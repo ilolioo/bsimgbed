@@ -5,12 +5,24 @@
       <div class="card p-6">
         <!-- 标题 -->
         <div class="text-center mb-4">
-          <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
-            <Icon name="heroicons:photo" class="w-8 h-8 text-white" />
+          <div class="w-16 h-16 mx-auto mb-4 rounded-2xl overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+            <img
+              v-if="appLogo && !logoError"
+              :src="appLogo"
+              :alt="appName"
+              class="w-full h-full object-contain"
+              @error="logoError = true"
+            />
+            <div
+              v-else
+              class="w-full h-full rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center"
+            >
+              <Icon name="heroicons:photo" class="w-8 h-8 text-white" />
+            </div>
           </div>
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white">管理员登录</h1>
           <div class="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-            <p>EasyImg - 面向个人的图床应用</p>
+            <p>{{ appName }} - 面向个人的图床应用</p>
           </div>
         </div>
 
@@ -92,13 +104,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
+import { useSettingsStore } from '~/stores/settings'
 import { useToastStore } from '~/stores/toast'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 const toastStore = useToastStore()
+
+const appName = computed(() => settingsStore.appSettings?.appName || 'bsimgbed')
+const appLogo = computed(() => settingsStore.appSettings?.appLogo || '')
+const logoError = ref(false)
 
 // 表单数据
 const form = ref({
@@ -110,10 +128,12 @@ const form = ref({
 const loading = ref(false)
 const showPassword = ref(false)
 
-// 如果已登录，重定向到首页
+// 如果已登录，重定向到首页；否则拉取公共设置以显示应用名称
 onMounted(() => {
   if (authStore.isAuthenticated) {
     router.push('/')
+  } else {
+    settingsStore.fetchPublicAppSettings()
   }
 })
 
@@ -131,7 +151,7 @@ async function handleLogin() {
 
     if (result.success) {
       toastStore.success('登录成功')
-      router.push('/')
+      router.push(result.mustChangePassword ? '/change-password' : '/')
     } else {
       toastStore.error(result.message || '用户名或密码错误')
     }

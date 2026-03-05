@@ -28,14 +28,16 @@ const PROCESS_INTERVAL = 5 * 1000  // 正常处理间隔 5 秒
  * @param {string} imageId - 图片ID
  * @param {string} imageUuid - 图片UUID
  * @param {string} filename - 文件名
+ * @param {string} [bucketId] - 储存桶 ID（用于按桶读取图片）
  * @returns {Promise<object>} - 创建的任务
  */
-export async function createModerationTask(imageId, imageUuid, filename) {
+export async function createModerationTask(imageId, imageUuid, filename, bucketId) {
   const task = {
     _id: uuidv4(),
     imageId: imageId,
     imageUuid: imageUuid,
     filename: filename,
+    bucketId: bucketId || undefined,
     status: 'pending',
     retryCount: 0,
     result: null,
@@ -124,8 +126,8 @@ async function processTask(task) {
       return { success: true, retry: false }
     }
 
-    // 执行审核
-    const result = await moderateImage(task.imageId, task.filename, contentSafetyConfig)
+    // 执行审核（按任务所属储存桶读取图片）
+    const result = await moderateImage(task.imageId, task.filename, contentSafetyConfig, task.bucketId)
 
     if (result.success) {
       // 审核成功

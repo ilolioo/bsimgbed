@@ -4,6 +4,24 @@ import db from '../utils/db.js'
 const requestCounts = new Map()
 // 存储正在上传的 IP/ApiKey
 const uploadingClients = new Map()
+// 配置缓存，减少频繁读库（60 秒 TTL）
+const configCache = new Map()
+const CONFIG_CACHE_TTL = 60 * 1000
+
+function getCachedConfig (key) {
+  const entry = configCache.get(key)
+  if (entry && Date.now() - entry.at < CONFIG_CACHE_TTL) return entry.value
+  return null
+}
+
+async function getRateLimitConfig (type) {
+  const configKey = type === 'public' ? 'publicApiConfig' : 'privateApiConfig'
+  const cached = getCachedConfig(configKey)
+  if (cached) return cached
+  const config = await db.settings.findOne({ key: configKey })
+  if (config) configCache.set(configKey, { value: config, at: Date.now() })
+  return config
+}
 
 // 清理过期的计数记录（每分钟清理一次）
 setInterval(() => {
@@ -21,8 +39,7 @@ setInterval(() => {
  * @param {string} identifier - IP 地址或 ApiKey
  */
 export async function checkRateLimit(type, identifier) {
-  const configKey = type === 'public' ? 'publicApiConfig' : 'privateApiConfig'
-  const config = await db.settings.findOne({ key: configKey })
+  const config = await getRateLimitConfig(type)
 
   if (!config) {
     return { allowed: true }
@@ -59,8 +76,7 @@ export async function checkRateLimit(type, identifier) {
  * @param {string} identifier - IP 地址或 ApiKey
  */
 export async function checkConcurrency(type, identifier) {
-  const configKey = type === 'public' ? 'publicApiConfig' : 'privateApiConfig'
-  const config = await db.settings.findOne({ key: configKey })
+  const config = await getRateLimitConfig(type)
 
   if (!config) {
     return { allowed: true }

@@ -3,6 +3,7 @@ import { getImageMetadata, saveUploadedFile } from '../../utils/image.js'
 import { authMiddleware } from '../../utils/authMiddleware.js'
 import { getRandomHeaders } from '../../utils/fetchHeaders.js'
 import { processImageWithConfig } from '../../utils/upload.js'
+import { getBucketsConfig } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
 
 // 供第三方API调用
@@ -37,7 +38,7 @@ export default defineEventHandler(async (event) => {
 
     // 解析请求体
     const body = await readBody(event)
-    const { url, returnBase64 = false } = body
+    const { url, returnBase64 = false, bucketId: requestedBucketId } = body
 
     if (!url) {
       throw createError({
@@ -61,6 +62,15 @@ export default defineEventHandler(async (event) => {
     // 获取私有 API 配置
     const configDoc = await db.settings.findOne({ key: 'privateApiConfig' })
     const config = configDoc?.value || {}
+
+    // 解析上传目标储存桶（登录/API Key 可使用全部桶）
+    const { defaultId, buckets } = await getBucketsConfig()
+    const allBucketIds = (buckets || []).map(b => b.id)
+    let bucketIdToUse = defaultId || allBucketIds[0]
+    if (requestedBucketId) {
+      const id = String(requestedBucketId).trim()
+      if (allBucketIds.includes(id)) bucketIdToUse = id
+    }
 
     // 处理所有 URL
     const results = []
@@ -177,9 +187,9 @@ export default defineEventHandler(async (event) => {
         // 获取图片元数据
         const metadata = await getImageMetadata(processedBuffer)
 
-        // 保存文件
+        // 保存文件到所选储存桶
         const filename = `${imageUuid}.${finalFormat}`
-        await saveUploadedFile(processedBuffer, filename)
+        const bucketId = await saveUploadedFile(processedBuffer, filename, bucketIdToUse)
 
         // 从URL提取原始文件名
         let originalName = imageUrl.pathname.split('/').pop() || 'image'
@@ -193,6 +203,7 @@ export default defineEventHandler(async (event) => {
           uuid: imageUuid,
           originalName: originalName,
           filename: filename,
+          bucketId: bucketId || undefined,
           format: finalFormat,
           size: processedBuffer.length,
           width: metadata.width || 0,

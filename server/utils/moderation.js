@@ -1,6 +1,4 @@
-import { readFile } from 'fs/promises'
-import { existsSync } from 'fs'
-import { getImagePath } from './upload.js'
+import { getFileBuffer, fileExists } from './storage.js'
 
 /**
  * 内容审核服务 - 支持多厂商API适配
@@ -365,7 +363,7 @@ function getMimeType(filename) {
  * @param {object} contentSafetyConfig - 内容安全配置
  * @returns {Promise<object>} - 审核结果
  */
-export async function moderateImage(imageId, filename, contentSafetyConfig) {
+export async function moderateImage(imageId, filename, contentSafetyConfig, bucketId) {
   if (!contentSafetyConfig?.enabled) {
     return {
       success: true,
@@ -399,17 +397,18 @@ export async function moderateImage(imageId, filename, contentSafetyConfig) {
     }
   }
 
-  // 读取图片文件
-  const filePath = getImagePath(filename)
-  if (!existsSync(filePath)) {
-    return {
-      success: false,
-      error: '图片文件不存在'
-    }
-  }
-
   try {
-    const imageBuffer = await readFile(filePath)
+    // 通过存储驱动读取图片（按储存桶，bucketId 可选）
+    const bucketId = arguments[3]
+    const exists = await fileExists(filename, bucketId)
+    if (!exists) {
+      return {
+        success: false,
+        error: '图片文件不存在'
+      }
+    }
+
+    const imageBuffer = await getFileBuffer(filename, bucketId)
     const result = await adapter.detect(imageBuffer, filename, providerConfig)
 
     return {

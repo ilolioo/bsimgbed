@@ -1,10 +1,10 @@
 import db from '../../utils/db.js'
 import { verifyToken, extractToken } from '../../utils/jwt.js'
 
-// 统计缓存，避免频繁计算
+// 统计缓存，避免频繁计算（存储汇总需遍历全表，适当延长缓存）
 let statsCache = null
 let statsCacheTime = 0
-const CACHE_TTL = 60 * 1000 // 缓存 60 秒
+const CACHE_TTL = 2 * 60 * 1000 // 缓存 2 分钟
 
 // 计算存储大小的函数（分批处理以减少内存压力）
 async function calculateStorageStats() {

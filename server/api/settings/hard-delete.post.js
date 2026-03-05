@@ -37,8 +37,8 @@ export default defineEventHandler(async (event) => {
 
     for (const image of deletedImages) {
       try {
-        // 删除物理文件
-        deleteImage(image.filename)
+        // 删除物理文件（按储存桶并扣减容量）
+        await deleteImage(image.filename, image.bucketId, image.size)
 
         // 从数据库删除记录
         await db.images.remove({ _id: image._id })

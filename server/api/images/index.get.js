@@ -42,17 +42,15 @@ export default defineEventHandler(async (event) => {
       queryCondition = { isDeleted: false, uploadedByType: 'public', isNsfw: { $ne: true } }
     }
 
-    // 获取总数
-    const total = await db.images.count(queryCondition)
-
-    // 获取图片列表（按上传时间倒序）
-    let images = await db.images.find(queryCondition)
-
-    // 手动排序（按上传时间倒序）
-    images.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
-
-    // 手动分页
-    images = images.slice(skip, skip + limit)
+    // 获取总数与当前页数据（数据库层排序分页，避免全量加载）
+    const [total, images] = await Promise.all([
+      db.images.count(queryCondition),
+      db.images.findWithOptions(queryCondition, {
+        sort: { uploadedAt: -1 },
+        skip,
+        limit
+      })
+    ])
 
     // 过滤敏感信息
     const safeImages = images.map(img => {

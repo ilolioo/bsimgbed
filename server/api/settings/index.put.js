@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     // 获取当前设置
     const currentSettings = await db.settings.findOne({ key: 'appSettings' })
     const currentValue = currentSettings?.value || {
-      appName: 'easyimg',
+      appName: 'bsimgbed',
       appLogo: '',
       backgroundUrl: '',
       backgroundBlur: 0,
@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
     // 更新 appName（如果传递了）
     if (body.appName !== undefined) {
-      updatedValue.appName = body.appName || 'easyimg'
+      updatedValue.appName = body.appName || 'bsimgbed'
     }
 
     // 更新 appLogo（如果传递了）

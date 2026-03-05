@@ -1,7 +1,6 @@
-import { createReadStream, existsSync } from 'fs'
 import { createHash } from 'crypto'
 import db from '../../utils/db.js'
-import { getImagePath } from '../../utils/upload.js'
+import { fileExists, getFileStream } from '../../utils/storage.js'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -58,10 +57,9 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 检查文件是否存在
-    const filePath = getImagePath(image.filename)
-
-    if (!existsSync(filePath)) {
+    // 检查文件是否存在（按图片所属储存桶）
+    const exists = await fileExists(image.filename, image.bucketId)
+    if (!exists) {
       console.log('[Image Route] File does not exist')
       throw createError({
         statusCode: 404,
@@ -108,8 +106,9 @@ export default defineEventHandler(async (event) => {
     setHeader(event, 'Last-Modified', new Date(image.createdAt).toUTCString()) // 最后修改时间
     setHeader(event, 'X-Content-Type-Options', 'nosniff') // 安全头
 
-    // 返回文件流
-    return sendStream(event, createReadStream(filePath))
+    // 获取文件流并返回（按图片所属储存桶）
+    const stream = await getFileStream(image.filename, image.bucketId)
+    return sendStream(event, stream)
   } catch (error) {
     if (error.statusCode) {
       throw error

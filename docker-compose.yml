@@ -1,7 +1,10 @@
 services:
-  easyimg:
-    image: ghcr.io/chaos-zhu/easyimg:latest
-    container_name: easyimg
+  bsimgbed:
+    image: bsimgbed:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bsimgbed
     restart: unless-stopped
     ports:
       - "8092:3000"
@@ -9,21 +12,8 @@ services:
       - ./db:/app/db
       - ./uploads:/app/uploads
     environment:
-      - NODE_ENV=production
-      - HOST=0.0.0.0
-      - PORT=3000
+      NODE_ENV: production
+      HOST: "0.0.0.0"
+      PORT: "3000"
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-
-  watchtower:
-    image: containrrr/watchtower:latest
-    container_name: watchtower-easyimg
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - TZ=Asia/Shanghai
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_POLL_INTERVAL=120
-      - WATCHTOWER_LABEL_ENABLE=true
-    command: --label-enable
+      - "com.centurylinklabs.watchtower.enable=false"

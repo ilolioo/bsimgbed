@@ -4,7 +4,7 @@ import { useAuthStore } from './auth'
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
     appSettings: {
-      appName: 'EasyImg',
+      appName: 'bsimgbed',
       appLogo: '',
       backgroundUrl: '',
       backgroundBlur: 0,

@@ -1,5 +1,5 @@
 {
-  "name": "easyimg",
+  "name": "bsimgbed",
   "installCommand": "pnpm install",
   "buildCommand": "pnpm run generate",
   "assets": {

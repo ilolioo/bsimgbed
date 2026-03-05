@@ -1,7 +1,7 @@
 <div align="center">
 本项目由阿里云ESA提供加速、计算和保护
-  <a href="https://github.com/chaos-zhu/easyimg">
-    <img src="https://img.alicdn.com/imgextra/i3/O1CN01H1UU3i1Cti9lYtFrs_!!6000000000139-2-tps-7534-844.png" alt="easyimg">
+  <a href="https://github.com/chaos-zhu/bsimgbed">
+    <img src="https://img.alicdn.com/imgextra/i3/O1CN01H1UU3i1Cti9lYtFrs_!!6000000000139-2-tps-7534-844.png" alt="bsimgbed">
   </a>
 </div>
 
@@ -9,20 +9,20 @@
 
 <div align="center">
 
-# EasyImg
+# bsimgbed
 
 _✨ 简单易用的个人图床系统，基于 Nuxt.js 构建 ✨_
 
-<a href="https://github.com/chaos-zhu/easyimg/releases/latest">
-  <img src="https://img.shields.io/github/v/release/chaos-zhu/easyimg?color=brightgreen" alt="release">
+<a href="https://github.com/chaos-zhu/bsimgbed/releases/latest">
+  <img src="https://img.shields.io/github/v/release/chaos-zhu/bsimgbed?color=brightgreen" alt="release">
 </a>
 
-<a href="https://github.com/chaos-zhu/easyimg">
+<a href="https://github.com/chaos-zhu/bsimgbed">
   <img src="https://img.shields.io/badge/Apache-License2.0-green" alt="License">
 </a>
 
-<a href="https://github.com/chaos-zhu/easyimg">
-  <img src="https://img.shields.io/badge/EasyImg-图床-blue" alt="easyimg">
+<a href="https://github.com/chaos-zhu/bsimgbed">
+  <img src="https://img.shields.io/badge/bsimgbed-图床-blue" alt="bsimgbed">
 </a>
 
 
@@ -100,12 +100,12 @@ _✨ 简单易用的个人图床系统，基于 Nuxt.js 构建 ✨_
 ### Docker Compose 部署（推荐）
 
 ```bash
-# 1. 创建 easyimg 目录
-mkdir -p /root/easyimg && cd /root/easyimg
+# 1. 创建 bsimgbed 目录
+mkdir -p /root/bsimgbed && cd /root/bsimgbed
 
 
 # 2. 下载docker-compose.yml文件
-wget https://git.221022.xyz/https://raw.githubusercontent.com/chaos-zhu/easyimg/refs/heads/main/docker-compose.yml
+wget https://git.221022.xyz/https://raw.githubusercontent.com/chaos-zhu/bsimgbed/refs/heads/main/docker-compose.yml
 
 # 使用 docker-compose
 docker compose up -d
@@ -114,7 +114,7 @@ docker compose up -d
 ### Docker run部署
 
 ```bash
-docker run -d --name easyimg -p 3000:3000 -v ./db:/app/db -v ./uploads:/app/uploads ghcr.io/chaos-zhu/easyimg:latest
+docker run -d --name bsimgbed -p 3000:3000 -v ./db:/app/db -v ./uploads:/app/uploads ghcr.io/chaos-zhu/bsimgbed:latest
 ```
 
 
@@ -138,8 +138,8 @@ node .output/server/index.mjs
 
 首次启动后，使用以下默认账户登录：
 
-- **用户名**：`easyimg`
-- **密码**：`easyimg`
+- **用户名**：`baisiimg`
+- **密码**：`baisiimg`
 
 > ⚠️ 请登录后立即修改默认用户名密码！
 
@@ -166,6 +166,39 @@ volumes:
   - ./uploads:/app/uploads
 ```
 
+## API 文档
+
+完整 API 说明与示例请登录后台，进入 **API 管理 → API文档** 查看。以下为常用接口摘要：
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/upload/public` | 公共上传（multipart/form-data，无需认证） |
+| POST | `/api/upload/private` | 私有上传（需 `X-API-Key`；支持 multipart/form-data 或 JSON+Base64） |
+| POST | `/api/upload/url` | URL 上传（需 API Key，请求体 `{"url": "图片地址"}`） |
+| POST | `/api/upload/urls` | 批量 URL 上传（需 API Key，请求体 `{"urls": ["url1", "url2", ...]}`） |
+
+上传成功后返回示例：
+
+```json
+{
+  "success": true,
+  "message": "上传成功",
+  "data": {
+    "id": "文档ID",
+    "uuid": "文件UUID",
+    "filename": "uuid.webp",
+    "format": "webp",
+    "size": 123456,
+    "width": 1920,
+    "height": 1080,
+    "url": "/i/uuid.webp",
+    "uploadedAt": "2025-01-01T00:00:00.000Z"
+  }
+}
+```
+
+图片访问地址：`{站点根地址}/i/{uuid}.{格式}`，例如 `/i/xxx.webp`。
+
 ## 常见问题
 
 ### Q: 如何重置管理员密码？
@@ -188,7 +221,7 @@ volumes:
 ## 交流反馈
 
 - **Telegram 频道**：[https://t.me/easynode_notify](https://t.me/easynode_notify)
-- **GitHub Issues**：[提交问题](https://github.com/chaos-zhu/easyimg/issues)
+- **GitHub Issues**：[提交问题](https://github.com/chaos-zhu/bsimgbed/issues)
 
 ## 开源协议
 

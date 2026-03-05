@@ -32,13 +32,16 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    const mustChangePassword = user.passwordChanged === false
+
     return {
       success: true,
       authenticated: true,
       data: {
         user: {
           username: user.username
-        }
+        },
+        mustChangePassword
       }
     }
   } catch (error) {

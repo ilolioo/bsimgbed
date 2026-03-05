@@ -3,12 +3,10 @@
  * 后续可扩展支持其他通知方式（钉钉等）
  */
 
-import { readFile } from 'fs/promises'
-import { existsSync } from 'fs'
 import db from './db.js'
 import TelegramBot from 'node-telegram-bot-api'
 import nodemailer from 'nodemailer'
-import { getImagePath } from './upload.js'
+import { getFileBuffer, fileExists } from './storage.js'
 
 // 通知类型枚举
 export const NOTIFICATION_TYPES = {
@@ -222,20 +220,19 @@ function isValidImageUrl(url) {
 }
 
 /**
- * 从本地文件系统读取图片
+ * 从存储中读取图片（本地或 WebDAV）
  * @param {string} filename - 图片文件名
  * @returns {Promise<Buffer|null>} 图片Buffer，失败返回null
  */
-async function readLocalImage(filename) {
+async function readLocalImage(filename, bucketId) {
   try {
-    const filepath = getImagePath(filename)
-
-    if (!existsSync(filepath)) {
-      console.warn(`[Notification] 本地图片文件不存在: ${filepath}`)
+    const exists = await fileExists(filename, bucketId)
+    if (!exists) {
+      console.warn(`[Notification] 图片文件不存在: ${filename}`)
       return null
     }
 
-    const buffer = await readFile(filepath)
+    const buffer = await getFileBuffer(filename, bucketId)
     return buffer
   } catch (error) {
     console.warn('[Notification] 读取本地图片出错:', error.message)
@@ -313,7 +310,7 @@ async function sendTelegramNotification(config, payload) {
 
     if (localFilename) {
       console.log('[Notification] 尝试读取本地图片:', localFilename)
-      imageBuffer = await readLocalImage(localFilename)
+      imageBuffer = await readLocalImage(localFilename, payload.data?.bucketId)
     }
 
     if (imageBuffer) {
@@ -450,7 +447,7 @@ function generateEmailTemplate(content) {
   <div class="container">
     ${content}
     <div class="footer">
-      <p>此邮件由 EasyImg 图床系统自动发送</p>
+      <p>此邮件由 bsimgbed 图床系统自动发送</p>
     </div>
   </div>
 </body>
@@ -532,7 +529,7 @@ async function sendEmailNotification(config, payload) {
     await transporter.sendMail({
       from: email.user,
       to: toAddress,
-      subject: `[EasyImg] ${payload.title}`,
+      subject: `[bsimgbed] ${payload.title}`,
       html: generateEmailTemplate(htmlContent)
     })
 
@@ -699,6 +696,7 @@ export async function sendUploadNotification(imageInfo, uploaderInfo) {
       format: imageInfo.format,
       size: imageInfo.size,
       url: imageInfo.url,
+      bucketId: imageInfo.bucketId,
       uploader: uploaderInfo.name,
       uploaderType: uploaderInfo.type,
       ip: uploaderInfo.ip,
@@ -841,7 +839,7 @@ export async function testEmail(emailConfig) {
     await transporter.sendMail({
       from: emailConfig.user,
       to: toAddress,
-      subject: '[EasyImg] 测试通知',
+      subject: '[bsimgbed] 测试通知',
       html: generateEmailTemplate(htmlContent)
     })
 

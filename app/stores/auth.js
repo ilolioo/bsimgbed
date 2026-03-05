@@ -1,10 +1,13 @@
 import { defineStore } from 'pinia'
 
+const MUST_CHANGE_PASSWORD_KEY = 'mustChangePassword'
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: null,
     user: null,
-    isAuthenticated: false
+    isAuthenticated: false,
+    mustChangePassword: false
   }),
 
   actions: {
@@ -13,10 +16,12 @@ export const useAuthStore = defineStore('auth', {
       if (import.meta.client) {
         const token = localStorage.getItem('token')
         const user = localStorage.getItem('user')
+        const mustChange = localStorage.getItem(MUST_CHANGE_PASSWORD_KEY) === 'true'
         if (token && user) {
           this.token = token
           this.user = JSON.parse(user)
           this.isAuthenticated = true
+          this.mustChangePassword = mustChange
         }
       }
     },
@@ -33,14 +38,20 @@ export const useAuthStore = defineStore('auth', {
           this.token = response.data.token
           this.user = response.data.user
           this.isAuthenticated = true
+          this.mustChangePassword = response.data.mustChangePassword === true
 
           // 保存到 localStorage
           if (import.meta.client) {
             localStorage.setItem('token', this.token)
             localStorage.setItem('user', JSON.stringify(this.user))
+            if (this.mustChangePassword) {
+              localStorage.setItem(MUST_CHANGE_PASSWORD_KEY, 'true')
+            } else {
+              localStorage.removeItem(MUST_CHANGE_PASSWORD_KEY)
+            }
           }
 
-          return { success: true }
+          return { success: true, mustChangePassword: this.mustChangePassword }
         }
 
         return { success: false, message: response.message || '登录失败' }
@@ -54,10 +65,12 @@ export const useAuthStore = defineStore('auth', {
       this.token = null
       this.user = null
       this.isAuthenticated = false
+      this.mustChangePassword = false
 
       if (import.meta.client) {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
+        localStorage.removeItem(MUST_CHANGE_PASSWORD_KEY)
       }
     },
 
@@ -76,6 +89,14 @@ export const useAuthStore = defineStore('auth', {
 
         if (response.success && response.authenticated) {
           this.user = response.data.user
+          this.mustChangePassword = response.data.mustChangePassword === true
+          if (import.meta.client) {
+            if (this.mustChangePassword) {
+              localStorage.setItem(MUST_CHANGE_PASSWORD_KEY, 'true')
+            } else {
+              localStorage.removeItem(MUST_CHANGE_PASSWORD_KEY)
+            }
+          }
           return true
         }
 
@@ -85,6 +106,14 @@ export const useAuthStore = defineStore('auth', {
       } catch (error) {
         this.logout()
         return false
+      }
+    },
+
+    // 首次改密完成后调用，清除强制改密状态
+    clearMustChangePassword() {
+      this.mustChangePassword = false
+      if (import.meta.client) {
+        localStorage.removeItem(MUST_CHANGE_PASSWORD_KEY)
       }
     },
 

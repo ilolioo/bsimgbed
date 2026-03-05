@@ -54,16 +54,16 @@
   <Transition name="announcement-banner">
     <div
       v-if="visible && displayType === 'banner'"
-      class="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-4 py-3 rounded-lg mb-4"
+      class="px-4 py-3 rounded-lg mb-4 bg-gray-200/60 dark:bg-gray-600/50 text-gray-900 dark:text-white"
     >
       <div class="flex items-center justify-between gap-4">
         <div class="flex items-center gap-3 flex-1 min-w-0">
-          <Icon name="heroicons:megaphone" class="w-5 h-5 flex-shrink-0" />
-          <div class="prose prose-sm prose-invert max-w-none flex-1 min-w-0 truncate-content" v-html="content"></div>
+          <Icon name="heroicons:megaphone" class="w-5 h-5 flex-shrink-0 text-gray-700 dark:text-gray-200" />
+          <div class="prose prose-sm prose-gray-900 dark:prose-invert max-w-none flex-1 min-w-0 truncate-content text-gray-900 dark:text-white" v-html="content"></div>
         </div>
         <button
           @click="close"
-          class="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-white/20 rounded-lg transition-colors"
+          class="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-400/30 dark:hover:bg-gray-500/30 rounded-lg transition-colors text-gray-700 dark:text-gray-200"
           title="关闭公告"
         >
           <Icon name="heroicons:x-mark" class="w-5 h-5" />

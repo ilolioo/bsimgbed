@@ -46,13 +46,16 @@ export default defineEventHandler(async (event) => {
       console.error('[Login] 发送登录通知失败:', err)
     })
 
+    const mustChangePassword = user.passwordChanged === false
+
     return {
       success: true,
       data: {
         token,
         user: {
           username: user.username
-        }
+        },
+        mustChangePassword
       }
     }
   } catch (error) {

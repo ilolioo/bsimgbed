@@ -1,6 +1,7 @@
 import db from '../../utils/db.js'
 import { getImageMetadata, saveUploadedFile } from '../../utils/image.js'
 import { parseFormData, processImageWithConfig } from '../../utils/upload.js'
+import { getBucketsConfig } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
 import {
   checkPublicRateLimit,
@@ -58,8 +59,8 @@ export default defineEventHandler(async (event) => {
       acquirePublicConcurrency(clientIP)
     }
 
-    // 解析表单数据
-    const { file } = await parseFormData(event)
+    // 解析表单数据（含可选 bucketId）
+    const { file, bucketId: requestedBucketId } = await parseFormData(event)
 
     if (!file) {
       releasePublicConcurrency(clientIP)
@@ -67,6 +68,19 @@ export default defineEventHandler(async (event) => {
         statusCode: 400,
         message: '请选择要上传的图片'
       })
+    }
+
+    // 解析上传目标储存桶：游客仅允许使用 allowGuest 的桶
+    const { defaultId, buckets } = await getBucketsConfig()
+    const guestAllowedIds = (buckets || []).filter(b => b.allowGuest !== false).map(b => String(b.id).trim())
+    const normalizedRequested = requestedBucketId ? String(requestedBucketId).trim() : null
+    let bucketIdToUse = defaultId || guestAllowedIds[0]
+    if (normalizedRequested) {
+      if (!guestAllowedIds.includes(normalizedRequested)) {
+        releasePublicConcurrency(clientIP)
+        throw createError({ statusCode: 400, message: '不允许使用该储存桶' })
+      }
+      bucketIdToUse = normalizedRequested
     }
 
     // 检查文件格式
@@ -99,9 +113,9 @@ export default defineEventHandler(async (event) => {
     // 获取图片元数据
     const metadata = await getImageMetadata(processedBuffer)
 
-    // 保存文件
+    // 保存文件到所选储存桶
     const filename = `${imageUuid}.${finalFormat}`
-    await saveUploadedFile(processedBuffer, filename)
+    const bucketId = await saveUploadedFile(processedBuffer, filename, bucketIdToUse)
 
     // 判断是否启用内容安全检测
     const contentSafetyEnabled = config.contentSafety?.enabled || false
@@ -112,6 +126,7 @@ export default defineEventHandler(async (event) => {
       uuid: imageUuid,
       originalName: file.originalFilename,
       filename: filename,
+      bucketId: bucketId || undefined,
       format: finalFormat,
       size: processedBuffer.length,
       width: metadata.width || 0,
@@ -136,7 +151,7 @@ export default defineEventHandler(async (event) => {
     // 如果启用了内容安全检测，创建审核任务
     if (contentSafetyEnabled) {
       try {
-        await createModerationTask(imageDoc._id, imageUuid, filename)
+        await createModerationTask(imageDoc._id, imageUuid, filename, bucketId)
       } catch (err) {
         console.error('[Upload] 创建审核任务失败:', err)
         // 审核任务创建失败不影响上传结果
@@ -168,7 +183,8 @@ export default defineEventHandler(async (event) => {
         filename: filename,
         format: finalFormat,
         size: processedBuffer.length,
-        url: fullImageUrl
+        url: fullImageUrl,
+        bucketId: bucketId
       },
       {
         name: '访客',
@@ -204,9 +220,10 @@ export default defineEventHandler(async (event) => {
     }
 
     console.error('[Upload] 公共上传失败:', error)
+    const msg = error?.message && String(error.message).trim()
     throw createError({
       statusCode: 500,
-      message: '上传失败，请稍后重试'
+      message: (msg && (msg.startsWith('[') || msg.includes('储存桶'))) ? msg : '上传失败，请稍后重试'
     })
   }
 })

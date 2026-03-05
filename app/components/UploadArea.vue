@@ -2,7 +2,7 @@
   <div class="upload-section flex gap-4">
     <!-- 主上传区域 -->
     <div
-      class="upload-area flex-1 relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300"
+      class="upload-area flex-1 relative border-2 border-dashed rounded-xl overflow-hidden flex flex-col transition-all duration-300"
       :class="[
         !configLoaded
           ? 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30'
@@ -30,15 +30,13 @@
         </div>
       </div>
 
-      <!-- 内容区域 - 固定高度避免状态切换时高度变化，移动端增加高度 -->
-      <div class="upload-content h-[180px] sm:h-[148px]">
+      <!-- 上传框主体：图标 + 文案 -->
+      <div class="upload-content flex-1 flex flex-col items-center justify-center p-6 sm:p-8 text-center min-h-[140px]">
         <!-- 加载中骨架屏 - 配置未加载完成时显示 -->
         <template v-if="!configLoaded">
-          <!-- 骨架图标 -->
           <div class="mb-4">
             <div class="w-16 h-16 mx-auto rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
           </div>
-          <!-- 骨架文字 -->
           <div class="space-y-3">
             <div class="h-7 w-64 mx-auto bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
             <div class="h-5 w-80 mx-auto bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
@@ -48,31 +46,21 @@
 
         <!-- 禁用状态 -->
         <template v-else-if="isDisabled">
-          <!-- 禁用图标 -->
           <div class="mb-4">
             <Icon name="heroicons:no-symbol" class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600" />
           </div>
-          <!-- 禁用提示 -->
           <div class="space-y-3">
-            <p class="text-lg font-medium text-gray-400 dark:text-gray-500">
-              访客上传已禁用
-            </p>
-            <p class="text-sm text-gray-400 dark:text-gray-500">
-              请登录后上传图片
-            </p>
-            <!-- 占位，保持高度一致 -->
+            <p class="text-lg font-medium text-gray-400 dark:text-gray-500">访客上传已禁用</p>
+            <p class="text-sm text-gray-400 dark:text-gray-500">请登录后上传图片</p>
             <p class="text-sm invisible">&nbsp;</p>
           </div>
         </template>
 
         <!-- 正常状态 -->
         <template v-else>
-          <!-- 上传图标 -->
-          <div class="">
+          <div>
             <Icon name="heroicons:cloud-arrow-up" class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" />
           </div>
-
-          <!-- 提示文字 -->
           <div class="space-y-2 sm:space-y-3">
             <p class="text-base sm:text-lg font-medium text-gray-700 dark:text-gray-300">
               <span class="block sm:inline">点击、拖拽或粘贴上传图片</span>
@@ -87,13 +75,26 @@
               </span>
             </p>
             <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              支持 {{ allowedFormats.join(', ').toUpperCase() }} 格式，可选择多张
-            </p>
-            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              单张最大 {{ formatFileSize(maxFileSize) }}
+              支持 {{ allowedFormats.join(', ').toUpperCase() }} 格式，可选择多张 · 单张最大 {{ formatFileSize(maxFileSize) }}
             </p>
           </div>
         </template>
+      </div>
+
+      <!-- 储存桶选择：放在上传框底部栏内，点击不触发选择文件 -->
+      <div
+        v-if="configLoaded && bucketChoices.length > 0"
+        class="upload-box-options border-t border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-800/30 px-4 py-3 flex items-center justify-center gap-2"
+        @click.stop
+      >
+        <span class="text-xs text-gray-500 dark:text-gray-400">上传到</span>
+        <select
+          v-model="selectedBucketId"
+          class="text-xs sm:text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[120px]"
+          @click.stop
+        >
+          <option v-for="opt in bucketChoices" :key="opt.id" :value="opt.id">{{ opt.name }}</option>
+        </select>
       </div>
 
       <!-- 隐藏的文件输入（支持多选） -->
@@ -246,12 +247,34 @@ watch(showUrlModal, (visible) => {
   }
 })
 
+// 登录/登出后重新拉取储存桶选项（游客仅可见允许的桶，管理员可见全部）
+watch(() => authStore.isAuthenticated, async () => {
+  if (!configLoaded.value) return
+  try {
+    const bucketRes = await fetch('/api/config/storage/buckets-choices', {
+      headers: authStore.isAuthenticated ? authStore.authHeader : {}
+    })
+    if (bucketRes.ok) {
+      const bucketData = await bucketRes.json()
+      if (bucketData.success && bucketData.data) {
+        bucketChoices.value = bucketData.data.buckets || []
+        selectedBucketId.value = bucketData.data.defaultId || bucketChoices.value[0]?.id || ''
+      }
+    }
+  } catch (e) {
+    console.error('获取储存桶选项失败:', e)
+  }
+})
+
 // 配置
 const allowedFormats = ref(['jpeg', 'jpg', 'png', 'gif', 'webp', 'avif', 'svg', 'bmp', 'ico', 'apng', 'tiff', 'tif'])
 const maxFileSize = ref(10 * 1024 * 1024) // 10MB
 // 初始值为 null，表示配置尚未加载
 const publicApiEnabled = ref(null)
 const defaultApiKey = ref('')
+// 储存桶选项（游客仅能选允许的桶，管理员可选全部）
+const bucketChoices = ref([])
+const selectedBucketId = ref('')
 
 // 计算是否禁用上传（未登录且公共上传已禁用）
 // 配置未加载时（null），不显示禁用状态，避免闪烁
@@ -322,6 +345,21 @@ async function fetchConfig() {
         // 回退到公共配置的限制
         maxFileSize.value = 10 * 1024 * 1024
       }
+    }
+    // 获取可选储存桶（游客：仅 allowGuest 的桶；管理员：全部）
+    try {
+      const bucketRes = await fetch('/api/config/storage/buckets-choices', {
+        headers: authStore.isAuthenticated ? authStore.authHeader : {}
+      })
+      if (bucketRes.ok) {
+        const bucketData = await bucketRes.json()
+        if (bucketData.success && bucketData.data) {
+          bucketChoices.value = bucketData.data.buckets || []
+          selectedBucketId.value = bucketData.data.defaultId || bucketChoices.value[0]?.id || ''
+        }
+      }
+    } catch (e) {
+      console.error('获取储存桶选项失败:', e)
     }
   } catch (error) {
     console.error('获取配置失败:', error)
@@ -428,9 +466,12 @@ function validateFile(file) {
   return { valid: true }
 }
 
-// 上传单个文件
+// 上传单个文件（先追加 bucketId 再追加 file，便于服务端 multipart 解析）
 async function uploadSingleFile(file) {
   const formData = new FormData()
+  if (selectedBucketId.value) {
+    formData.append('bucketId', selectedBucketId.value)
+  }
   formData.append('file', file)
 
   // 根据登录状态选择 API
@@ -606,7 +647,10 @@ async function handleUrlUpload() {
         'Content-Type': 'application/json',
         ...authStore.authHeader
       },
-      body: JSON.stringify({ urls })
+      body: JSON.stringify({
+        urls,
+        ...(selectedBucketId.value ? { bucketId: selectedBucketId.value } : {})
+      })
     })
 
     if (!response.ok) {

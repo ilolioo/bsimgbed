@@ -3,6 +3,17 @@
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">关于</h1>
 
     <div class="space-y-6">
+      <!-- 项目简介 -->
+      <div class="card p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <Icon name="heroicons:photo" class="w-5 h-5 text-primary-500" />
+          bsimgbed
+        </h2>
+        <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+          bsimgbed 是一个简单易用的个人图床应用，支持本地磁盘、WebDAV、Telegram 等多种存储方式，可自由切换无需重启。提供公共/私有 API、API Key 管理、内容安全与通知等能力，适合自建图床与图片管理。
+        </p>
+      </div>
+
       <!-- 版本信息（仅登录后显示） -->
       <!-- <div v-if="authStore.isAuthenticated" class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -47,7 +58,7 @@
               v{{ versionInfo.latestVersion }}
             </span>
             <a
-              href="https://github.com/chaos-zhu/easyimg/releases"
+              href="https://github.com/chaos-zhu/bsimgbed/releases"
               target="_blank"
               rel="noopener noreferrer"
               class="text-primary-600 dark:text-primary-400 hover:underline text-sm flex items-center gap-1"
@@ -85,85 +96,12 @@
             <Icon name="simple-icons:github" class="w-5 h-5 text-gray-800 dark:text-gray-200" />
             <span class="text-gray-700 dark:text-gray-300">项目地址:</span>
             <a
-              href="https://github.com/chaos-zhu/easyimg"
+              href="https://github.com/chaos-zhu/bsimgbed"
               target="_blank"
               rel="noopener noreferrer"
               class="text-primary-600 dark:text-primary-400 hover:underline"
             >
-              https://github.com/chaos-zhu/easyimg
-            </a>
-          </div>
-          <div class="flex items-center gap-3">
-            <Icon name="simple-icons:telegram" class="w-5 h-5 text-blue-500" />
-            <span class="text-gray-700 dark:text-gray-300">TG频道:</span>
-            <a
-              href="https://t.me/easynode_notify"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-primary-600 dark:text-primary-400 hover:underline"
-            >
-              https://t.me/easynode_notify
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- 作者其他项目 -->
-      <div class="card p-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Icon name="heroicons:rocket-launch" class="w-5 h-5 text-primary-500" />
-          作者其他项目
-        </h2>
-        <div class="space-y-6">
-          <!-- EasyNode -->
-          <div class="border-l-4 border-primary-500 pl-4">
-            <div class="flex items-center gap-2 mb-2">
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white">EasyNode</h3>
-              <a
-                href="https://github.com/chaos-zhu/easynode"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-              >
-                <Icon name="simple-icons:github" class="w-4 h-4" />
-              </a>
-            </div>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">
-              一个多功能Linux&win服务器WEB终端面板(webSSH&webSFTP)
-            </p>
-            <a
-              href="https://github.com/chaos-zhu/easynode"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-primary-600 dark:text-primary-400 hover:underline text-sm"
-            >
-              https://github.com/chaos-zhu/easynode
-            </a>
-          </div>
-
-          <!-- EasyNavTab -->
-          <div class="border-l-4 border-green-500 pl-4">
-            <div class="flex items-center gap-2 mb-2">
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white">EasyNavTab</h3>
-              <a
-                href="https://github.com/chaos-zhu/easynavtab"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-              >
-                <Icon name="simple-icons:github" class="w-4 h-4" />
-              </a>
-            </div>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">
-              开源浏览器插件，自定义新标签页
-            </p>
-            <a
-              href="https://github.com/chaos-zhu/easynavtab"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-primary-600 dark:text-primary-400 hover:underline text-sm"
-            >
-              https://github.com/chaos-zhu/easynavtab
+              https://github.com/chaos-zhu/bsimgbed
             </a>
           </div>
         </div>

@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
       return {
         success: true,
         data: {
-          appName: 'easyimg',
+          appName: 'bsimgbed',
           appLogo: '',
           backgroundUrl: '',
           backgroundBlur: 0,
@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       data: {
-        appName: settings.value.appName || 'easyimg',
+        appName: settings.value.appName || 'bsimgbed',
         appLogo: settings.value.appLogo || '',
         backgroundUrl: settings.value.backgroundUrl || '',
         backgroundBlur: settings.value.backgroundBlur || 0,

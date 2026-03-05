@@ -6,17 +6,18 @@ import { getDefaultContentSafetyConfig } from '../utils/moderation.js'
 
 // 初始化默认管理员用户
 async function initDefaultUser() {
-  const existingUser = await db.users.findOne({ username: 'easyimg' })
+  const existingUser = await db.users.findOne({ username: 'baisiimg' })
   if (!existingUser) {
-    const hashedPassword = await bcrypt.hash('easyimg', 10)
+    const hashedPassword = await bcrypt.hash('baisiimg', 10)
     await db.users.insert({
       _id: uuidv4(),
-      username: 'easyimg',
+      username: 'baisiimg',
       password: hashedPassword,
+      passwordChanged: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     })
-    console.log('[Database] 默认管理员用户已创建 (用户名: easyimg, 密码: easyimg)')
+    console.log('[Database] 默认管理员用户已创建 (用户名: baisiimg, 密码: baisiimg)')
   }
 }
 
@@ -128,7 +129,7 @@ async function initAppSettings() {
       _id: uuidv4(),
       key: 'appSettings',
       value: {
-        appName: 'EasyImg',                     // 应用名称
+        appName: 'bsimgbed',                    // 应用名称
         appLogo: ''                             // 应用 Logo URL
       },
       createdAt: new Date().toISOString(),

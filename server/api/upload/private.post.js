@@ -1,6 +1,7 @@
 import db from '../../utils/db.js'
 import { getImageMetadata, saveUploadedFile } from '../../utils/image.js'
 import { parseFormData, processImageWithConfig } from '../../utils/upload.js'
+import { getBucketsConfig } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
 import { sendUploadNotification } from '../../utils/notification.js'
 
@@ -70,9 +71,11 @@ export default defineEventHandler(async (event) => {
     // 检查 Content-Type 来决定解析方式
     const contentType = getHeader(event, 'content-type') || ''
 
+    let requestedBucketId = null
     if (contentType.includes('application/json')) {
       // JSON 格式，支持 base64 上传
       const body = await readBody(event)
+      if (body.bucketId) requestedBucketId = String(body.bucketId).trim() || null
 
       if (body.base64) {
         // base64 字符串上传
@@ -95,6 +98,7 @@ export default defineEventHandler(async (event) => {
       // multipart/form-data 格式
       const formResult = await parseFormData(event)
       file = formResult.file
+      requestedBucketId = formResult.bucketId || null
     }
 
     if (!file) {
@@ -116,6 +120,17 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // 管理员/私有 API 可使用全部储存桶，校验请求的 bucketId
+    const { defaultId, buckets } = await getBucketsConfig()
+    const allBucketIds = (buckets || []).map(b => b.id)
+    let bucketIdToUse = defaultId || allBucketIds[0]
+    if (requestedBucketId) {
+      if (!allBucketIds.includes(requestedBucketId)) {
+        throw createError({ statusCode: 400, message: '储存桶不存在' })
+      }
+      bucketIdToUse = requestedBucketId
+    }
+
     // 生成 UUID
     const imageUuid = uuidv4()
 
@@ -125,9 +140,9 @@ export default defineEventHandler(async (event) => {
     // 获取图片元数据
     const metadata = await getImageMetadata(processedBuffer)
 
-    // 保存文件
+    // 保存文件到所选储存桶
     const filename = `${imageUuid}.${finalFormat}`
-    await saveUploadedFile(processedBuffer, filename)
+    const bucketId = await saveUploadedFile(processedBuffer, filename, bucketIdToUse)
 
     // 获取用户信息（通过 ApiKey 关联）
     const uploadedBy = keyDoc.name || 'API用户'
@@ -138,6 +153,7 @@ export default defineEventHandler(async (event) => {
       uuid: imageUuid,
       originalName: file.originalFilename,
       filename: filename,
+      bucketId: bucketId || undefined,
       format: finalFormat,
       size: processedBuffer.length,
       width: metadata.width || 0,
@@ -176,7 +192,8 @@ export default defineEventHandler(async (event) => {
         filename: filename,
         format: finalFormat,
         size: processedBuffer.length,
-        url: fullImageUrl
+        url: fullImageUrl,
+        bucketId: bucketId
       },
       {
         name: uploadedBy,

@@ -60,12 +60,13 @@ export default defineEventHandler(async (event) => {
     // 加密新密码
     const hashedPassword = await bcrypt.hash(newPassword, 10)
 
-    // 更新密码
+    // 更新密码（同时标记已修改过密码，用于首次登录强制改密）
     await db.users.update(
       { _id: user.userId },
       {
         $set: {
           password: hashedPassword,
+          passwordChanged: true,
           updatedAt: new Date().toISOString()
         }
       }

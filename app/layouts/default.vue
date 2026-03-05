@@ -23,19 +23,22 @@
     <header class="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
       <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16 gap-2">
-          <!-- 左侧：Logo + 应用名称 -->
+          <!-- 左侧：Logo + 应用名称（与登录页规则一致：有 Logo 且未加载失败则显示图片，否则显示默认图标） -->
           <NuxtLink to="/" class="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity flex-shrink-0">
-            <img
-              v-if="appLogo"
-              :src="appLogo"
-              :alt="appName"
-              class="h-8 w-8 rounded-lg object-cover"
-            />
-            <div
-              v-else
-              class="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center"
-            >
-              <Icon name="heroicons:photo" class="w-5 h-5 text-white" />
+            <div class="h-8 w-8 rounded-lg overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-800 shrink-0">
+              <img
+                v-if="appLogo && !headerLogoError"
+                :src="appLogo"
+                :alt="appName"
+                class="w-full h-full object-contain"
+                @error="headerLogoError = true"
+              />
+              <div
+                v-else
+                class="w-full h-full rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center"
+              >
+                <Icon name="heroicons:photo" class="w-5 h-5 text-white" />
+              </div>
             </div>
             <span class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white whitespace-nowrap">{{ appName }}</span>
           </NuxtLink>
@@ -51,6 +54,17 @@
             >
               <Icon name="heroicons:home" class="w-5 h-5 flex-shrink-0" />
               <span class="hidden sm:inline">首页</span>
+            </NuxtLink>
+
+            <!-- 容量 -->
+            <NuxtLink
+              to="/capacity"
+              class="nav-link nav-link-icon sm:nav-link-text"
+              :class="{ 'nav-link-active': route.path === '/capacity' }"
+              title="容量"
+            >
+              <Icon name="heroicons:circle-stack" class="w-5 h-5 flex-shrink-0" />
+              <span class="hidden sm:inline">容量</span>
             </NuxtLink>
 
             <!-- API -->
@@ -165,9 +179,10 @@ const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const toastStore = useToastStore()
 
-// 应用配置
-const appName = computed(() => settingsStore.appSettings.appName || 'EasyImg')
-const appLogo = computed(() => settingsStore.appSettings.appLogo || '/favicon.png')
+// 应用配置（与登录页一致：无配置时显示默认图标，不强制 fallback 到 favicon）
+const appName = computed(() => settingsStore.appSettings.appName || 'bsimgbed')
+const appLogo = computed(() => settingsStore.appSettings.appLogo || '')
+const headerLogoError = ref(false)
 const backgroundUrl = computed(() => settingsStore.appSettings.backgroundUrl || '')
 const backgroundBlur = computed(() => settingsStore.appSettings.backgroundBlur || 0)
 
@@ -199,9 +214,10 @@ function updateFavicon(url) {
   document.head.appendChild(link)
 }
 
-// 监听 appLogo 变化，立即更新 favicon
+// 监听 appLogo 变化，立即更新 favicon（无 Logo 时用默认 favicon）
 watch(appLogo, (newLogo) => {
-  updateFavicon(newLogo)
+  updateFavicon(newLogo || '/favicon.png')
+  headerLogoError.value = false
 }, { immediate: true })
 
 // 动态设置页面标题

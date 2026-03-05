@@ -1,17 +1,19 @@
 import sharp from 'sharp'
 import { v4 as uuidv4 } from 'uuid'
 import { join, extname } from 'path'
-import { existsSync, mkdirSync, unlinkSync } from 'fs'
+import { existsSync, mkdirSync } from 'fs'
 import { writeFile } from 'fs/promises'
+import { saveFile, deleteFile, getUploadsDirPath, getStorageDriver } from './storage.js'
 
-// 上传目录：生产环境使用 /app/uploads，开发环境使用项目根目录下的 uploads
-const uploadsDir = process.env.NODE_ENV === 'production'
-  ? '/app/uploads'
-  : join(process.cwd(), 'uploads')
+// 上传目录（仅在本地存储模式下使用）
+const uploadsDir = getUploadsDirPath()
+const STORAGE_DRIVER = getStorageDriver()
 
-// 确保 uploads 目录存在
-if (!existsSync(uploadsDir)) {
-  mkdirSync(uploadsDir, { recursive: true })
+// 仅在本地驱动下确保目录存在
+if (STORAGE_DRIVER === 'local') {
+  if (!existsSync(uploadsDir)) {
+    mkdirSync(uploadsDir, { recursive: true })
+  }
 }
 
 // 支持的图片格式
@@ -61,12 +63,10 @@ export async function processImage(buffer, options = {}) {
 }
 
 /**
- * 保存上传的文件到磁盘
+ * 保存上传的文件到存储（本地或 WebDAV）
  */
-export async function saveUploadedFile(buffer, filename) {
-  const filepath = join(uploadsDir, filename)
-  await writeFile(filepath, buffer)
-  return filepath
+export async function saveUploadedFile(buffer, filename, bucketId = null) {
+  return await saveFile(buffer, filename, bucketId)
 }
 
 /**
@@ -115,24 +115,23 @@ export async function convertToPNG(buffer, quality = 80) {
 }
 
 /**
- * 保存图片到磁盘
+ * 保存图片到存储（使用默认储存桶，返回 bucketId）
  */
 export async function saveImage(buffer, filename) {
-  const filepath = join(uploadsDir, filename)
-  await sharp(buffer).toFile(filepath)
-  return filepath
+  const outputBuffer = await sharp(buffer).toBuffer()
+  return await saveFile(outputBuffer, filename, null)
 }
 
 /**
- * 删除图片文件
+ * 删除图片文件（需传入 bucketId 与 fileSize 以正确扣减桶容量）
  */
-export function deleteImage(filename) {
-  const filepath = join(uploadsDir, filename)
-  if (existsSync(filepath)) {
-    unlinkSync(filepath)
-    return true
+export async function deleteImage(filename, bucketId, fileSize) {
+  try {
+    return await deleteFile(filename, bucketId, fileSize)
+  } catch (err) {
+    console.error('[Image] 删除存储文件失败:', filename, err?.message || err)
+    return false
   }
-  return false
 }
 
 /**

@@ -1,8 +1,8 @@
 import { verifyToken } from '../../utils/jwt'
 
 // GitHub package.json 的 URL
-const PROXY_URL = 'https://git.221022.xyz/https://raw.githubusercontent.com/chaos-zhu/easyimg/main/package.json'
-const DIRECT_URL = 'https://raw.githubusercontent.com/chaos-zhu/easyimg/main/package.json'
+const PROXY_URL = 'https://git.221022.xyz/https://raw.githubusercontent.com/chaos-zhu/bsimgbed/main/package.json'
+const DIRECT_URL = 'https://raw.githubusercontent.com/chaos-zhu/bsimgbed/main/package.json'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -76,7 +76,7 @@ async function fetchPackageJson(url) {
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'EasyImg-Version-Check'
+        'User-Agent': 'bsimgbed-Version-Check'
       },
       // 设置超时时间为 10 秒
       signal: AbortSignal.timeout(10000)

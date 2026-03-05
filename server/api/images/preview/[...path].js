@@ -1,7 +1,6 @@
-import { createReadStream, existsSync } from 'fs'
 import db from '../../../utils/db.js'
 import { verifyToken, extractToken } from '../../../utils/jwt.js'
-import { getImagePath } from '../../../utils/upload.js'
+import { fileExists, getFileStream } from '../../../utils/storage.js'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -67,11 +66,11 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 检查文件是否存在
-    const filePath = getImagePath(image.filename)
+    // 检查文件是否存在（支持本地与 WebDAV）
+    const exists = await fileExists(image.filename, image.bucketId)
 
-    if (!existsSync(filePath)) {
-      console.log('[Admin Preview] File does not exist:', filePath)
+    if (!exists) {
+      console.log('[Admin Preview] File does not exist:', image.filename)
       throw createError({
         statusCode: 404,
         message: '图片文件不存在'
@@ -101,7 +100,8 @@ export default defineEventHandler(async (event) => {
     setHeader(event, 'X-Content-Type-Options', 'nosniff')
 
     // 返回文件流
-    return sendStream(event, createReadStream(filePath))
+    const stream = await getFileStream(image.filename, image.bucketId)
+    return sendStream(event, stream)
   } catch (error) {
     if (error.statusCode) {
       throw error

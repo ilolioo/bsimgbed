@@ -47,6 +47,12 @@ const ipBlacklist = new Datastore({
   autoload: true
 })
 
+// 存储元信息表（用于第三方存储，如 Telegram）
+const storageMeta = new Datastore({
+  filename: join(dataDir, 'storage_meta.db'),
+  autoload: true
+})
+
 // Promise 化数据库操作
 const promisify = (db) => ({
   findOne: (query) => db.findOneAsync(query),
@@ -64,7 +70,27 @@ export const db = {
   apikeys: promisify(apikeys),
   settings: promisify(settings),
   moderationTasks: promisify(moderationTasks),
-  ipBlacklist: promisify(ipBlacklist)
+  ipBlacklist: promisify(ipBlacklist),
+  storageMeta: promisify(storageMeta)
 }
+
+// 支持 sort/skip/limit 的查询（用于分页，避免全量加载）
+function findWithOptions (rawStore, query, options = {}) {
+  const { sort = {}, skip = 0, limit } = options
+  return new Promise((resolve, reject) => {
+    let cursor = rawStore.find(query)
+    if (Object.keys(sort).length) cursor = cursor.sort(sort)
+    if (skip > 0) cursor = cursor.skip(skip)
+    if (limit != null && limit > 0) cursor = cursor.limit(limit)
+    cursor.exec((err, docs) => (err ? reject(err) : resolve(docs)))
+  })
+}
+
+db.images.findWithOptions = (query, options) => findWithOptions(images, query, options)
+
+// 为图片列表排序建立索引，加速分页查询
+images.ensureIndex({ fieldName: 'uploadedAt', unique: false }, (err) => {
+  if (err) console.error('[Database] images.uploadedAt 索引创建失败:', err)
+})
 
 export default db
