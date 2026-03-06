@@ -1,27 +1,18 @@
 <div align="center">
-本项目由阿里云ESA提供加速、计算和保护
-  <a href="https://github.com/chaos-zhu/bsimgbed">
-    <img src="https://img.alicdn.com/imgextra/i3/O1CN01H1UU3i1Cti9lYtFrs_!!6000000000139-2-tps-7534-844.png" alt="bsimgbed">
-  </a>
-</div>
-
----
-
-<div align="center">
 
 # bsimgbed
 
 _✨ 简单易用的个人图床系统，基于 Nuxt.js 构建 ✨_
 
-<a href="https://github.com/chaos-zhu/bsimgbed/releases/latest">
-  <img src="https://img.shields.io/github/v/release/chaos-zhu/bsimgbed?color=brightgreen" alt="release">
+<a href="https://github.com/ilolioo/bsimgbed/releases">
+  <img src="https://img.shields.io/github/v/release/ilolioo/bsimgbed?color=brightgreen" alt="release">
 </a>
 
-<a href="https://github.com/chaos-zhu/bsimgbed">
+<a href="https://github.com/ilolioo/bsimgbed">
   <img src="https://img.shields.io/badge/Apache-License2.0-green" alt="License">
 </a>
 
-<a href="https://github.com/chaos-zhu/bsimgbed">
+<a href="https://github.comilolioo/bsimgbed">
   <img src="https://img.shields.io/badge/bsimgbed-图床-blue" alt="bsimgbed">
 </a>
 
@@ -105,7 +96,7 @@ mkdir -p /root/bsimgbed && cd /root/bsimgbed
 
 
 # 2. 下载docker-compose.yml文件
-wget https://git.221022.xyz/https://raw.githubusercontent.com/chaos-zhu/bsimgbed/refs/heads/main/docker-compose.yml
+wget https://raw.githubusercontent.com/ilolioo/bsimgbed/refs/heads/main/docker-compose.yml
 
 # 使用 docker-compose
 docker compose up -d
@@ -212,16 +203,6 @@ volumes:
 ### Q: 支持哪些图片格式？
 
 默认支持：JPEG、JPG、PNG、GIF、WebP、AVIF、SVG、BMP、ICO、APNG、TIFF
-
-## 作者其他项目
-
-- [EasyNode](https://github.com/chaos-zhu/easynode) - 多功能 Linux & Windows 服务器 WEB 终端面板
-- [EasyNavTab](https://github.com/chaos-zhu/easynavtab) - 开源浏览器插件，自定义新标签页
-
-## 交流反馈
-
-- **Telegram 频道**：[https://t.me/easynode_notify](https://t.me/easynode_notify)
-- **GitHub Issues**：[提交问题](https://github.com/chaos-zhu/bsimgbed/issues)
 
 ## 开源协议
 
