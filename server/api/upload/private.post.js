@@ -1,7 +1,7 @@
 import db from '../../utils/db.js'
 import { getImageMetadata, saveUploadedFile } from '../../utils/image.js'
 import { parseFormData, processImageWithConfig } from '../../utils/upload.js'
-import { getBucketsConfig } from '../../utils/storage.js'
+import { getBucketsConfig, getUniqueStorageFilename } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
 import { sendUploadNotification } from '../../utils/notification.js'
 
@@ -140,8 +140,11 @@ export default defineEventHandler(async (event) => {
     // 获取图片元数据
     const metadata = await getImageMetadata(processedBuffer)
 
-    // 保存文件到所选储存桶
-    const filename = `${imageUuid}.${finalFormat}`
+    // 根据「自动重命名」配置决定存储文件名：开则用 UUID，关则用原始文件名（去重）
+    const autoRename = config.autoRename !== false
+    const filename = autoRename
+      ? `${imageUuid}.${finalFormat}`
+      : await getUniqueStorageFilename(bucketIdToUse, file.originalFilename, finalFormat)
     const bucketId = await saveUploadedFile(processedBuffer, filename, bucketIdToUse)
 
     // 获取用户信息（通过 ApiKey 关联）

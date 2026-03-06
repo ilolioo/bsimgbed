@@ -404,6 +404,30 @@ export async function fileExists(filename, bucketId) {
 }
 
 /**
+ * 根据用户文件名生成存储用唯一文件名（关闭自动重命名时使用）
+ * @param {string} bucketId - 储存桶 ID
+ * @param {string} originalFilename - 用户上传的原始文件名
+ * @param {string} finalFormat - 最终格式（如 webp）
+ * @returns {Promise<string>} 唯一且安全的存储文件名
+ */
+export async function getUniqueStorageFilename(bucketId, originalFilename, finalFormat) {
+  const base = (originalFilename || 'image')
+    .replace(/^.*[\\/]/, '') // 去掉路径
+    .replace(/\.[a-z0-9]+$/i, '') // 去掉原扩展名
+    .replace(/[^a-zA-Z0-9_\u4e00-\u9fa5-]/g, '_') // 只保留安全字符
+    .slice(0, 200) || 'image'
+  const ext = (finalFormat || 'png').toLowerCase()
+  const name = `${base}.${ext}`
+  let candidate = name
+  let n = 0
+  while (await fileExists(candidate, bucketId)) {
+    n += 1
+    candidate = `${base}_${n}.${ext}`
+  }
+  return candidate
+}
+
+/**
  * 读取文件为 Buffer（bucketId 为空时使用默认桶）
  */
 export async function getFileBuffer(filename, bucketId) {

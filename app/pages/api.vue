@@ -194,6 +194,25 @@
             </button>
           </div>
 
+          <!-- 自动重命名 -->
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">上传自动重命名</label>
+              <p class="text-xs text-gray-500 dark:text-gray-400">关闭后保留用户原始文件名（重名时自动加后缀）</p>
+            </div>
+            <button
+              type="button"
+              @click="publicConfig.autoRename = !publicConfig.autoRename"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+              :class="publicConfig.autoRename !== false ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                :class="publicConfig.autoRename !== false ? 'translate-x-6' : 'translate-x-1'"
+              />
+            </button>
+          </div>
+
           <div class="pt-4">
             <button type="submit" class="btn-primary" :disabled="saving">
               {{ saving ? '保存中...' : '保存配置' }}
@@ -598,6 +617,25 @@
               <span
                 class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
                 :class="privateConfig.showOnHomepage ? 'translate-x-6' : 'translate-x-1'"
+              />
+            </button>
+          </div>
+
+          <!-- 自动重命名 -->
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">上传自动重命名</label>
+              <p class="text-xs text-gray-500 dark:text-gray-400">关闭后保留用户原始文件名（重名时自动加后缀）</p>
+            </div>
+            <button
+              type="button"
+              @click="privateConfig.autoRename = !privateConfig.autoRename"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+              :class="privateConfig.autoRename !== false ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                :class="privateConfig.autoRename !== false ? 'translate-x-6' : 'translate-x-1'"
               />
             </button>
           </div>
@@ -1073,6 +1111,7 @@ const publicConfig = reactive({
   convertToPng: false,
   rateLimit: 10,
   allowConcurrent: false,
+  autoRename: true,
   contentSafety: { ...defaultContentSafetyConfig }
 })
 
@@ -1083,7 +1122,8 @@ const privateConfig = reactive({
   compressionQuality: 80,
   convertToWebp: false,
   convertToPng: false,
-  showOnHomepage: false
+  showOnHomepage: false,
+  autoRename: true
 })
 
 // ApiKey 列表
@@ -1228,6 +1268,7 @@ async function savePublicConfig() {
       convertToPng: publicConfig.convertToPng,
       rateLimit: publicConfig.rateLimit,
       allowConcurrent: publicConfig.allowConcurrent,
+      autoRename: publicConfig.autoRename !== false,
       contentSafety: publicConfig.contentSafety
     })
 
@@ -1253,7 +1294,8 @@ async function savePrivateConfig() {
       compressionQuality: privateConfig.compressionQuality,
       convertToWebp: privateConfig.convertToWebp,
       convertToPng: privateConfig.convertToPng,
-      showOnHomepage: privateConfig.showOnHomepage
+      showOnHomepage: privateConfig.showOnHomepage,
+      autoRename: privateConfig.autoRename !== false
     })
 
     if (result.success) {

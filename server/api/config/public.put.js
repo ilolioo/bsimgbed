@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
       convertToPng,
       rateLimit,
       allowConcurrent,
+      autoRename,
       contentSafety
     } = body
 
@@ -77,6 +78,7 @@ export default defineEventHandler(async (event) => {
       convertToPng: finalConvertToPng,
       rateLimit: rateLimit || 10,
       allowConcurrent: allowConcurrent || false,
+      autoRename: autoRename !== undefined ? autoRename : true,
       contentSafety: contentSafetyConfig
     }
 

@@ -30,7 +30,8 @@ export default defineEventHandler(async (event) => {
       compressionQuality,
       convertToWebp,
       convertToPng,
-      showOnHomepage
+      showOnHomepage,
+      autoRename
     } = body
 
     // 构建更新对象（convertToWebp 和 convertToPng 互斥）
@@ -43,7 +44,8 @@ export default defineEventHandler(async (event) => {
       compressionQuality: compressionQuality || 80,
       convertToWebp: finalConvertToWebp,
       convertToPng: finalConvertToPng,
-      showOnHomepage: showOnHomepage === true
+      showOnHomepage: showOnHomepage === true,
+      autoRename: autoRename !== undefined ? autoRename : true
     }
 
     // 更新配置

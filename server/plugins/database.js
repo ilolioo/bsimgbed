@@ -90,7 +90,8 @@ async function initPublicApiConfig() {
         compressToWebp: true,                   // 是否压缩转换为 WebP
         webpQuality: 80,                        // WebP 压缩质量 (100 - 20% = 80)
         rateLimit: 10,                          // 每分钟请求限制
-        allowConcurrent: false,                 // 是否允许并发上传
+        allowConcurrent: false,                  // 是否允许并发上传
+        autoRename: true,                       // 上传是否自动重命名（关则保留原始文件名）
         // 内容安全配置（从 moderation.js 获取默认配置）
         contentSafety: getDefaultContentSafetyConfig()
       },
@@ -112,7 +113,8 @@ async function initPrivateApiConfig() {
         maxFileSize: 100 * 1024 * 1024,         // 最大文件大小 100MB
         convertToWebp: false,                   // 是否转换为 WebP
         rateLimit: 100,                         // 每分钟请求限制
-        maxConcurrent: 5                        // 最大并发数
+        maxConcurrent: 5,                        // 最大并发数
+        autoRename: true                        // 上传是否自动重命名（关则保留原始文件名）
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()

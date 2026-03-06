@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
       convertToPng: false,
       rateLimit: 10,
       allowConcurrent: false,
+      autoRename: true,
       contentSafety: getDefaultContentSafetyConfig()
     }
 
