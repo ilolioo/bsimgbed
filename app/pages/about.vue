@@ -15,7 +15,7 @@
       </div>
 
       <!-- 版本信息（仅登录后显示） -->
-      <!-- <div v-if="authStore.isAuthenticated" class="card p-6">
+      <div v-if="authStore.isAuthenticated" class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Icon name="heroicons:information-circle" class="w-5 h-5 text-primary-500" />
           版本信息
@@ -83,7 +83,7 @@
             </button>
           </div>
         </div>
-      </div> -->
+      </div>
 
       <!-- 项目信息 -->
       <div class="card p-6">
@@ -132,36 +132,36 @@ const versionInfo = reactive({
 const loading = ref(false)
 
 // 检查版本更新
-// async function checkVersion() {
-//   if (!authStore.isAuthenticated) return
+async function checkVersion() {
+  if (!authStore.isAuthenticated) return
 
-//   loading.value = true
-//   versionInfo.error = null
+  loading.value = true
+  versionInfo.error = null
 
-//   try {
-//     const response = await $fetch('/api/version/check', {
-//       headers: authStore.authHeader
-//     })
+  try {
+    const response = await $fetch('/api/version/check', {
+      headers: authStore.authHeader
+    })
 
-//     if (response.success) {
-//       versionInfo.currentVersion = response.data.currentVersion
-//       versionInfo.latestVersion = response.data.latestVersion
-//       versionInfo.hasUpdate = response.data.hasUpdate
-//       versionInfo.error = response.data.error
-//     } else {
-//       versionInfo.error = response.message || '检测失败'
-//     }
-//   } catch (error) {
-//     versionInfo.error = '网络请求失败'
-//   } finally {
-//     loading.value = false
-//   }
-// }
+    if (response.success) {
+      versionInfo.currentVersion = response.data.currentVersion
+      versionInfo.latestVersion = response.data.latestVersion
+      versionInfo.hasUpdate = response.data.hasUpdate
+      versionInfo.error = response.data.error
+    } else {
+      versionInfo.error = response.message || '检测失败'
+    }
+  } catch (error) {
+    versionInfo.error = '网络请求失败'
+  } finally {
+    loading.value = false
+  }
+}
 
 // 页面加载时自动检测版本（仅登录后）
 onMounted(() => {
-  // if (authStore.isAuthenticated) {
-  //   checkVersion()
-  // }
+  if (authStore.isAuthenticated) {
+    checkVersion()
+  }
 })
 </script>

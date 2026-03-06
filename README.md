@@ -12,7 +12,7 @@ _✨ 简单易用的个人图床系统，基于 Nuxt.js 构建 ✨_
   <img src="https://img.shields.io/badge/Apache-License2.0-green" alt="License">
 </a>
 
-<a href="https://github.comilolioo/bsimgbed">
+<a href="https://github.com/ilolioo/bsimgbed">
   <img src="https://img.shields.io/badge/bsimgbed-图床-blue" alt="bsimgbed">
 </a>
 
@@ -105,7 +105,7 @@ docker compose up -d
 ### Docker run部署
 
 ```bash
-docker run -d --name bsimgbed -p 3000:3000 -v ./db:/app/db -v ./uploads:/app/uploads ghcr.io/chaos-zhu/bsimgbed:latest
+docker run -d --name bsimgbed -p 3000:3000 -v ./db:/app/db -v ./uploads:/app/uploads ghcr.io/ilolioo/bsimgbed:latest
 ```
 
 

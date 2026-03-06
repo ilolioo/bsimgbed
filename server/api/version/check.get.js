@@ -1,8 +1,8 @@
 import { verifyToken } from '../../utils/jwt'
 
 // GitHub package.json 的 URL
-const PROXY_URL = 'https://git.221022.xyz/https://raw.githubusercontent.com/chaos-zhu/bsimgbed/main/package.json'
-const DIRECT_URL = 'https://raw.githubusercontent.com/chaos-zhu/bsimgbed/main/package.json'
+const PROXY_URL = 'https://raw.githubusercontent.com/ilolioo/bsimgbed/main/package.json'
+const DIRECT_URL = 'https://raw.githubusercontent.com/ilolioo/bsimgbed/main/package.json'
 
 export default defineEventHandler(async (event) => {
   try {
