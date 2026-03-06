@@ -161,6 +161,17 @@
             </button>
           </div>
 
+          <!-- 下载图片 -->
+          <div class="border-t border-gray-200 dark:border-gray-700 py-1">
+            <button
+              @click="handleDownloadFromMenu"
+              class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+            >
+              <Icon name="heroicons:arrow-down-tray" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              下载图片
+            </button>
+          </div>
+
           <!-- 分隔线 -->
           <div v-if="authStore.isAuthenticated" class="border-t border-gray-200 dark:border-gray-700"></div>
 
@@ -381,7 +392,7 @@ async function handleBatchDelete() {
 function handleImageContextMenu(event, image) {
   // 计算菜单位置，确保不超出视口
   const menuWidth = 160
-  const menuHeight = authStore.isAuthenticated ? 280 : 200
+  const menuHeight = authStore.isAuthenticated ? 324 : 244
 
   let x = event.clientX
   let y = event.clientY
@@ -453,6 +464,34 @@ function handleDeleteFromMenu() {
     confirmDelete(contextMenuImage.value)
   }
   hideContextMenu()
+}
+
+// 从菜单下载图片
+async function handleDownloadFromMenu() {
+  if (!contextMenuImage.value) {
+    hideContextMenu()
+    return
+  }
+  const fullUrl = window.location.origin + contextMenuImage.value.url
+  const filename = contextMenuImage.value.originalName || contextMenuImage.value.filename || `image.${contextMenuImage.value.format || 'png'}`
+  hideContextMenu()
+  try {
+    const res = await fetch(fullUrl)
+    if (!res.ok) throw new Error('下载失败')
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    toastStore.success('图片已开始下载')
+  } catch (e) {
+    toastStore.error('下载失败，请稍后重试')
+  }
 }
 
 // 复制链接

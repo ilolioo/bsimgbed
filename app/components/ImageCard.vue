@@ -45,17 +45,21 @@
       </div>
     </div>
 
-    <!-- 图片 -->
+    <!-- 图片：禁用系统长按菜单，使用应用内操作菜单 -->
     <div
-      class="relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden"
+      class="image-touch-area relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden"
       :style="{ paddingBottom: aspectRatioPadding }"
       @click="handleImageClick"
+      @contextmenu.prevent="handleContextMenu"
+      @touchstart="onTouchStart"
+      @touchend="onTouchEnd"
+      @touchcancel="onTouchCancel"
     >
       <!-- 图片元素 - 使用 CSS 过渡实现淡入 -->
       <img
         :src="image.url"
         :alt="image.filename"
-        class="absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out group-hover:scale-105"
+        class="img-no-callout absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out group-hover:scale-105"
         :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
         loading="lazy"
         @load="onImageLoad"
@@ -185,13 +189,48 @@ function onImageError() {
   imageError.value = true
 }
 
-// 处理右键菜单 - 触发事件让父组件处理
+// 处理右键/长按菜单 - 触发事件让父组件处理
 function handleContextMenu(event) {
   emit('contextmenu', event, props.image)
 }
 
-// 处理图片点击
+// 手机端长按：禁用系统菜单并弹出应用内菜单
+const longPressTimer = ref(null)
+const touchStartPos = ref({ x: 0, y: 0 })
+const longPressHandled = ref(false)
+
+function onTouchStart(e) {
+  if (e.touches.length === 0) return
+  longPressHandled.value = false
+  const t = e.touches[0]
+  touchStartPos.value = { x: t.clientX, y: t.clientY }
+  longPressTimer.value = window.setTimeout(() => {
+    longPressTimer.value = null
+    longPressHandled.value = true
+    handleContextMenu({ clientX: touchStartPos.value.x, clientY: touchStartPos.value.y })
+  }, 400)
+}
+
+function onTouchEnd() {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+}
+
+function onTouchCancel() {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+}
+
+// 处理图片点击（长按弹出菜单后不触发展开查看器）
 function handleImageClick() {
+  if (longPressHandled.value) {
+    longPressHandled.value = false
+    return
+  }
   // 如果有选中的图片且当前可选择，则切换选中状态而不是打开查看器
   if (props.selectable && imagesStore.hasSelection) {
     emit('select')
@@ -202,6 +241,14 @@ function handleImageClick() {
 </script>
 
 <style scoped>
+/* 禁用手机端长按图片时的系统菜单（保存图片等），改用应用内操作菜单 */
+.image-touch-area,
+.img-no-callout {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.15s ease;

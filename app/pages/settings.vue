@@ -64,6 +64,34 @@
             </div>
           </div>
 
+          <!-- Favicon -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Favicon URL
+            </label>
+            <input
+              v-model="appSettings.appFavicon"
+              type="text"
+              class="input"
+              placeholder="留空则与 Logo 一致"
+            />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              浏览器标签页图标，留空则使用应用 Logo，均未设置时使用默认图标
+            </p>
+
+            <!-- Favicon 预览 -->
+            <div v-if="appSettings.appFavicon" class="mt-3 flex items-center gap-3">
+              <span class="text-sm text-gray-600 dark:text-gray-400">预览：</span>
+              <img
+                :src="appSettings.appFavicon"
+                alt="Favicon 预览"
+                class="h-6 w-6 rounded object-cover"
+                @error="faviconError = true"
+              />
+              <span v-if="faviconError" class="text-sm text-red-500 dark:text-red-400">图片加载失败</span>
+            </div>
+          </div>
+
           <!-- 全局背景图片 -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -481,11 +509,13 @@ const activeTab = ref('app')
 const appSettings = reactive({
   appName: 'bsimgbed',
   appLogo: '',
+  appFavicon: '',
   backgroundUrl: '',
   backgroundBlur: 0,
   siteUrl: ''
 })
 const logoError = ref(false)
+const faviconError = ref(false)
 const backgroundError = ref(false)
 const savingApp = ref(false)
 
@@ -552,12 +582,14 @@ const savingPassword = ref(false)
 async function saveAppSettings() {
   savingApp.value = true
   logoError.value = false
+  faviconError.value = false
   backgroundError.value = false
 
   try {
     const result = await settingsStore.saveAppSettings({
       appName: appSettings.appName,
       appLogo: appSettings.appLogo,
+      appFavicon: appSettings.appFavicon,
       backgroundUrl: appSettings.backgroundUrl,
       backgroundBlur: appSettings.backgroundBlur,
       siteUrl: appSettings.siteUrl,
@@ -741,6 +773,7 @@ onMounted(async () => {
   // 同步到本地状态
   appSettings.appName = settingsStore.appSettings.appName || 'bsimgbed'
   appSettings.appLogo = settingsStore.appSettings.appLogo || ''
+  appSettings.appFavicon = settingsStore.appSettings.appFavicon || ''
   appSettings.backgroundUrl = settingsStore.appSettings.backgroundUrl || ''
   appSettings.backgroundBlur = settingsStore.appSettings.backgroundBlur || 0
   appSettings.siteUrl = settingsStore.appSettings.siteUrl || ''

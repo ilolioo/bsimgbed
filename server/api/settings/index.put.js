@@ -25,6 +25,7 @@ export default defineEventHandler(async (event) => {
     const currentValue = currentSettings?.value || {
       appName: 'bsimgbed',
       appLogo: '',
+      appFavicon: '',
       backgroundUrl: '',
       backgroundBlur: 0,
       siteUrl: '',
@@ -49,6 +50,11 @@ export default defineEventHandler(async (event) => {
     // 更新 appLogo（如果传递了）
     if (body.appLogo !== undefined) {
       updatedValue.appLogo = body.appLogo || ''
+    }
+
+    // 更新 appFavicon（如果传递了）
+    if (body.appFavicon !== undefined) {
+      updatedValue.appFavicon = body.appFavicon || ''
     }
 
     // 更新 backgroundUrl（如果传递了）
