@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 昼夜主题与移动端：根元素声明 color-scheme，便于手机端浏览器状态栏、表单控件等自适应 */
+:root {
+  color-scheme: light dark;
+}
+
 /* 基础样式 */
 body {
   @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;

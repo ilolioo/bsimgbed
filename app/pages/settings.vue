@@ -60,7 +60,7 @@
                 class="h-8 w-8 rounded-lg object-cover"
                 @error="logoError = true"
               />
-              <span v-if="logoError" class="text-sm text-red-500">图片加载失败</span>
+              <span v-if="logoError" class="text-sm text-red-500 dark:text-red-400">图片加载失败</span>
             </div>
           </div>
 
@@ -95,7 +95,7 @@
                   :style="{ backdropFilter: `blur(${appSettings.backgroundBlur}px)` }"
                 ></div>
               </div>
-              <span v-if="backgroundError" class="text-sm text-red-500">图片加载失败</span>
+              <span v-if="backgroundError" class="text-sm text-red-500 dark:text-red-400">图片加载失败</span>
             </div>
           </div>
 

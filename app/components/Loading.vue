@@ -51,9 +51,9 @@ const sizeClass = computed(() => {
 
 const colorClass = computed(() => {
   const colors = {
-    primary: 'text-primary-600',
+    primary: 'text-primary-600 dark:text-primary-400',
     white: 'text-white',
-    gray: 'text-gray-500'
+    gray: 'text-gray-500 dark:text-gray-400'
   }
   return colors[props.color] || colors.primary
 })

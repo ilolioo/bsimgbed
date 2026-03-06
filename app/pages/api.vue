@@ -292,11 +292,11 @@
           <div v-if="publicConfig.contentSafety.provider === 'nsfw_detector'" class="space-y-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div class="flex items-center gap-2 mb-2">
               <Icon name="heroicons:server" class="w-4 h-4 text-blue-500 dark:text-blue-400" />
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">自建服务配置 <a href="https://github.com/chaos-zhu/nsfw_detector" class="text-blue-500" target="_blank">开源地址</a></span>
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">自建服务配置 <a href="https://github.com/chaos-zhu/nsfw_detector" class="text-blue-500 dark:text-blue-400 hover:underline" target="_blank">开源地址</a></span>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                API 地址 <span class="text-red-500">*</span>
+                API 地址 <span class="text-red-500 dark:text-red-400">*</span>
               </label>
               <input
                 type="text"
