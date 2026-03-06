@@ -7,7 +7,7 @@
       <div class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Icon name="heroicons:photo" class="w-5 h-5 text-primary-500" />
-          bsimgbed
+          关于项目
         </h2>
         <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
           bsimgbed 是一个简单易用的个人图床应用，支持本地磁盘、WebDAV、Telegram 等多种存储方式，可自由切换无需重启。提供公共/私有 API、API Key 管理、内容安全与通知等能力，适合自建图床与图片管理。
@@ -58,7 +58,7 @@
               v{{ versionInfo.latestVersion }}
             </span>
             <a
-              href="https://github.com/chaos-zhu/bsimgbed/releases"
+              href="https://github.com/ilolioo/bsimgbed/releases"
               target="_blank"
               rel="noopener noreferrer"
               class="text-primary-600 dark:text-primary-400 hover:underline text-sm flex items-center gap-1"
@@ -96,12 +96,12 @@
             <Icon name="simple-icons:github" class="w-5 h-5 text-gray-800 dark:text-gray-200" />
             <span class="text-gray-700 dark:text-gray-300">项目地址:</span>
             <a
-              href="https://github.com/chaos-zhu/bsimgbed"
+              href="https://github.com/ilolioo/bsimgbed"
               target="_blank"
               rel="noopener noreferrer"
               class="text-primary-600 dark:text-primary-400 hover:underline"
             >
-              https://github.com/chaos-zhu/bsimgbed
+              https://github.com/ilolioo/bsimgbed
             </a>
           </div>
         </div>
