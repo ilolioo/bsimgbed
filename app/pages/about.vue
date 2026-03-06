@@ -6,7 +6,7 @@
       <!-- 项目简介 -->
       <div class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Icon name="heroicons:photo" class="w-5 h-5 text-primary-500" />
+          <Icon name="heroicons:photo" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
           关于项目
         </h2>
         <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -17,7 +17,7 @@
       <!-- 项目信息 -->
       <div class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Icon name="heroicons:link" class="w-5 h-5 text-primary-500" />
+          <Icon name="heroicons:link" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
           项目信息
         </h2>
         <div class="space-y-4">

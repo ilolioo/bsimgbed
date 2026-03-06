@@ -357,7 +357,7 @@
                   <!-- WebDAV 配置 -->
                   <div v-if="b.driver === 'webdav'" class="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                     <p class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                      <Icon name="heroicons:cloud-arrow-up" class="w-4 h-4 text-blue-500" />
+                      <Icon name="heroicons:cloud-arrow-up" class="w-4 h-4 text-blue-500 dark:text-blue-400" />
                       WebDAV 配置
                     </p>
                     <div class="space-y-2">
@@ -371,7 +371,7 @@
                   <!-- Telegram 配置 -->
                   <div v-if="b.driver === 'telegram'" class="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                     <p class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                      <Icon name="heroicons:paper-airplane" class="w-4 h-4 text-sky-500" />
+                      <Icon name="heroicons:paper-airplane" class="w-4 h-4 text-sky-500 dark:text-sky-400" />
                       Telegram 配置
                     </p>
                     <div class="space-y-2">

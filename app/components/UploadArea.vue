@@ -168,22 +168,22 @@
                 <Icon
                   v-if="item.status === 'pending'"
                   name="heroicons:clock"
-                  class="w-4 h-4 text-gray-400"
+                  class="w-4 h-4 text-gray-400 dark:text-gray-500"
                 />
                 <Icon
                   v-else-if="item.status === 'downloading'"
                   name="heroicons:arrow-down-tray"
-                  class="w-4 h-4 text-blue-500 animate-bounce"
+                  class="w-4 h-4 text-blue-500 dark:text-blue-400 animate-bounce"
                 />
                 <Icon
                   v-else-if="item.status === 'success'"
                   name="heroicons:check-circle"
-                  class="w-4 h-4 text-green-500"
+                  class="w-4 h-4 text-green-500 dark:text-green-400"
                 />
                 <Icon
                   v-else-if="item.status === 'error'"
                   name="heroicons:x-circle"
-                  class="w-4 h-4 text-red-500"
+                  class="w-4 h-4 text-red-500 dark:text-red-400"
                 />
               </div>
 
@@ -192,13 +192,13 @@
                 <p class="truncate text-gray-700 dark:text-gray-300" :title="item.url">
                   {{ item.url }}
                 </p>
-                <p v-if="item.error" class="text-xs text-red-500 truncate" :title="item.error">
+                <p v-if="item.error" class="text-xs text-red-500 dark:text-red-400 truncate" :title="item.error">
                   {{ item.error }}
                 </p>
               </div>
 
               <!-- 序号 -->
-              <span class="flex-shrink-0 text-xs text-gray-400">
+              <span class="flex-shrink-0 text-xs text-gray-400 dark:text-gray-500">
                 #{{ index + 1 }}
               </span>
             </div>

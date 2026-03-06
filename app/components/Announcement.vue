@@ -21,7 +21,7 @@
               @click="close"
               class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             >
-              <Icon name="heroicons:x-mark" class="w-5 h-5" />
+              <Icon name="heroicons:x-mark" class="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
@@ -66,7 +66,7 @@
           class="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-400/30 dark:hover:bg-gray-500/30 rounded-lg transition-colors text-gray-700 dark:text-gray-200"
           title="关闭公告"
         >
-          <Icon name="heroicons:x-mark" class="w-5 h-5" />
+          <Icon name="heroicons:x-mark" class="w-5 h-5 text-gray-700 dark:text-gray-200" />
         </button>
       </div>
     </div>

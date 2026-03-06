@@ -77,7 +77,7 @@
       <!-- 内容安全 -->
       <div class="card p-6">
         <div class="flex items-center gap-2 mb-4">
-          <Icon name="heroicons:shield-exclamation" class="w-6 h-6 text-orange-500" />
+          <Icon name="heroicons:shield-exclamation" class="w-6 h-6 text-orange-500 dark:text-orange-400" />
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">内容安全</h2>
         </div>
 
@@ -134,7 +134,7 @@
               <p>加载中...</p>
             </div>
             <div v-else-if="nsfwImages.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
-              <Icon name="heroicons:check-circle" class="h-12 w-12 mx-auto mb-2 text-green-500" />
+              <Icon name="heroicons:check-circle" class="h-12 w-12 mx-auto mb-2 text-green-500 dark:text-green-400" />
               <p>暂无违规图片</p>
             </div>
             <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -156,7 +156,7 @@
                       <span>{{ formatFileSize(image.size) }}</span>
                       <span>{{ image.width }}x{{ image.height }}</span>
                       <span>{{ formatDate(image.uploadedAt) }}</span>
-                      <span v-if="image.moderationScore" class="text-red-500">
+                      <span v-if="image.moderationScore" class="text-red-500 dark:text-red-400">
                         风险分数: {{ (image.moderationScore * 100).toFixed(1) }}%
                       </span>
                     </div>
@@ -242,7 +242,7 @@
         <!-- 警告提示 -->
         <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
           <p class="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
-            <Icon name="heroicons:exclamation-triangle" class="w-5 h-5" />
+            <Icon name="heroicons:exclamation-triangle" class="w-5 h-5 text-red-600 dark:text-red-400" />
             <span>此图片被标记为违规内容</span>
           </p>
         </div>
