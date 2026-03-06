@@ -59,8 +59,8 @@ export default defineEventHandler(async (event) => {
       acquirePublicConcurrency(clientIP)
     }
 
-    // 解析表单数据（含可选 bucketId）
-    const { file, bucketId: requestedBucketId } = await parseFormData(event)
+    // 解析表单数据（含可选 bucketId、showOnHomepage）
+    const { file, bucketId: requestedBucketId, showOnHomepage } = await parseFormData(event)
 
     if (!file) {
       releasePublicConcurrency(clientIP)
@@ -120,7 +120,7 @@ export default defineEventHandler(async (event) => {
     // 判断是否启用内容安全检测
     const contentSafetyEnabled = config.contentSafety?.enabled || false
 
-    // 保存到数据库
+    // 保存到数据库（showOnHomepage：游客上传的图片是否在主页展示，默认 true）
     const imageDoc = {
       _id: uuidv4(),
       uuid: imageUuid,
@@ -138,6 +138,7 @@ export default defineEventHandler(async (event) => {
       ip: clientIP,
       uploadedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      showOnHomepage: showOnHomepage !== false,
       // 内容审核相关字段
       // 如果未启用内容安全检测，状态直接设为 skipped
       moderationStatus: contentSafetyEnabled ? 'pending' : 'skipped',
@@ -195,7 +196,7 @@ export default defineEventHandler(async (event) => {
       console.error('[Upload] 发送上传通知失败:', err)
     })
 
-    // 返回结果（不包含敏感信息）
+    // 返回结果（不包含敏感信息）；与列表接口字段一致，便于前端直接加入展示区（未勾选展示在主页时仅靠本地状态可见）
     return {
       success: true,
       message: '上传成功',
@@ -203,11 +204,13 @@ export default defineEventHandler(async (event) => {
         id: imageDoc._id,
         uuid: imageUuid,
         filename: filename,
+        originalName: file.originalFilename,
         format: finalFormat,
         size: processedBuffer.length,
         width: metadata.width || 0,
         height: metadata.height || 0,
         url: `/i/${imageUuid}.${finalFormat}`,
+        uploadedBy: '访客',
         uploadedAt: imageDoc.uploadedAt
       }
     }
