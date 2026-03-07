@@ -991,7 +991,6 @@ import { useSettingsStore } from '~/stores/settings'
 import { useToastStore } from '~/stores/toast'
 import { copyToClipboard } from '../utils/clipboard'
 
-// 使用认证中间件
 definePageMeta({
   middleware: 'auth'
 })

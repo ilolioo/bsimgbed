@@ -6,8 +6,7 @@ export default defineEventHandler(async (event) => {
     await authMiddleware(event)
     const user = event.context.user
 
-    const isAdmin = user.role === 'admin'
-    const query = isAdmin ? {} : { userId: user.userId }
+    const query = { userId: user.userId }
     const apiKeys = await db.apikeys.find(query)
 
     apiKeys.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
