@@ -35,10 +35,15 @@ export default defineEventHandler(async (event) => {
         ]
       }
     } else {
+      // 游客：公开上传的图 + 登录用户设为「对所有人可见」的图（展示在首页）
       queryCondition = {
         isDeleted: false,
-        uploadedByType: 'public',
-        isNsfw: { $ne: true }
+        isNsfw: { $ne: true },
+        $or: [
+          { uploadedByType: 'public' },
+          { showOnHomepage: true },
+          { showOnHomepage: { $exists: false } }
+        ]
       }
     }
 
