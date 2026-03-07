@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
     requireAdmin(event)
 
     const body = await readBody(event)
-    const { username, password } = body || {}
+    const { username, password, email } = body || {}
 
     if (!username || !String(username).trim()) {
       throw createError({
@@ -32,10 +32,22 @@ export default defineEventHandler(async (event) => {
     }
 
     const name = String(username).trim()
-    if (name.length < 3) {
+    if (name.length < 4) {
       throw createError({
         statusCode: 400,
-        message: '用户名长度至少 3 位'
+        message: '用户名至少 4 位'
+      })
+    }
+    if (/^\d+$/.test(name)) {
+      throw createError({
+        statusCode: 400,
+        message: '用户名不能为纯数字'
+      })
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+      throw createError({
+        statusCode: 400,
+        message: '用户名仅支持英文、数字、下划线'
       })
     }
 
@@ -48,6 +60,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const hashedPassword = await bcrypt.hash(String(password), 10)
+    const now = new Date().toISOString()
     const newUser = {
       _id: uuidv4(),
       username: name,
@@ -55,8 +68,18 @@ export default defineEventHandler(async (event) => {
       passwordChanged: false,
       role: 'user',
       disabled: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: now,
+      updatedAt: now
+    }
+    if (email != null && String(email).trim()) {
+      const emailStr = String(email).trim().toLowerCase()
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr)) {
+        const existingEmail = await db.users.findOne({ email: emailStr })
+        if (!existingEmail) {
+          newUser.email = emailStr
+          newUser.emailVerified = true
+        }
+      }
     }
     await db.users.insert(newUser)
 

@@ -32,10 +32,22 @@ export default defineEventHandler(async (event) => {
 
     if (body.username !== undefined) {
       const name = String(body.username).trim()
-      if (name.length < 3) {
+      if (name.length < 4) {
         throw createError({
           statusCode: 400,
-          message: '用户名长度至少 3 位'
+          message: '用户名至少 4 位'
+        })
+      }
+      if (/^\d+$/.test(name)) {
+        throw createError({
+          statusCode: 400,
+          message: '用户名不能为纯数字'
+        })
+      }
+      if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+        throw createError({
+          statusCode: 400,
+          message: '用户名仅支持英文、数字、下划线'
         })
       }
       if (name !== target.username) {

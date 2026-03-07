@@ -452,29 +452,19 @@
     <div v-show="activeTab === 'users'" class="space-y-6">
       <div class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">用户管理</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">创建新用户、编辑角色与状态。新用户角色为普通用户，仅能管理自己的图片与 API Key。</p>
-        <form @submit.prevent="createUser" class="flex flex-wrap gap-3 items-end mb-4">
-          <input
-            v-model="newUserForm.username"
-            type="text"
-            class="input w-40"
-            placeholder="用户名（至少3位）"
-          />
-          <input
-            v-model="newUserForm.password"
-            type="password"
-            class="input w-40"
-            placeholder="请输入密码"
-          />
-          <button type="submit" class="btn-primary" :disabled="creatingUser">
-            {{ creatingUser ? '创建中...' : '创建用户' }}
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">创建新用户、编辑角色与状态。用户名至少 4 位，仅支持英文、数字、下划线；新用户角色为普通用户。</p>
+        <div class="mb-4">
+          <button type="button" class="btn-primary inline-flex items-center gap-2" @click="showCreateUserModal = true">
+            <Icon name="heroicons:user-plus" class="w-4 h-4" />
+            创建用户
           </button>
-        </form>
+        </div>
         <div v-if="userList.length" class="overflow-x-auto">
           <table class="w-full text-sm text-left text-gray-700 dark:text-gray-300">
             <thead>
               <tr class="border-b border-gray-200 dark:border-gray-600">
                 <th class="py-2 pr-4">用户名</th>
+                <th class="py-2 pr-4">邮箱</th>
                 <th class="py-2 pr-4">角色</th>
                 <th class="py-2 pr-4">状态</th>
                 <th class="py-2">操作</th>
@@ -487,6 +477,7 @@
                 class="border-b border-gray-100 dark:border-gray-700"
               >
                 <td class="py-2 pr-4 font-medium">{{ u.username }}</td>
+                <td class="py-2 pr-4 text-gray-600 dark:text-gray-400">{{ u.email || '—' }}</td>
                 <td class="py-2 pr-4">{{ u.role === 'admin' ? '管理员' : '普通用户' }}</td>
                 <td class="py-2 pr-4">
                   <span v-if="u.disabled" class="text-amber-600 dark:text-amber-400">已禁用</span>
@@ -521,6 +512,54 @@
             </tbody>
           </table>
         </div>
+        <!-- 创建用户弹窗 -->
+        <div
+          v-if="showCreateUserModal"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          @click.self="closeCreateUserModal"
+        >
+          <div class="card p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">创建用户</h3>
+            <form @submit.prevent="createUser" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">用户名</label>
+                <input
+                  v-model="newUserForm.username"
+                  type="text"
+                  class="input w-full"
+                  placeholder="请输入用户名"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">至少4位，不能为纯数字，仅英文/数字/下划线</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">密码</label>
+                <input
+                  v-model="newUserForm.password"
+                  type="password"
+                  class="input w-full"
+                  placeholder="请输入密码"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">邮箱（选填）</label>
+                <input
+                  v-model="newUserForm.email"
+                  type="email"
+                  class="input w-full"
+                  placeholder="选填，可用于登录"
+                />
+              </div>
+              <div class="flex gap-2 pt-2">
+                <button type="submit" class="btn-primary" :disabled="creatingUser">
+                  {{ creatingUser ? '创建中...' : '创建' }}
+                </button>
+                <button type="button" class="btn-secondary" @click="closeCreateUserModal">
+                  取消
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
         <!-- 编辑用户弹层 -->
         <div
           v-if="editingUser"
@@ -536,8 +575,9 @@
                   v-model="editForm.username"
                   type="text"
                   class="input w-full"
-                  placeholder="至少3位"
+                  placeholder="请输入用户名（至少4位）"
                 />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">仅支持英文、数字、下划线</p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">角色</label>
@@ -592,12 +632,13 @@
                 v-model="newUsername"
                 type="text"
                 class="input flex-1"
-                placeholder="新用户名"
+                placeholder="请输入新用户名（至少4位）"
               />
               <button type="submit" class="btn-secondary" :disabled="savingUsername">
                 {{ savingUsername ? '保存中...' : '修改' }}
               </button>
             </form>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">仅支持英文、数字、下划线，不能为纯数字</p>
           </div>
 
           <!-- 修改密码 -->
@@ -658,7 +699,8 @@ const tabs = [
 ]
 // 用户管理（仅管理员）
 const userList = ref([])
-const newUserForm = reactive({ username: '', password: '' })
+const showCreateUserModal = ref(false)
+const newUserForm = reactive({ username: '', password: '', email: '' })
 const creatingUser = ref(false)
 const editingUser = ref(null)
 const editForm = reactive({ username: '', role: 'user', disabled: false, newPassword: '' })
@@ -879,8 +921,21 @@ async function saveStorageConfig() {
 
 // 修改用户名
 async function updateUsername() {
-  if (!newUsername.value.trim()) {
+  const name = newUsername.value.trim()
+  if (!name) {
     toastStore.error('请输入新用户名')
+    return
+  }
+  if (name.length < 4) {
+    toastStore.error('用户名至少 4 位')
+    return
+  }
+  if (/^\d+$/.test(name)) {
+    toastStore.error('用户名不能为纯数字')
+    return
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+    toastStore.error('用户名仅支持英文、数字、下划线')
     return
   }
 
@@ -889,12 +944,12 @@ async function updateUsername() {
   try {
     const response = await $fetch('/api/admin/username', {
       method: 'PUT',
-      body: { username: newUsername.value.trim() },
+      body: { username: name },
       headers: authStore.authHeader
     })
 
     if (response.success) {
-      authStore.updateUsername(newUsername.value.trim(), response.data?.token)
+      authStore.updateUsername(name, response.data?.token)
       toastStore.success('用户名已更新')
       newUsername.value = ''
     } else {
@@ -965,6 +1020,13 @@ async function fetchUserList() {
   } catch (_) {}
 }
 
+function closeCreateUserModal() {
+  showCreateUserModal.value = false
+  newUserForm.username = ''
+  newUserForm.password = ''
+  newUserForm.email = ''
+}
+
 function openEditUser(u) {
   editingUser.value = u
   editForm.username = u.username
@@ -975,8 +1037,21 @@ function openEditUser(u) {
 
 async function saveEditUser() {
   if (!editingUser.value) return
-  if (!editForm.username.trim() || editForm.username.trim().length < 3) {
-    toastStore.error('用户名至少 3 位')
+  const name = editForm.username.trim()
+  if (!name || name.length < 4) {
+    toastStore.error('用户名至少 4 位')
+    return
+  }
+  if (/^\d+$/.test(name)) {
+    toastStore.error('用户名不能为纯数字')
+    return
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+    toastStore.error('用户名仅支持英文、数字、下划线')
+    return
+  }
+  if (editForm.newPassword && /^\d+$/.test(editForm.newPassword)) {
+    toastStore.error('密码不能为纯数字')
     return
   }
   savingEditUser.value = true
@@ -1045,8 +1120,16 @@ async function deleteUser(u) {
 async function createUser() {
   const name = newUserForm.username.trim()
   const pwd = newUserForm.password
-  if (!name || name.length < 3) {
-    toastStore.error('用户名至少 3 位')
+  if (!name || name.length < 4) {
+    toastStore.error('用户名至少 4 位')
+    return
+  }
+  if (/^\d+$/.test(name)) {
+    toastStore.error('用户名不能为纯数字')
+    return
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+    toastStore.error('用户名仅支持英文、数字、下划线')
     return
   }
   if (!pwd || pwd.length < 6) {
@@ -1059,15 +1142,16 @@ async function createUser() {
   }
   creatingUser.value = true
   try {
+    const body = { username: name, password: pwd }
+    if (newUserForm.email?.trim()) body.email = newUserForm.email.trim()
     const res = await $fetch('/api/admin/users', {
       method: 'POST',
-      body: { username: name, password: pwd },
+      body,
       headers: authStore.authHeader
     })
     if (res.success) {
       toastStore.success('用户已创建')
-      newUserForm.username = ''
-      newUserForm.password = ''
+      closeCreateUserModal()
       await fetchUserList()
     } else {
       toastStore.error(res.message || '创建失败')

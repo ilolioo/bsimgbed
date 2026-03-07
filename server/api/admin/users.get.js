@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
     const list = users.map(u => ({
       id: u._id,
       username: u.username,
+      email: u.email || '',
       role: u.role || 'user',
       disabled: u.disabled === true,
       createdAt: u.createdAt

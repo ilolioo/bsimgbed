@@ -24,23 +24,35 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     const { username } = body
 
-    if (!username || !username.trim()) {
+    const name = username != null ? String(username).trim() : ''
+    if (!name) {
       throw createError({
         statusCode: 400,
         message: '请输入新用户名'
       })
     }
 
-    if (username.length < 3) {
+    if (name.length < 4) {
       throw createError({
         statusCode: 400,
-        message: '用户名长度至少 3 位'
+        message: '用户名至少 4 位'
+      })
+    }
+    if (/^\d+$/.test(name)) {
+      throw createError({
+        statusCode: 400,
+        message: '用户名不能为纯数字'
+      })
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+      throw createError({
+        statusCode: 400,
+        message: '用户名仅支持英文、数字、下划线'
       })
     }
 
-    // 检查用户名是否已存在（如果不同）
-    if (username !== user.username) {
-      const existingUser = await db.users.findOne({ username: username.trim() })
+    if (name !== user.username) {
+      const existingUser = await db.users.findOne({ username: name })
       if (existingUser) {
         throw createError({
           statusCode: 400,
@@ -49,21 +61,19 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 更新用户名
     await db.users.update(
       { _id: user.userId },
       {
         $set: {
-          username: username.trim(),
+          username: name,
           updatedAt: new Date().toISOString()
         }
       }
     )
 
-    // 生成新 Token
     const newToken = await generateToken({
       userId: user.userId,
-      username: username.trim()
+      username: name
     })
 
     return {
@@ -71,7 +81,7 @@ export default defineEventHandler(async (event) => {
       message: '用户名修改成功',
       data: {
         token: newToken,
-        username: username.trim()
+        username: name
       }
     }
   } catch (error) {
