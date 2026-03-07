@@ -1,6 +1,6 @@
 import db from '../../utils/db.js'
 import { getImageMetadata, saveUploadedFile } from '../../utils/image.js'
-import { parseFormData, processImageWithConfig } from '../../utils/upload.js'
+import { parseFormData, processImageWithConfig, generateTimestampId } from '../../utils/upload.js'
 import { getBucketsConfig } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
 import {
@@ -104,8 +104,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 生成 UUID
-    const imageUuid = uuidv4()
+    // 以时间戳生成唯一 ID（用于文件名与 /i/xxx 路径）
+    const imageUuid = generateTimestampId()
 
     // 处理图片（根据配置决定是否压缩和转换格式）
     const { processedBuffer, finalFormat, isWebp } = await processImageWithConfig(file.buffer, fileExt, config)

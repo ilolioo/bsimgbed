@@ -66,6 +66,14 @@ if (!existsSync(uploadsDir)) {
 console.log('[Upload] 上传目录:', uploadsDir)
 
 /**
+ * 生成以时间戳为基础的唯一 ID，用于图片文件名与访问路径（/i/xxx.ext）
+ * 格式：{毫秒时间戳}-{4位十六进制随机}，例如 1730793022123-a1b2
+ */
+export function generateTimestampId() {
+  return `${Date.now()}-${Math.random().toString(16).slice(2, 6)}`
+}
+
+/**
  * 解析 multipart/form-data 请求
  */
 export async function parseFormData(event) {
