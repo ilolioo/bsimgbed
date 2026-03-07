@@ -3,7 +3,7 @@ import { getImageMetadata, saveUploadedFile } from '../../utils/image.js'
 import { authMiddleware } from '../../utils/authMiddleware.js'
 import { getRandomHeaders } from '../../utils/fetchHeaders.js'
 import { processImageWithConfig } from '../../utils/upload.js'
-import { getBucketsConfig } from '../../utils/storage.js'
+import { getBucketsConfig, getTimestampStorageFilename } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
 
 // 下载单个URL的图片，保存到指定储存桶
@@ -95,8 +95,8 @@ async function downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse =
   // 获取图片元数据
   const metadata = await getImageMetadata(processedBuffer)
 
-  // 保存文件到所选储存桶
-  const filename = `${imageUuid}.${finalFormat}`
+  // 以时间戳命名存储文件
+  const filename = await getTimestampStorageFilename(bucketIdToUse, finalFormat)
   const bucketId = await saveUploadedFile(processedBuffer, filename, bucketIdToUse)
 
   // 从URL提取原始文件名
