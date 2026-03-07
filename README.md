@@ -22,28 +22,6 @@ _✨ 简单易用的个人图床系统，基于 Nuxt.js 构建 ✨_
 
 </div>
 
-## 项目预览
-
-<details>
-<summary>点击展开查看项目截图</summary>
-
-![项目预览1](md-images/img1.jpg)
-
-![项目预览2](md-images/img2.jpg)
-
-![项目预览3](md-images/img3.jpg)
-
-![项目预览4](md-images/img4.jpg)
-
-![项目预览5](md-images/img5.jpg)
-
-![项目预览6](md-images/img6.jpg)
-
-![项目预览7](md-images/img7.jpg)
-
-![项目预览8](md-images/img8.jpg)
-
-</details>
 
 ## 功能特性
 
