@@ -161,6 +161,17 @@
             </button>
           </div>
 
+          <!-- 下载图片 -->
+          <div class="border-t border-gray-200 dark:border-gray-700 py-1">
+            <button
+              @click="handleDownloadFromMenu"
+              class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+            >
+              <Icon name="heroicons:arrow-down-tray" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              下载图片
+            </button>
+          </div>
+
           <!-- 分隔线 -->
           <div v-if="authStore.isAuthenticated" class="border-t border-gray-200 dark:border-gray-700"></div>
 
@@ -426,6 +437,25 @@ function handleCopyFromMenu(type) {
     const fullUrl = window.location.origin + contextMenuImage.value.url
     handleCopy(type, fullUrl)
   }
+  hideContextMenu()
+}
+
+// 从菜单下载图片
+function handleDownloadFromMenu() {
+  if (!contextMenuImage.value) {
+    hideContextMenu()
+    return
+  }
+  const img = contextMenuImage.value
+  const fullUrl = window.location.origin + img.url
+  const downloadName = img.originalName || (img.filename || `${img.uuid}.${img.format || 'webp'}`)
+  const a = document.createElement('a')
+  a.href = fullUrl
+  a.download = downloadName
+  a.rel = 'noopener noreferrer'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
   hideContextMenu()
 }
 
