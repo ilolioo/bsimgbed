@@ -13,14 +13,8 @@ export default defineEventHandler(async (event) => {
 
     const isAdmin = user && user.role === 'admin'
 
-    // 获取私有 API 配置，检查是否允许首页展示私有图片
-    const privateConfig = await db.settings.findOne({ key: 'privateApiConfig' })
-    const showPrivateOnHomepage = privateConfig?.value?.showOnHomepage === true
-
     let queryCondition
     if (isAdmin) {
-      queryCondition = { isDeleted: false, isNsfw: { $ne: true } }
-    } else if (user && showPrivateOnHomepage) {
       queryCondition = { isDeleted: false, isNsfw: { $ne: true } }
     } else if (user) {
       // 普通用户：公开图 + 自己上传的图 + 其他用户设为「上传后展示」的图

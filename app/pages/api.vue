@@ -584,25 +584,6 @@
             </div>
           </div>
 
-          <!-- 首页展示 -->
-          <div class="flex items-center justify-between">
-            <div>
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">首页展示</label>
-              <p class="text-xs text-gray-500 dark:text-gray-400">是否在首页展示私有上传的图片</p>
-            </div>
-            <button
-              type="button"
-              @click="privateConfig.showOnHomepage = !privateConfig.showOnHomepage"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-              :class="privateConfig.showOnHomepage ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
-            >
-              <span
-                class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                :class="privateConfig.showOnHomepage ? 'translate-x-6' : 'translate-x-1'"
-              />
-            </button>
-          </div>
-
           <div class="pt-4">
             <button type="submit" class="btn-primary" :disabled="saving">
               {{ saving ? '保存中...' : '保存配置' }}
@@ -1112,14 +1093,13 @@ const publicConfig = reactive({
   contentSafety: { ...defaultContentSafetyConfig }
 })
 
-// 私有 API 配置
+// 私有 API 配置（上传是否在首页展示以上传时勾选「上传后展示」为准，不在此配置）
 const privateConfig = reactive({
   maxFileSize: 100 * 1024 * 1024,
   enableCompression: false,
   compressionQuality: 80,
   convertToWebp: false,
-  convertToPng: false,
-  showOnHomepage: false
+  convertToPng: false
 })
 
 // ApiKey 列表
@@ -1288,8 +1268,7 @@ async function savePrivateConfig() {
       enableCompression: privateConfig.enableCompression,
       compressionQuality: privateConfig.compressionQuality,
       convertToWebp: privateConfig.convertToWebp,
-      convertToPng: privateConfig.convertToPng,
-      showOnHomepage: privateConfig.showOnHomepage
+      convertToPng: privateConfig.convertToPng
     })
 
     if (result.success) {

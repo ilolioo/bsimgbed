@@ -9,14 +9,13 @@ export default defineEventHandler(async (event) => {
     // 获取请求体
     const body = await readBody(event)
 
-    // 验证配置项
+    // 验证配置项（上传是否在首页展示以上传时「上传后展示」勾选为准，不在此配置）
     const {
       maxFileSize,
       enableCompression,
       compressionQuality,
       convertToWebp,
-      convertToPng,
-      showOnHomepage
+      convertToPng
     } = body
 
     // 构建更新对象（convertToWebp 和 convertToPng 互斥）
@@ -28,8 +27,7 @@ export default defineEventHandler(async (event) => {
       enableCompression: enableCompression || false,
       compressionQuality: compressionQuality || 80,
       convertToWebp: finalConvertToWebp,
-      convertToPng: finalConvertToPng,
-      showOnHomepage: showOnHomepage === true
+      convertToPng: finalConvertToPng
     }
 
     // 更新配置

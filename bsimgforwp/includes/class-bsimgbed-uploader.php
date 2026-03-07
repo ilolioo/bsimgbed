@@ -88,6 +88,11 @@ class BSImgBed_Uploader {
             $body .= "Content-Disposition: form-data; name=\"bucketId\"\r\n\r\n";
             $body .= trim($s['bucket_id']) . "\r\n";
         }
+        if ($use_private) {
+            $body .= "--{$boundary}\r\n";
+            $body .= "Content-Disposition: form-data; name=\"showOnHomepage\"\r\n\r\n";
+            $body .= "0\r\n";
+        }
         $body .= "--{$boundary}\r\n";
         $body .= "Content-Disposition: form-data; name=\"file\"; filename=\"" . basename($upload_name) . "\"\r\n";
         $body .= "Content-Type: {$mime}\r\n\r\n";

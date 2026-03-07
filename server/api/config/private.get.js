@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
     const config = await db.settings.findOne({ key: 'privateApiConfig' })
 
     if (!config) {
-      // 返回默认配置
+      // 返回默认配置（上传是否在首页展示以上传时「上传后展示」勾选为准）
       return {
         success: true,
         data: {
@@ -17,8 +17,7 @@ export default defineEventHandler(async (event) => {
           enableCompression: false,
           compressionQuality: 80,
           convertToWebp: false,
-          convertToPng: false,
-          showOnHomepage: false
+          convertToPng: false
         }
       }
     }

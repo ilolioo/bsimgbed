@@ -32,8 +32,7 @@ export const useSettingsStore = defineStore('settings', {
       enableCompression: false,
       compressionQuality: 80,
       convertToWebp: false,
-      convertToPng: false,
-      showOnHomepage: false
+      convertToPng: false
     },
     apiKeys: [],
     loading: false
