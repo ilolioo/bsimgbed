@@ -103,18 +103,6 @@
               <span class="hidden sm:inline">统计</span>
             </NuxtLink>
 
-            <!-- 通知（仅管理员） -->
-            <NuxtLink
-              v-if="authStore.isAdmin"
-              to="/notification"
-              class="nav-link nav-link-icon sm:nav-link-text"
-              :class="{ 'nav-link-active': route.path === '/notification' }"
-              title="通知"
-            >
-              <Icon name="heroicons:bell" class="w-5 h-5 flex-shrink-0" />
-              <span class="hidden sm:inline">通知</span>
-            </NuxtLink>
-
             <!-- 关于 -->
             <NuxtLink
               to="/about"

@@ -464,132 +464,139 @@
       </div>
     </div>
 
+    <!-- 通知设置 -->
+    <div v-show="activeTab === 'notification'" class="space-y-6">
+      <NotificationSettings />
+    </div>
+
+    <!-- 用户管理 -->
+    <div v-show="activeTab === 'users'" class="space-y-6">
+      <div class="card p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">用户管理</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">创建新用户、编辑角色与状态。新用户角色为普通用户，仅能管理自己的图片与 API Key。</p>
+        <form @submit.prevent="createUser" class="flex flex-wrap gap-3 items-end mb-4">
+          <input
+            v-model="newUserForm.username"
+            type="text"
+            class="input w-40"
+            placeholder="用户名（至少3位）"
+          />
+          <input
+            v-model="newUserForm.password"
+            type="password"
+            class="input w-40"
+            placeholder="密码（至少6位）"
+          />
+          <button type="submit" class="btn-primary" :disabled="creatingUser">
+            {{ creatingUser ? '创建中...' : '创建用户' }}
+          </button>
+        </form>
+        <div v-if="userList.length" class="overflow-x-auto">
+          <table class="w-full text-sm text-left text-gray-700 dark:text-gray-300">
+            <thead>
+              <tr class="border-b border-gray-200 dark:border-gray-600">
+                <th class="py-2 pr-4">用户名</th>
+                <th class="py-2 pr-4">角色</th>
+                <th class="py-2 pr-4">状态</th>
+                <th class="py-2">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="u in userList"
+                :key="u.id"
+                class="border-b border-gray-100 dark:border-gray-700"
+              >
+                <td class="py-2 pr-4 font-medium">{{ u.username }}</td>
+                <td class="py-2 pr-4">{{ u.role === 'admin' ? '管理员' : '普通用户' }}</td>
+                <td class="py-2 pr-4">
+                  <span v-if="u.disabled" class="text-amber-600 dark:text-amber-400">已禁用</span>
+                  <span v-else class="text-green-600 dark:text-green-400">正常</span>
+                </td>
+                <td class="py-2">
+                  <button
+                    type="button"
+                    class="text-primary-600 dark:text-primary-400 hover:underline mr-3"
+                    @click="openEditUser(u)"
+                  >
+                    编辑
+                  </button>
+                  <button
+                    v-if="u.id !== authStore.user?.id && u.username !== authStore.user?.username"
+                    type="button"
+                    class="text-amber-600 dark:text-amber-400 hover:underline"
+                    @click="toggleUserDisabled(u)"
+                  >
+                    {{ u.disabled ? '启用' : '禁用' }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- 编辑用户弹层 -->
+        <div
+          v-if="editingUser"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          @click.self="editingUser = null"
+        >
+          <div class="card p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">编辑用户</h3>
+            <form @submit.prevent="saveEditUser" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">用户名</label>
+                <input
+                  v-model="editForm.username"
+                  type="text"
+                  class="input w-full"
+                  placeholder="至少3位"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">角色</label>
+                <select v-model="editForm.role" class="input w-full">
+                  <option value="user">普通用户</option>
+                  <option value="admin">管理员</option>
+                </select>
+              </div>
+              <div v-if="editingUser.id !== authStore.user?.id && editingUser.username !== authStore.user?.username" class="flex items-center gap-2">
+                <input
+                  id="edit-disabled"
+                  v-model="editForm.disabled"
+                  type="checkbox"
+                  class="rounded border-gray-300 dark:border-gray-600 text-primary-600"
+                />
+                <label for="edit-disabled" class="text-sm text-gray-700 dark:text-gray-300">禁用账号</label>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">新密码（不填则不修改）</label>
+                <input
+                  v-model="editForm.newPassword"
+                  type="password"
+                  class="input w-full"
+                  placeholder="留空保持原密码"
+                />
+              </div>
+              <div class="flex gap-2 pt-2">
+                <button type="submit" class="btn-primary" :disabled="savingEditUser">
+                  {{ savingEditUser ? '保存中...' : '保存' }}
+                </button>
+                <button type="button" class="btn-secondary" @click="editingUser = null">
+                  取消
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 账户设置 -->
     <div v-show="activeTab === 'account'" class="space-y-6">
       <div class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">账户设置</h2>
 
         <div class="space-y-6">
-          <!-- 用户管理（仅管理员在设置页可见，本页已受 admin 中间件保护） -->
-          <div v-if="authStore.isAdmin" class="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">用户管理</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">创建新用户，新用户角色为普通用户，仅能管理自己的图片与 API Key。</p>
-            <form @submit.prevent="createUser" class="flex flex-wrap gap-3 items-end mb-4">
-              <input
-                v-model="newUserForm.username"
-                type="text"
-                class="input w-40"
-                placeholder="用户名（至少3位）"
-              />
-              <input
-                v-model="newUserForm.password"
-                type="password"
-                class="input w-40"
-                placeholder="密码（至少6位）"
-              />
-              <button type="submit" class="btn-primary" :disabled="creatingUser">
-                {{ creatingUser ? '创建中...' : '创建用户' }}
-              </button>
-            </form>
-            <div v-if="userList.length" class="overflow-x-auto">
-              <table class="w-full text-sm text-left text-gray-700 dark:text-gray-300">
-                <thead>
-                  <tr class="border-b border-gray-200 dark:border-gray-600">
-                    <th class="py-2 pr-4">用户名</th>
-                    <th class="py-2 pr-4">角色</th>
-                    <th class="py-2 pr-4">状态</th>
-                    <th class="py-2">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="u in userList"
-                    :key="u.id"
-                    class="border-b border-gray-100 dark:border-gray-700"
-                  >
-                    <td class="py-2 pr-4 font-medium">{{ u.username }}</td>
-                    <td class="py-2 pr-4">{{ u.role === 'admin' ? '管理员' : '普通用户' }}</td>
-                    <td class="py-2 pr-4">
-                      <span v-if="u.disabled" class="text-amber-600 dark:text-amber-400">已禁用</span>
-                      <span v-else class="text-green-600 dark:text-green-400">正常</span>
-                    </td>
-                    <td class="py-2">
-                      <button
-                        type="button"
-                        class="text-primary-600 dark:text-primary-400 hover:underline mr-3"
-                        @click="openEditUser(u)"
-                      >
-                        编辑
-                      </button>
-                      <button
-                        v-if="u.id !== authStore.user?.id && u.username !== authStore.user?.username"
-                        type="button"
-                        class="text-amber-600 dark:text-amber-400 hover:underline"
-                        @click="toggleUserDisabled(u)"
-                      >
-                        {{ u.disabled ? '启用' : '禁用' }}
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <!-- 编辑用户弹层 -->
-            <div
-              v-if="editingUser"
-              class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-              @click.self="editingUser = null"
-            >
-              <div class="card p-6 w-full max-w-md">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">编辑用户</h3>
-                <form @submit.prevent="saveEditUser" class="space-y-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">用户名</label>
-                    <input
-                      v-model="editForm.username"
-                      type="text"
-                      class="input w-full"
-                      placeholder="至少3位"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">角色</label>
-                    <select v-model="editForm.role" class="input w-full">
-                      <option value="user">普通用户</option>
-                      <option value="admin">管理员</option>
-                    </select>
-                  </div>
-                  <div v-if="editingUser.id !== authStore.user?.id && editingUser.username !== authStore.user?.username" class="flex items-center gap-2">
-                    <input
-                      id="edit-disabled"
-                      v-model="editForm.disabled"
-                      type="checkbox"
-                      class="rounded border-gray-300 dark:border-gray-600 text-primary-600"
-                    />
-                    <label for="edit-disabled" class="text-sm text-gray-700 dark:text-gray-300">禁用账号</label>
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">新密码（不填则不修改）</label>
-                    <input
-                      v-model="editForm.newPassword"
-                      type="password"
-                      class="input w-full"
-                      placeholder="留空保持原密码"
-                    />
-                  </div>
-                  <div class="flex gap-2 pt-2">
-                    <button type="submit" class="btn-primary" :disabled="savingEditUser">
-                      {{ savingEditUser ? '保存中...' : '保存' }}
-                    </button>
-                    <button type="button" class="btn-secondary" @click="editingUser = null">
-                      取消
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-
           <!-- 修改用户名 -->
           <div>
             <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">修改用户名</h3>
@@ -640,7 +647,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { useSettingsStore } from '~/stores/settings'
 import { useToastStore } from '~/stores/toast'
@@ -658,6 +665,8 @@ const tabs = [
   { id: 'app', label: '应用设置' },
   { id: 'announcement', label: '公告设置' },
   { id: 'storage', label: '存储配置' },
+  { id: 'notification', label: '通知设置' },
+  { id: 'users', label: '用户管理' },
   { id: 'account', label: '账户设置' }
 ]
 // 用户管理（仅管理员）
@@ -667,7 +676,12 @@ const creatingUser = ref(false)
 const editingUser = ref(null)
 const editForm = reactive({ username: '', role: 'user', disabled: false, newPassword: '' })
 const savingEditUser = ref(false)
-const activeTab = ref('app')
+const route = useRoute()
+const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : 'app')
+watch(() => route.query.tab, (tab) => {
+  if (tab === 'notification') activeTab.value = 'notification'
+  else if (tab === 'users') activeTab.value = 'users'
+})
 
 // 应用设置
 const appSettings = reactive({
