@@ -70,7 +70,13 @@ export default defineEventHandler(async (event) => {
       if (pwd.length < 6) {
         throw createError({
           statusCode: 400,
-          message: '新密码长度至少 6 位'
+          message: '新密码至少 6 位'
+        })
+      }
+      if (/^\d+$/.test(pwd)) {
+        throw createError({
+          statusCode: 400,
+          message: '密码不能为纯数字'
         })
       }
       updates.password = await bcrypt.hash(pwd, 10)

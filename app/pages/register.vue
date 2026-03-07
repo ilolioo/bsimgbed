@@ -26,7 +26,7 @@
           注册已关闭，请联系管理员。
         </p>
         <form v-else @submit.prevent="handleRegister" class="space-y-6">
-          <div v-if="registrationEmailVerification">
+          <div>
             <label for="reg-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">邮箱</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -39,11 +39,13 @@
                 required
                 autocomplete="email"
                 class="input !pl-10"
-                placeholder="用于接收验证链接"
+                :placeholder="registrationEmailVerification ? '用于接收验证链接' : '可用于登录'"
                 :disabled="loading"
               />
             </div>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">注册后需点击邮件中的链接完成验证方可登录</p>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {{ registrationEmailVerification ? '注册后需点击邮件中的链接完成验证方可登录' : '邮箱与用户名均可用于登录' }}
+            </p>
           </div>
           <div>
             <label for="reg-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">用户名</label>
@@ -76,7 +78,7 @@
                 required
                 autocomplete="new-password"
                 class="input !pl-10 !pr-10"
-                placeholder="至少 6 位"
+                placeholder="请输入密码"
                 :disabled="loading"
               />
               <button
@@ -96,6 +98,7 @@
                 />
               </button>
             </div>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">密码至少 6 位，且不能为纯数字</p>
           </div>
           <div>
             <label for="reg-confirm" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">确认密码</label>
@@ -110,7 +113,7 @@
                 required
                 autocomplete="new-password"
                 class="input !pl-10 !pr-10"
-                placeholder="再次输入密码"
+                placeholder="请再次输入密码"
                 :disabled="loading"
               />
               <button
@@ -185,7 +188,7 @@ async function handleRegister() {
     toastStore.error('请填写用户名和密码')
     return
   }
-  if (registrationEmailVerification.value && !form.value.email?.trim()) {
+  if (!form.value.email?.trim()) {
     toastStore.error('请填写邮箱')
     return
   }
@@ -197,6 +200,10 @@ async function handleRegister() {
     toastStore.error('密码至少 6 位')
     return
   }
+  if (/^\d+$/.test(form.value.password)) {
+    toastStore.error('密码不能为纯数字')
+    return
+  }
   if (form.value.password !== form.value.confirmPassword) {
     toastStore.error('两次输入的密码不一致')
     return
@@ -206,10 +213,8 @@ async function handleRegister() {
   try {
     const body = {
       username: form.value.username.trim(),
+      email: form.value.email.trim(),
       password: form.value.password
-    }
-    if (registrationEmailVerification.value && form.value.email?.trim()) {
-      body.email = form.value.email.trim()
     }
     const res = await $fetch('/api/auth/register', {
       method: 'POST',

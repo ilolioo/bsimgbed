@@ -1,9 +1,11 @@
 import db from '../../utils/db.js'
+import { getNotificationConfig } from '../../utils/notification.js'
 
 export default defineEventHandler(async (event) => {
   try {
     // 获取应用设置（公共部分，无需登录）
     const settings = await db.settings.findOne({ key: 'appSettings' })
+    const notifConfig = await getNotificationConfig()
 
     // 默认公告配置
     const defaultAnnouncement = {
@@ -22,7 +24,7 @@ export default defineEventHandler(async (event) => {
           backgroundUrl: '',
           backgroundBlur: 0,
           registrationEnabled: true,
-          registrationEmailVerification: false,
+          registrationEmailVerification: !!notifConfig.registrationEmailVerification,
           announcement: defaultAnnouncement
         }
       }
@@ -37,7 +39,7 @@ export default defineEventHandler(async (event) => {
         backgroundUrl: settings.value.backgroundUrl || '',
         backgroundBlur: settings.value.backgroundBlur || 0,
         registrationEnabled: settings.value.registrationEnabled !== false,
-        registrationEmailVerification: !!settings.value.registrationEmailVerification,
+        registrationEmailVerification: !!notifConfig.registrationEmailVerification,
         announcement: settings.value.announcement || defaultAnnouncement
       }
     }

@@ -2,7 +2,7 @@ import db from '../../utils/db.js'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { v4 as uuidv4 } from 'uuid'
-import { sendVerificationEmail } from '../../utils/notification.js'
+import { getNotificationConfig, sendVerificationEmail } from '../../utils/notification.js'
 
 function createDefaultApiKeyForUser(userId) {
   const apiKey = `sk-${uuidv4().replace(/-/g, '')}`
@@ -27,7 +27,8 @@ export default defineEventHandler(async (event) => {
     const appDoc = await db.settings.findOne({ key: 'appSettings' })
     const appSettings = appDoc?.value || {}
     const registrationEnabled = appSettings.registrationEnabled !== false
-    const emailVerification = !!appSettings.registrationEmailVerification
+    const notifConfig = await getNotificationConfig()
+    const emailVerification = !!notifConfig.registrationEmailVerification
 
     if (!registrationEnabled) {
       throw createError({
@@ -49,7 +50,13 @@ export default defineEventHandler(async (event) => {
     if (!password || String(password).length < 6) {
       throw createError({
         statusCode: 400,
-        message: '密码长度至少 6 位'
+        message: '密码至少 6 位'
+      })
+    }
+    if (/^\d+$/.test(String(password))) {
+      throw createError({
+        statusCode: 400,
+        message: '密码不能为纯数字'
       })
     }
 
@@ -61,27 +68,25 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    if (emailVerification) {
-      const emailStr = email ? String(email).trim().toLowerCase() : ''
-      if (!emailStr) {
-        throw createError({
-          statusCode: 400,
-          message: '请填写邮箱'
-        })
-      }
-      if (!EMAIL_REGEX.test(emailStr)) {
-        throw createError({
-          statusCode: 400,
-          message: '邮箱格式不正确'
-        })
-      }
-      const existingByEmail = await db.users.findOne({ email: emailStr })
-      if (existingByEmail) {
-        throw createError({
-          statusCode: 400,
-          message: '该邮箱已被注册'
-        })
-      }
+    const emailStr = email ? String(email).trim().toLowerCase() : ''
+    if (!emailStr) {
+      throw createError({
+        statusCode: 400,
+        message: '请填写邮箱'
+      })
+    }
+    if (!EMAIL_REGEX.test(emailStr)) {
+      throw createError({
+        statusCode: 400,
+        message: '邮箱格式不正确'
+      })
+    }
+    const existingByEmail = await db.users.findOne({ email: emailStr })
+    if (existingByEmail) {
+      throw createError({
+        statusCode: 400,
+        message: '该邮箱已被注册'
+      })
     }
 
     const existing = await db.users.findOne({ username: name })
@@ -97,6 +102,7 @@ export default defineEventHandler(async (event) => {
     const newUser = {
       _id: uuidv4(),
       username: name,
+      email: emailStr,
       password: hashedPassword,
       passwordChanged: false,
       role: 'user',
@@ -106,11 +112,11 @@ export default defineEventHandler(async (event) => {
     }
 
     if (emailVerification) {
-      const emailStr = String(email).trim().toLowerCase()
-      newUser.email = emailStr
       newUser.emailVerified = false
       newUser.emailVerificationToken = crypto.randomBytes(32).toString('hex')
       newUser.emailVerificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    } else {
+      newUser.emailVerified = true
     }
 
     await db.users.insert(newUser)

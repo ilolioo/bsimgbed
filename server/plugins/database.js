@@ -150,8 +150,7 @@ async function initAppSettings() {
         appName: 'bsimgbed',
         appLogo: '',
         favicon: '',
-        registrationEnabled: true,
-        registrationEmailVerification: false
+        registrationEnabled: true
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()

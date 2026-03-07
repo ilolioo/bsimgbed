@@ -59,7 +59,7 @@
                 required
                 autocomplete="new-password"
                 class="input !pl-10 !pr-10"
-                placeholder="至少 6 位"
+                placeholder="请输入新密码"
                 :disabled="loading"
               />
               <button
@@ -90,7 +90,7 @@
                 required
                 autocomplete="new-password"
                 class="input !pl-10 !pr-10"
-                placeholder="再次输入新密码"
+                placeholder="请再次输入新密码"
                 :disabled="loading"
               />
               <button
@@ -163,7 +163,11 @@ async function handleSubmit() {
     return
   }
   if (form.newPassword.length < 6) {
-    toastStore.error('新密码至少需要 6 个字符')
+    toastStore.error('新密码至少需要 6 位')
+    return
+  }
+  if (/^\d+$/.test(form.newPassword)) {
+    toastStore.error('密码不能为纯数字')
     return
   }
   if (form.newPassword !== form.confirmPassword) {

@@ -28,10 +28,10 @@
 
         <!-- 登录表单 -->
         <form @submit.prevent="handleLogin" class="space-y-6">
-          <!-- 用户名 -->
+          <!-- 用户名 / 邮箱 -->
           <div>
             <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              用户名
+              用户名 / 邮箱
             </label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -44,7 +44,7 @@
                 required
                 autocomplete="username"
                 class="input !pl-10"
-                placeholder="请输入用户名"
+                placeholder="请输入用户名或邮箱"
                 :disabled="loading"
               />
             </div>

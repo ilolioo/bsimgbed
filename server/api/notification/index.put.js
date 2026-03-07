@@ -1,5 +1,5 @@
 import { authMiddleware, requireAdmin } from '../../utils/authMiddleware.js'
-import { saveNotificationConfig, NOTIFICATION_TYPES, NOTIFICATION_METHODS } from '../../utils/notification.js'
+import { getNotificationConfig, saveNotificationConfig, NOTIFICATION_TYPES, NOTIFICATION_METHODS } from '../../utils/notification.js'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
 
     // 获取请求体
     const body = await readBody(event)
-    const { enabled, method, types, webhook } = body
+    const { enabled, method, types, webhook, registrationEmailVerification } = body
 
     // 验证通知方式
     if (method && !Object.values(NOTIFICATION_METHODS).includes(method)) {
@@ -21,9 +21,13 @@ export default defineEventHandler(async (event) => {
     // 获取 telegram、email 和 serverchan 配置
     const { telegram, email, serverchan } = body
 
+    // 获取当前配置以保留未提交的字段
+    const current = await getNotificationConfig()
+
     // 构建配置对象
     const config = {
       enabled: !!enabled,
+      registrationEmailVerification: registrationEmailVerification !== undefined ? !!registrationEmailVerification : !!current.registrationEmailVerification,
       method: method || NOTIFICATION_METHODS.WEBHOOK,
       types: {
         [NOTIFICATION_TYPES.LOGIN]: !!types?.login,

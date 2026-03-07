@@ -1,12 +1,12 @@
 import db from '../../utils/db.js'
 import { generateToken } from '../../utils/jwt.js'
 import bcrypt from 'bcryptjs'
-import { sendLoginNotification } from '../../utils/notification.js'
+import { getNotificationConfig, sendLoginNotification } from '../../utils/notification.js'
 
 export default defineEventHandler(async (event) => {
   try {
-    const appDoc = await db.settings.findOne({ key: 'appSettings' })
-    const emailVerificationRequired = !!appDoc?.value?.registrationEmailVerification
+    const notifConfig = await getNotificationConfig()
+    const emailVerificationRequired = !!notifConfig.registrationEmailVerification
 
     const body = await readBody(event)
     const { username, password } = body
@@ -14,11 +14,18 @@ export default defineEventHandler(async (event) => {
     if (!username || !password) {
       throw createError({
         statusCode: 400,
-        message: '用户名和密码不能为空'
+        message: '用户名/邮箱和密码不能为空'
       })
     }
 
-    const user = await db.users.findOne({ username })
+    const account = String(username).trim()
+    const accountLower = account.toLowerCase()
+    const user = await db.users.findOne({
+      $or: [
+        { username: account },
+        { email: accountLower }
+      ]
+    })
     if (!user) {
       throw createError({
         statusCode: 401,

@@ -68,9 +68,6 @@ export default defineEventHandler(async (event) => {
     if (body.registrationEnabled !== undefined) {
       updatedValue.registrationEnabled = !!body.registrationEnabled
     }
-    if (body.registrationEmailVerification !== undefined) {
-      updatedValue.registrationEmailVerification = !!body.registrationEmailVerification
-    }
 
     // 更新 announcement（如果传递了）
     if (body.announcement !== undefined) {

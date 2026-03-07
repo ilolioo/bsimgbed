@@ -1,5 +1,31 @@
 <template>
   <div class="space-y-6">
+    <!-- 注册邮箱验证（与下方邮件配置配合使用） -->
+    <div class="card p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <Icon name="heroicons:envelope" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
+            注册邮箱验证
+          </h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            开启后，新用户注册需填写邮箱，点击验证邮件中的链接后才能登录；需在下方配置邮件发送方式
+          </p>
+        </div>
+        <button
+          type="button"
+          @click="config.registrationEmailVerification = !config.registrationEmailVerification"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+          :class="config.registrationEmailVerification ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
+        >
+          <span
+            class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+            :class="config.registrationEmailVerification ? 'translate-x-6' : 'translate-x-1'"
+          />
+        </button>
+      </div>
+    </div>
+
     <!-- 通知总开关 -->
     <div class="card p-6">
       <div class="flex items-center justify-between">
@@ -258,6 +284,7 @@ const toastStore = useToastStore()
 
 const config = reactive({
   enabled: false,
+  registrationEmailVerification: false,
   method: 'telegram',
   types: { login: true, upload: true, nsfw: true },
   webhook: {

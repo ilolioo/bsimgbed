@@ -35,7 +35,13 @@ export default defineEventHandler(async (event) => {
     if (newPassword.length < 6) {
       throw createError({
         statusCode: 400,
-        message: '新密码长度至少 6 位'
+        message: '新密码至少 6 位'
+      })
+    }
+    if (/^\d+$/.test(newPassword)) {
+      throw createError({
+        statusCode: 400,
+        message: '密码不能为纯数字'
       })
     }
 

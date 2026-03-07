@@ -171,17 +171,6 @@
               允许开放注册（访客可在注册页自行注册账号）
             </label>
           </div>
-          <div class="flex items-center gap-3">
-            <input
-              id="registrationEmailVerification"
-              v-model="appSettings.registrationEmailVerification"
-              type="checkbox"
-              class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
-            />
-            <label for="registrationEmailVerification" class="text-sm font-medium text-gray-700 dark:text-gray-300">
-              注册邮箱验证（开启后需填写邮箱，验证邮件中的链接后才能登录；需在「通知」中配置邮件）
-            </label>
-          </div>
 
           <div class="pt-4">
             <button type="submit" class="btn-primary" :disabled="savingApp">
@@ -485,7 +474,7 @@
             v-model="newUserForm.password"
             type="password"
             class="input w-40"
-            placeholder="密码（至少6位）"
+            placeholder="请输入密码"
           />
           <button type="submit" class="btn-primary" :disabled="creatingUser">
             {{ creatingUser ? '创建中...' : '创建用户' }}
@@ -629,19 +618,19 @@
                 v-model="passwordForm.oldPassword"
                 type="password"
                 class="input"
-                placeholder="当前密码"
+                placeholder="请输入当前密码"
               />
               <input
                 v-model="passwordForm.newPassword"
                 type="password"
                 class="input"
-                placeholder="新密码"
+                placeholder="请输入新密码"
               />
               <input
                 v-model="passwordForm.confirmPassword"
                 type="password"
                 class="input"
-                placeholder="确认新密码"
+                placeholder="请再次输入新密码"
               />
               <button type="submit" class="btn-secondary" :disabled="savingPassword">
                 {{ savingPassword ? '保存中...' : '修改密码' }}
@@ -699,8 +688,7 @@ const appSettings = reactive({
   backgroundUrl: '',
   backgroundBlur: 0,
   siteUrl: '',
-  registrationEnabled: true,
-  registrationEmailVerification: false
+  registrationEnabled: true
 })
 const logoError = ref(false)
 const faviconError = ref(false)
@@ -796,7 +784,6 @@ async function saveAppSettings() {
       backgroundBlur: appSettings.backgroundBlur,
       siteUrl: appSettings.siteUrl,
       registrationEnabled: appSettings.registrationEnabled,
-      registrationEmailVerification: appSettings.registrationEmailVerification,
       announcement: announcementSettings
     })
 
@@ -934,7 +921,11 @@ async function updatePassword() {
     return
   }
   if (passwordForm.newPassword.length < 6) {
-    toastStore.error('新密码至少需要 6 个字符')
+    toastStore.error('新密码至少需要 6 位')
+    return
+  }
+  if (/^\d+$/.test(passwordForm.newPassword)) {
+    toastStore.error('密码不能为纯数字')
     return
   }
   if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -1065,6 +1056,10 @@ async function createUser() {
     toastStore.error('密码至少 6 位')
     return
   }
+  if (/^\d+$/.test(pwd)) {
+    toastStore.error('密码不能为纯数字')
+    return
+  }
   creatingUser.value = true
   try {
     const res = await $fetch('/api/admin/users', {
@@ -1101,7 +1096,6 @@ onMounted(async () => {
   appSettings.backgroundBlur = settingsStore.appSettings.backgroundBlur || 0
   appSettings.siteUrl = settingsStore.appSettings.siteUrl || ''
   appSettings.registrationEnabled = settingsStore.appSettings.registrationEnabled !== false
-  appSettings.registrationEmailVerification = !!settingsStore.appSettings.registrationEmailVerification
 
   const announcement = settingsStore.appSettings.announcement || {}
   announcementSettings.enabled = announcement.enabled || false

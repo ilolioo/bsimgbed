@@ -30,7 +30,6 @@ export default defineEventHandler(async (event) => {
           backgroundBlur: 0,
           siteUrl: '',
           registrationEnabled: true,
-          registrationEmailVerification: false,
           deletedImagesCount: deletedCount,
           announcement: defaultAnnouncement
         }
@@ -47,7 +46,6 @@ export default defineEventHandler(async (event) => {
         backgroundBlur: settings.value.backgroundBlur || 0,
         siteUrl: settings.value.siteUrl || '',
         registrationEnabled: settings.value.registrationEnabled !== false,
-        registrationEmailVerification: !!settings.value.registrationEmailVerification,
         deletedImagesCount: deletedCount,
         announcement: settings.value.announcement || defaultAnnouncement
       }

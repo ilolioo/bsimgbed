@@ -32,6 +32,8 @@ export const NOTIFICATION_METHODS = {
 export function getDefaultNotificationConfig() {
   return {
     enabled: false,
+    /** 注册邮箱验证：开启后新用户需填写邮箱，验证邮件中的链接后才能登录（依赖下方邮件配置） */
+    registrationEmailVerification: false,
     method: NOTIFICATION_METHODS.TELEGRAM,
     // 各类型通知开关（默认全部开启）
     types: {
@@ -86,6 +88,9 @@ export async function getNotificationConfig() {
       return {
         ...defaultConfig,
         ...configDoc.value,
+        registrationEmailVerification: configDoc.value.registrationEmailVerification !== undefined
+          ? !!configDoc.value.registrationEmailVerification
+          : defaultConfig.registrationEmailVerification,
         types: {
           ...defaultConfig.types,
           ...configDoc.value.types
