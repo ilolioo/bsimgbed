@@ -98,17 +98,22 @@
           </select>
         </div>
         <!-- 游客上传是否展示在主页（仅未登录时显示） -->
-        <label
-          v-if="!authStore.isAuthenticated"
-          class="inline-flex items-center gap-2 cursor-pointer select-none"
-        >
-          <input
-            v-model="showGuestUploadOnHomepage"
-            type="checkbox"
-            class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
-          />
-          <span class="text-xs text-gray-600 dark:text-gray-400">上传后展示</span>
-        </label>
+        <div v-if="!authStore.isAuthenticated" class="flex flex-col items-center gap-0.5">
+          <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+            <input
+              v-model="showGuestUploadOnHomepage"
+              type="checkbox"
+              class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
+            />
+            <span class="text-xs text-gray-600 dark:text-gray-400">上传后展示</span>
+          </label>
+          <p
+            v-if="!showGuestUploadOnHomepage"
+            class="text-xs text-amber-600 dark:text-amber-400 max-w-[240px] text-center"
+          >
+            不勾选时图片不会在首页公开展示，仅您在本机 1 天内可查看，请及时保存链接
+          </p>
+        </div>
       </div>
 
       <!-- 隐藏的文件输入（支持多选） -->
