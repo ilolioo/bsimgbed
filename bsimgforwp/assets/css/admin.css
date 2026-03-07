@@ -1,0 +1,250 @@
+/**
+ * BSImg 图床 for WordPress - 设置页样式
+ * 兼容 WP 管理界面亮色/暗色
+ */
+
+/* 页面容器 */
+.bsimgforwp-wrap {
+  max-width: 720px;
+  margin-top: 12px;
+}
+
+.bsimgforwp-wrap *,
+.bsimgforwp-wrap *::before,
+.bsimgforwp-wrap *::after {
+  box-sizing: border-box;
+}
+
+/* 顶部标题区 */
+.bsimgforwp-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--bsimg-border, #c3c4c7);
+}
+
+.bsimgforwp-header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2271b1 0%, #135e96 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bsimgforwp-header-icon svg {
+  width: 28px;
+  height: 28px;
+  fill: #fff;
+}
+
+.bsimgforwp-header-text h1 {
+  margin: 0 0 4px 0;
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.bsimgforwp-header-text p {
+  margin: 0;
+  color: var(--bsimg-muted, #646970);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* 卡片 */
+.bsimgforwp-card {
+  background: var(--bsimg-card-bg, #fff);
+  border: 1px solid var(--bsimg-border, #c3c4c7);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.bsimgforwp-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--bsimg-border, #c3c4c7);
+  background: var(--bsimg-card-header-bg, #f6f7f7);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bsimg-text, #1d2327);
+}
+
+.bsimgforwp-card-body {
+  padding: 20px;
+}
+
+.bsimgforwp-card-body .form-table {
+  margin: 0;
+}
+
+.bsimgforwp-card-body .form-table th {
+  padding: 16px 16px 16px 0;
+  width: 180px;
+  font-weight: 500;
+  color: var(--bsimg-text, #1d2327);
+}
+
+.bsimgforwp-card-body .form-table td {
+  padding: 16px 0;
+}
+
+.bsimgforwp-card-body .form-table input[type="url"],
+.bsimgforwp-card-body .form-table input[type="text"],
+.bsimgforwp-card-body .form-table input[type="password"] {
+  width: 100%;
+  max-width: 400px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--bsimg-input-border, #8c8f94);
+}
+
+.bsimgforwp-card-body .form-table input:focus {
+  border-color: #2271b1;
+  box-shadow: 0 0 0 1px #2271b1;
+  outline: none;
+}
+
+.bsimgforwp-card-body .form-table .description {
+  margin-top: 6px;
+  color: var(--bsimg-muted, #646970);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 上传方式单选 */
+.bsimgforwp-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bsimgforwp-radio-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--bsimg-border, #c3c4c7);
+  border-radius: 6px;
+  background: var(--bsimg-input-bg, #fff);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.bsimgforwp-radio-item:hover {
+  border-color: #2271b1;
+  background: var(--bsimg-radio-hover, #f0f6fc);
+}
+
+.bsimgforwp-radio-item input {
+  margin: 2px 0 0 0;
+  flex-shrink: 0;
+}
+
+.bsimgforwp-radio-item:has(input:checked) {
+  border-color: #2271b1;
+  background: var(--bsimg-radio-checked-bg, #f0f6fc);
+  box-shadow: 0 0 0 1px #2271b1;
+}
+
+.bsimgforwp-radio-item:has(input:checked) .bsimgforwp-radio-label {
+  font-weight: 600;
+  color: var(--bsimg-text, #1d2327);
+}
+
+.bsimgforwp-radio-label {
+  display: block;
+  font-size: 13px;
+  color: var(--bsimg-text, #1d2327);
+  margin-bottom: 2px;
+}
+
+.bsimgforwp-radio-desc {
+  display: block;
+  font-size: 12px;
+  color: var(--bsimg-muted, #646970);
+  line-height: 1.4;
+}
+
+/* 操作按钮区 */
+.bsimgforwp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--bsimg-border, #c3c4c7);
+}
+
+.bsimgforwp-actions .button-primary {
+  padding: 6px 16px;
+  height: auto;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.bsimgforwp-actions .button-secondary {
+  padding: 6px 14px;
+  height: auto;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.bsimgforwp-test-desc {
+  font-size: 12px;
+  color: var(--bsimg-muted, #646970);
+  margin-left: 4px;
+}
+
+/* 说明列表 */
+.bsimgforwp-help-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bsimgforwp-help-list li {
+  position: relative;
+  padding: 10px 0 10px 24px;
+  border-bottom: 1px solid var(--bsimg-border, #c3c4c7);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--bsimg-text, #1d2327);
+}
+
+.bsimgforwp-help-list li:last-child {
+  border-bottom: none;
+}
+
+.bsimgforwp-help-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2271b1;
+}
+
+/* 页脚版本 */
+.bsimgforwp-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  font-size: 12px;
+  color: var(--bsimg-muted, #646970);
+}
+
+/* 高对比度 / 减少动效（尊重系统偏好） */
+@media (prefers-reduced-motion: reduce) {
+  .bsimgforwp-radio-item {
+    transition: none;
+  }
+}

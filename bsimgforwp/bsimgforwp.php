@@ -3,7 +3,7 @@
  * Plugin Name: BSImg 图床 for WordPress
  * Plugin URI: https://github.com/ilolioo/bsimgbed
  * Description: 将 WordPress 媒体库上传的图片接管到 BSImg 图床（bsimgbed），减轻站点存储压力并统一图片管理。
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: BSImg
  * Author URI: https://github.com/ilolioo/bsimgbed
  * License: Apache-2.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('BSIMGFORWP_VERSION', '1.2.0');
+define('BSIMGFORWP_VERSION', '1.3.0');
 define('BSIMGFORWP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('BSIMGFORWP_PLUGIN_URL', plugin_dir_url(__FILE__));
 

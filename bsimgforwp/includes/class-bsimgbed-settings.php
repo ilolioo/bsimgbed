@@ -24,9 +24,22 @@ class BSImgBed_Settings {
     public function __construct() {
         add_action('admin_menu', array($this, 'add_menu'));
         add_action('admin_init', array($this, 'register_settings'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
         add_filter('plugin_action_links_' . plugin_basename(BSIMGFORWP_PLUGIN_DIR . 'bsimgforwp.php'), array($this, 'plugin_links'));
         add_action('admin_notices', array($this, 'maybe_show_notices'));
         add_action('admin_init', array($this, 'handle_test_connection'));
+    }
+
+    public function enqueue_assets($hook) {
+        if ($hook !== 'settings_page_' . self::PAGE_SLUG) {
+            return;
+        }
+        wp_enqueue_style(
+            'bsimgforwp-admin',
+            BSIMGFORWP_PLUGIN_URL . 'assets/css/admin.css',
+            array(),
+            BSIMGFORWP_VERSION
+        );
     }
 
     public function add_menu() {
@@ -128,83 +141,113 @@ class BSImgBed_Settings {
         $api_key = isset($opts['api_key']) ? $opts['api_key'] : '';
         $use_private = !empty($opts['use_private']);
         $bucket_id = isset($opts['bucket_id']) ? $opts['bucket_id'] : '';
+        $test_url = wp_nonce_url(
+            add_query_arg('action', 'bsimgforwp_test', admin_url('admin.php')),
+            'bsimgforwp_test'
+        );
         ?>
-        <div class="wrap">
-            <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-            <p><?php _e('将媒体库上传的图片同步到 BSImg 图床（bsimgbed），前台显示的图片地址将使用图床 URL。', 'bsimgforwp'); ?></p>
+        <div class="wrap bsimgforwp-wrap">
+            <header class="bsimgforwp-header">
+                <div class="bsimgforwp-header-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5v14H5V5h14zm-2 2H7v10h10V7zm-1 1.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM8 9l2.5 3L13 10l3 4H8l1.5-2 1 1.33L8 9z"/></svg>
+                </div>
+                <div class="bsimgforwp-header-text">
+                    <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+                    <p><?php esc_html_e('将媒体库上传的图片同步到 BSImg 图床（bsimgbed），前台显示的图片地址将使用图床 URL。', 'bsimgforwp'); ?></p>
+                </div>
+            </header>
 
             <form action="options.php" method="post">
                 <?php settings_fields(self::PAGE_SLUG); ?>
-                <table class="form-table">
-                    <tr>
-                        <th scope="row">
-                            <label for="bsimgforwp_base_url"><?php _e('图床地址', 'bsimgforwp'); ?></label>
-                        </th>
-                        <td>
-                            <input name="<?php echo esc_attr(self::OPTION_KEY); ?>[base_url]" id="bsimgforwp_base_url"
-                                   type="url" value="<?php echo esc_attr($base_url); ?>"
-                                   class="regular-text" placeholder="https://your-bsimgbed.com"/>
-                            <p class="description"><?php _e('您的 bsimgbed 站点根地址，例如：https://img.example.com', 'bsimgforwp'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php _e('上传方式', 'bsimgforwp'); ?></th>
-                        <td>
-                            <label>
+
+                <div class="bsimgforwp-card">
+                    <div class="bsimgforwp-card-header"><?php esc_html_e('图床连接', 'bsimgforwp'); ?></div>
+                    <div class="bsimgforwp-card-body">
+                        <table class="form-table">
+                            <tr>
+                                <th scope="row">
+                                    <label for="bsimgforwp_base_url"><?php esc_html_e('图床地址', 'bsimgforwp'); ?></label>
+                                </th>
+                                <td>
+                                    <input name="<?php echo esc_attr(self::OPTION_KEY); ?>[base_url]" id="bsimgforwp_base_url"
+                                           type="url" value="<?php echo esc_attr($base_url); ?>"
+                                           class="regular-text" placeholder="https://your-bsimgbed.com"/>
+                                    <p class="description"><?php esc_html_e('您的 bsimgbed 站点根地址，例如：https://img.example.com', 'bsimgforwp'); ?></p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bsimgforwp-card">
+                    <div class="bsimgforwp-card-header"><?php esc_html_e('上传方式', 'bsimgforwp'); ?></div>
+                    <div class="bsimgforwp-card-body">
+                        <div class="bsimgforwp-radio-group">
+                            <label class="bsimgforwp-radio-item">
                                 <input type="radio" name="<?php echo esc_attr(self::OPTION_KEY); ?>[use_private]" value="0" <?php checked(!$use_private); ?> />
-                                <?php _e('公共上传', 'bsimgforwp'); ?>
+                                <span>
+                                    <span class="bsimgforwp-radio-label"><?php esc_html_e('公共上传', 'bsimgforwp'); ?></span>
+                                    <span class="bsimgforwp-radio-desc"><?php esc_html_e('使用公共接口，无需 API Key；需在图床后台开启“公共上传”。', 'bsimgforwp'); ?></span>
+                                </span>
                             </label>
-                            <p class="description"><?php _e('使用公共接口，无需 API Key；需在图床后台开启“公共上传”。', 'bsimgforwp'); ?></p>
-                            <label style="display:block; margin-top:8px;">
+                            <label class="bsimgforwp-radio-item">
                                 <input type="radio" name="<?php echo esc_attr(self::OPTION_KEY); ?>[use_private]" value="1" <?php checked($use_private); ?> />
-                                <?php _e('私有上传（API Key）', 'bsimgforwp'); ?>
+                                <span>
+                                    <span class="bsimgforwp-radio-label"><?php esc_html_e('私有上传（API Key）', 'bsimgforwp'); ?></span>
+                                    <span class="bsimgforwp-radio-desc"><?php esc_html_e('使用私有接口，需在图床后台创建 API Key 并在下方填写。', 'bsimgforwp'); ?></span>
+                                </span>
                             </label>
-                            <p class="description"><?php _e('使用私有接口，需在图床后台创建 API Key 并在下方填写。', 'bsimgforwp'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">
-                            <label for="bsimgforwp_api_key"><?php _e('API Key', 'bsimgforwp'); ?></label>
-                        </th>
-                        <td>
-                            <input name="<?php echo esc_attr(self::OPTION_KEY); ?>[api_key]" id="bsimgforwp_api_key"
-                                   type="password" value="<?php echo esc_attr($api_key); ?>"
-                                   class="regular-text" autocomplete="off"/>
-                            <p class="description"><?php _e('选择“私有上传”时必填。在图床后台 → API 管理中创建。留空则保留已保存的 Key。', 'bsimgforwp'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">
-                            <label for="bsimgforwp_bucket_id"><?php _e('储存桶 ID', 'bsimgforwp'); ?></label>
-                        </th>
-                        <td>
-                            <input name="<?php echo esc_attr(self::OPTION_KEY); ?>[bucket_id]" id="bsimgforwp_bucket_id"
-                                   type="text" value="<?php echo esc_attr($bucket_id); ?>"
-                                   class="regular-text" placeholder="default"/>
-                            <p class="description"><?php _e('可选。图床多储存桶时填写，留空使用图床默认储存桶。', 'bsimgforwp'); ?></p>
-                        </td>
-                    </tr>
-                </table>
-                <?php submit_button(); ?>
-                <p class="submit">
-                    <?php
-                    $test_url = wp_nonce_url(
-                        add_query_arg('action', 'bsimgforwp_test', admin_url('admin.php')),
-                        'bsimgforwp_test'
-                    );
-                    ?>
-                    <a href="<?php echo esc_url($test_url); ?>" class="button button-secondary"><?php esc_html_e('测试图床连接', 'bsimgforwp'); ?></a>
-                    <span class="description" style="margin-left:8px;"><?php esc_html_e('将上传一张最小测试图以验证配置。', 'bsimgforwp'); ?></span>
-                </p>
+                        </div>
+                        <table class="form-table" style="margin-top:16px;">
+                            <tr>
+                                <th scope="row">
+                                    <label for="bsimgforwp_api_key"><?php esc_html_e('API Key', 'bsimgforwp'); ?></label>
+                                </th>
+                                <td>
+                                    <input name="<?php echo esc_attr(self::OPTION_KEY); ?>[api_key]" id="bsimgforwp_api_key"
+                                           type="password" value="<?php echo esc_attr($api_key); ?>"
+                                           class="regular-text" autocomplete="off"/>
+                                    <p class="description"><?php esc_html_e('选择“私有上传”时必填。在图床后台 → API 管理中创建。留空则保留已保存的 Key。', 'bsimgforwp'); ?></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">
+                                    <label for="bsimgforwp_bucket_id"><?php esc_html_e('储存桶 ID', 'bsimgforwp'); ?></label>
+                                </th>
+                                <td>
+                                    <input name="<?php echo esc_attr(self::OPTION_KEY); ?>[bucket_id]" id="bsimgforwp_bucket_id"
+                                           type="text" value="<?php echo esc_attr($bucket_id); ?>"
+                                           class="regular-text" placeholder="default"/>
+                                    <p class="description"><?php esc_html_e('可选。图床多储存桶时填写，留空使用图床默认储存桶。', 'bsimgforwp'); ?></p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bsimgforwp-card">
+                    <div class="bsimgforwp-card-body">
+                        <div class="bsimgforwp-actions">
+                            <?php submit_button(__('保存设置', 'bsimgforwp'), 'primary', 'submit', false); ?>
+                            <a href="<?php echo esc_url($test_url); ?>" class="button button-secondary"><?php esc_html_e('测试图床连接', 'bsimgforwp'); ?></a>
+                            <span class="bsimgforwp-test-desc"><?php esc_html_e('将上传一张最小测试图以验证配置。', 'bsimgforwp'); ?></span>
+                        </div>
+                    </div>
+                </div>
             </form>
 
-            <hr/>
-            <h2><?php _e('说明', 'bsimgforwp'); ?></h2>
-            <ul style="list-style:disc; margin-left:20px;">
-                <li><?php _e('新上传的图片会自动同步到图床，并在前台使用图床链接显示。', 'bsimgforwp'); ?></li>
-                <li><?php _e('已存在的媒体库附件不会自动迁移；如需迁移，可重新上传或使用第三方工具。', 'bsimgforwp'); ?></li>
-                <li><?php _e('图床需允许跨域访问，否则部分主题/编辑器的图片可能无法正常显示。', 'bsimgforwp'); ?></li>
-            </ul>
+            <div class="bsimgforwp-card">
+                <div class="bsimgforwp-card-header"><?php esc_html_e('使用说明', 'bsimgforwp'); ?></div>
+                <div class="bsimgforwp-card-body">
+                    <ul class="bsimgforwp-help-list">
+                        <li><?php esc_html_e('新上传的图片会自动同步到图床，并在前台使用图床链接显示。', 'bsimgforwp'); ?></li>
+                        <li><?php esc_html_e('已存在的媒体库附件不会自动迁移；如需迁移，可重新上传或使用第三方工具。', 'bsimgforwp'); ?></li>
+                        <li><?php esc_html_e('图床需允许跨域访问，否则部分主题/编辑器的图片可能无法正常显示。', 'bsimgforwp'); ?></li>
+                    </ul>
+                </div>
+            </div>
+
+            <p class="bsimgforwp-footer">BSImg 图床 for WordPress <?php echo esc_html(BSIMGFORWP_VERSION); ?></p>
         </div>
         <?php
     }
