@@ -89,23 +89,29 @@ _✨ 简单易用的个人图床系统，基于 Nuxt.js 构建 ✨_
 ## 快速开始
 
 ### Docker Compose 部署（推荐）
-
+1. **克隆项目**
 ```bash
-# 1. 创建 bsimgbed 目录
-mkdir -p /root/bsimgbed && cd /root/bsimgbed
+cd /opt
+git clone https://github.com/ilolioo/bsimgbed.git
+cd /opt/bsimgbed
+```
 
+2. **构建并启动服务**
+```bash
+docker compose up -d --build
+```
+3. **访问系统**
+- `http://localhost:5198`
 
-# 2. 下载docker-compose.yml文件
-wget https://raw.githubusercontent.com/ilolioo/bsimgbed/refs/heads/main/docker-compose.yml
-
-# 使用 docker-compose
-docker compose up -d
+5. **停止服务**
+```bash
+docker compose down
 ```
 
 ### Docker run部署
 
 ```bash
-docker run -d --name bsimgbed -p 3000:3000 -v ./db:/app/db -v ./uploads:/app/uploads ghcr.io/ilolioo/bsimgbed:latest
+docker run -d --name bsimgbed -p 5198:3000 -v ./db:/app/db -v ./uploads:/app/uploads ghcr.io/ilolioo/bsimgbed:latest
 ```
 
 
