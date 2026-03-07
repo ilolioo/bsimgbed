@@ -16,7 +16,10 @@ export default defineEventHandler(async (event) => {
     const notifConfig = await getNotificationConfig()
     const emailVerification = !!notifConfig.registrationEmailVerification
 
-    if (!registrationEnabled) {
+    const adminCount = await db.users.count({ role: 'admin' })
+    const needSetup = adminCount === 0
+    // 无管理员时允许通过本接口创建首个管理员；否则需开启注册
+    if (!needSetup && !registrationEnabled) {
       throw createError({
         statusCode: 403,
         message: '注册已关闭，请联系管理员'
@@ -103,7 +106,7 @@ export default defineEventHandler(async (event) => {
       email: emailStr,
       password: hashedPassword,
       passwordChanged: false,
-      role: 'user',
+      role: needSetup ? 'admin' : 'user',
       disabled: false,
       createdAt: now,
       updatedAt: now

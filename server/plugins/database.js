@@ -4,34 +4,16 @@ import crypto from 'crypto'
 import { v4 as uuidv4 } from 'uuid'
 import { getDefaultContentSafetyConfig } from '../utils/moderation.js'
 
-// 初始化默认管理员用户
+// 不再创建默认管理员；无管理员时由用户访问 /setup 页手动注册首个管理员
 async function initDefaultUser() {
-  const existingUser = await db.users.findOne({ username: 'baisiimg' })
-  if (!existingUser) {
-    const hashedPassword = await bcrypt.hash('baisiimg', 10)
-    await db.users.insert({
-      _id: uuidv4(),
-      username: 'baisiimg',
-      password: hashedPassword,
-      passwordChanged: false,
-      role: 'admin',
-      disabled: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    })
-    console.log('[Database] 默认管理员用户已创建 (用户名: baisiimg, 密码: baisiimg)')
-  } else {
+  const legacyUser = await db.users.findOne({ username: 'baisiimg' })
+  if (legacyUser) {
     const updates = {}
-    if (existingUser.role === undefined) {
-      updates.role = 'admin'
-    }
-    if (existingUser.disabled === undefined) {
-      updates.disabled = false
-    }
+    if (legacyUser.role === undefined) updates.role = 'admin'
+    if (legacyUser.disabled === undefined) updates.disabled = false
     if (Object.keys(updates).length) {
       updates.updatedAt = new Date().toISOString()
-      await db.users.update({ _id: existingUser._id }, { $set: updates })
-      if (updates.role) console.log('[Database] 已为现有用户 baisiimg 设置 role: admin')
+      await db.users.update({ _id: legacyUser._id }, { $set: updates })
     }
   }
 }
@@ -73,11 +55,11 @@ async function initJwtSecret() {
   }
 }
 
-// 初始化默认 ApiKey（归属默认管理员）
+// 初始化默认 ApiKey（归属任意一名管理员，无管理员则跳过）
 async function initDefaultApiKey() {
   const existingKey = await db.apikeys.findOne({ isDefault: true })
   if (!existingKey) {
-    const adminUser = await db.users.findOne({ username: 'baisiimg' })
+    const adminUser = await db.users.findOne({ role: 'admin' })
     const adminId = adminUser ? adminUser._id : null
     const apiKey = `sk-${uuidv4().replace(/-/g, '')}`
     await db.apikeys.insert({
@@ -194,9 +176,9 @@ async function createIndexes() {
   console.log('[Database] 数据库索引已创建')
 }
 
-// 多用户迁移：为已有 apikeys、images 补全 userId（归属默认管理员）
+// 多用户迁移：为已有 apikeys、images 补全 userId（归属任意管理员）
 async function migrateMultiUser() {
-  const adminUser = await db.users.findOne({ username: 'baisiimg' })
+  const adminUser = await db.users.findOne({ role: 'admin' })
   if (!adminUser) return
 
   const adminId = adminUser._id
