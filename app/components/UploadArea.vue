@@ -109,7 +109,7 @@
           </label>
           <span
             v-if="!showOnHomepage"
-            class="text-xs text-amber-600 dark:text-amber-400"
+            class="text-xs text-amber-700 dark:text-amber-300 font-medium"
           >
             未勾选时，仅您本人在首页可见
           </span>

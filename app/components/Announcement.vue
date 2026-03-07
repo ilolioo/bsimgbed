@@ -14,14 +14,14 @@
           <!-- 标题 -->
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <Icon name="heroicons:megaphone" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
+              <Icon name="heroicons:megaphone" class="w-5 h-5 text-primary-500 dark:text-primary-400 shrink-0" />
               公告
             </h3>
             <button
               @click="close"
-              class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             >
-              <Icon name="heroicons:x-mark" class="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <Icon name="heroicons:x-mark" class="w-5 h-5 text-gray-500 dark:text-gray-400 shrink-0" />
             </button>
           </div>
 
@@ -58,7 +58,7 @@
     >
       <div class="flex items-center justify-between gap-4">
         <div class="flex items-center gap-3 flex-1 min-w-0">
-          <Icon name="heroicons:megaphone" class="w-5 h-5 flex-shrink-0 text-gray-700 dark:text-gray-200" />
+          <Icon name="heroicons:megaphone" class="w-5 h-5 flex-shrink-0 text-gray-700 dark:text-gray-200 shrink-0" />
           <div class="prose prose-sm prose-gray-900 dark:prose-invert max-w-none flex-1 min-w-0 truncate-content text-gray-900 dark:text-white" v-html="content"></div>
         </div>
         <button
@@ -66,7 +66,7 @@
           class="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-400/30 dark:hover:bg-gray-500/30 rounded-lg transition-colors text-gray-700 dark:text-gray-200"
           title="关闭公告"
         >
-          <Icon name="heroicons:x-mark" class="w-5 h-5 text-gray-700 dark:text-gray-200" />
+          <Icon name="heroicons:x-mark" class="w-5 h-5 text-gray-700 dark:text-gray-200 shrink-0" />
         </button>
       </div>
     </div>

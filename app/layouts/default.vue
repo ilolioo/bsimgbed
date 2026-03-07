@@ -269,6 +269,16 @@ async function handleLogout() {
   @apply bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400;
 }
 
+/* 顶栏图标在黑夜主题下正确继承颜色（含移动端） */
+.nav-link :deep(svg),
+.nav-link :deep(.icon),
+.nav-link :deep(span) {
+  color: inherit;
+}
+.nav-link :deep(svg) {
+  fill: currentColor;
+}
+
 /* 隐藏滚动条但保持滚动功能 */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* IE and Edge */
