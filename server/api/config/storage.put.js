@@ -23,10 +23,20 @@ export default defineEventHandler(async (event) => {
     let nextBuckets = currentBuckets
 
     if (Array.isArray(bodyBuckets) && bodyBuckets.length > 0) {
+      const usedIds = new Set()
       nextBuckets = bodyBuckets.map(b => {
-        let id = b.id || b._id
+        let id = (b.id ?? b._id ?? '').toString().trim()
         const existing = id ? currentBuckets.find(x => x.id === id) : null
-        if (!id || id.toString().startsWith('new-')) id = existing?.id || uuidv4()
+        if (!id || id.startsWith('new-')) {
+          id = existing?.id || uuidv4()
+        } else {
+          // 自定义 ID：仅保留英文、数字、连字符、下划线，避免路径问题
+          const sanitized = id.replace(/[^a-zA-Z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+          if (!sanitized) id = uuidv4()
+          else id = sanitized
+        }
+        if (usedIds.has(id)) id = uuidv4()
+        usedIds.add(id)
         const driver = (b.driver || (existing?.driver) || 'local').toLowerCase()
         if (!['local', 'webdav', 'telegram'].includes(driver)) {
           throw createError({ statusCode: 400, message: `储存桶 ${b.name || id} 无效的驱动` })

@@ -345,6 +345,21 @@
               <!-- 编辑表单（可折叠） -->
               <div v-if="editingBucketId === b.id" class="px-4 pb-4 pt-0">
                 <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800/50 p-4 space-y-4">
+                  <!-- 储存桶 ID：仅新建时可编辑 -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">储存桶 ID</label>
+                    <input
+                      v-model="b.id"
+                      type="text"
+                      class="input w-full font-mono"
+                      placeholder="如 backup、images，留空则自动生成"
+                      :disabled="!String(b.id).startsWith('new-')"
+                      maxlength="64"
+                    />
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {{ String(b.id).startsWith('new-') ? '仅新建时可设置，保存后不可修改；建议使用英文、数字、连字符' : '保存后不可修改' }}
+                    </p>
+                  </div>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">名称</label>
@@ -660,7 +675,7 @@ async function saveStorageConfig() {
   savingStorage.value = true
   try {
     const buckets = storageBuckets.value.map(b => ({
-      id: b.id.startsWith('new-') ? undefined : b.id,
+      id: (b.id && String(b.id).trim()) || undefined,
       name: b.name,
       driver: b.driver,
       sizeLimit: (b.sizeLimitMB || 1024) * 1024 * 1024,
