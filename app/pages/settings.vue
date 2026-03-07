@@ -580,6 +580,15 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">仅支持英文、数字、下划线</p>
               </div>
               <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">邮箱（选填，可用于登录）</label>
+                <input
+                  v-model="editForm.email"
+                  type="email"
+                  class="input w-full"
+                  placeholder="留空表示不设置邮箱"
+                />
+              </div>
+              <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">角色</label>
                 <select v-model="editForm.role" class="input w-full">
                   <option value="user">普通用户</option>
@@ -703,7 +712,7 @@ const showCreateUserModal = ref(false)
 const newUserForm = reactive({ username: '', password: '', email: '' })
 const creatingUser = ref(false)
 const editingUser = ref(null)
-const editForm = reactive({ username: '', role: 'user', disabled: false, newPassword: '' })
+const editForm = reactive({ username: '', email: '', role: 'user', disabled: false, newPassword: '' })
 const savingEditUser = ref(false)
 const route = useRoute()
 const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : 'app')
@@ -1030,6 +1039,7 @@ function closeCreateUserModal() {
 function openEditUser(u) {
   editingUser.value = u
   editForm.username = u.username
+  editForm.email = u.email || ''
   editForm.role = u.role || 'user'
   editForm.disabled = !!u.disabled
   editForm.newPassword = ''
@@ -1054,10 +1064,16 @@ async function saveEditUser() {
     toastStore.error('密码不能为纯数字')
     return
   }
+  const emailStr = editForm.email ? String(editForm.email).trim().toLowerCase() : ''
+  if (emailStr && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr)) {
+    toastStore.error('邮箱格式不正确')
+    return
+  }
   savingEditUser.value = true
   try {
     const body = {
       username: editForm.username.trim(),
+      email: emailStr || undefined,
       role: editForm.role,
       disabled: editForm.disabled
     }

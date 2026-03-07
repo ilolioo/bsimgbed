@@ -35,14 +35,14 @@
           项目信息
         </h2>
         <div class="space-y-4">
-          <div class="flex items-center gap-3">
-            <Icon name="simple-icons:github" class="w-5 h-5 text-gray-800 dark:text-gray-200" />
-            <span class="text-gray-700 dark:text-gray-300">项目地址:</span>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+            <Icon name="simple-icons:github" class="w-5 h-5 text-gray-800 dark:text-gray-200 shrink-0" />
+            <span class="text-gray-700 dark:text-gray-300 shrink-0">项目地址:</span>
             <a
               href="https://github.com/ilolioo/bsimgbed"
               target="_blank"
               rel="noopener noreferrer"
-              class="text-primary-600 dark:text-primary-400 hover:underline"
+              class="text-primary-600 dark:text-primary-400 hover:underline break-all min-w-0"
             >
               https://github.com/ilolioo/bsimgbed
             </a>

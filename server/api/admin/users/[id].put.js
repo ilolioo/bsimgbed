@@ -67,6 +67,32 @@ export default defineEventHandler(async (event) => {
       updates.role = role
     }
 
+    if (body.email !== undefined) {
+      const emailStr = String(body.email).trim().toLowerCase()
+      if (emailStr === '') {
+        // 留空表示不修改，保持原邮箱不变
+      } else {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(emailStr)) {
+          throw createError({
+            statusCode: 400,
+            message: '邮箱格式不正确'
+          })
+        }
+        if (emailStr !== (target.email || '')) {
+          const existingByEmail = await db.users.findOne({ email: emailStr })
+          if (existingByEmail && existingByEmail._id !== id) {
+            throw createError({
+              statusCode: 400,
+              message: '该邮箱已被其他用户使用'
+            })
+          }
+        }
+        updates.email = emailStr
+        updates.emailVerified = true
+      }
+    }
+
     if (body.disabled !== undefined) {
       if (isSelf && body.disabled === true) {
         throw createError({
