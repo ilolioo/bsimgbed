@@ -130,7 +130,8 @@ async function initAppSettings() {
       key: 'appSettings',
       value: {
         appName: 'bsimgbed',                    // 应用名称
-        appLogo: ''                             // 应用 Logo URL
+        appLogo: '',                             // 应用 Logo URL
+        favicon: ''                              // 浏览器标签页图标，留空用默认
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()

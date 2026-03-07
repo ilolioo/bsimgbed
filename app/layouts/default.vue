@@ -182,6 +182,7 @@ const toastStore = useToastStore()
 // 应用配置（与登录页一致：无配置时显示默认图标，不强制 fallback 到 favicon）
 const appName = computed(() => settingsStore.appSettings.appName || 'bsimgbed')
 const appLogo = computed(() => settingsStore.appSettings.appLogo || '')
+const appFavicon = computed(() => settingsStore.appSettings.favicon || '')
 const headerLogoError = ref(false)
 const backgroundUrl = computed(() => settingsStore.appSettings.backgroundUrl || '')
 const backgroundBlur = computed(() => settingsStore.appSettings.backgroundBlur || 0)
@@ -214,9 +215,9 @@ function updateFavicon(url) {
   document.head.appendChild(link)
 }
 
-// 监听 appLogo 变化，立即更新 favicon（无 Logo 时用默认 favicon）
-watch(appLogo, (newLogo) => {
-  updateFavicon(newLogo || '/favicon.png')
+// 监听 favicon / appLogo 变化，立即更新 favicon：优先使用设置的 favicon，否则 Logo，否则默认
+watch([appFavicon, appLogo], ([favicon, logo]) => {
+  updateFavicon(favicon || logo || '/favicon.png')
   headerLogoError.value = false
 }, { immediate: true })
 

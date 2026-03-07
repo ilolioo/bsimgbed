@@ -6,6 +6,7 @@ export const useSettingsStore = defineStore('settings', {
     appSettings: {
       appName: 'bsimgbed',
       appLogo: '',
+      favicon: '',
       backgroundUrl: '',
       backgroundBlur: 0,
       deletedImagesCount: 0,
@@ -48,6 +49,7 @@ export const useSettingsStore = defineStore('settings', {
           // 只更新公共字段，保留其他字段
           this.appSettings.appName = response.data.appName
           this.appSettings.appLogo = response.data.appLogo
+          this.appSettings.favicon = response.data.favicon || ''
           this.appSettings.backgroundUrl = response.data.backgroundUrl
           this.appSettings.backgroundBlur = response.data.backgroundBlur
           this.appSettings.announcement = response.data.announcement || {
