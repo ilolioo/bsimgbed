@@ -3,7 +3,7 @@
  * Plugin Name: BSImg 图床 for WordPress
  * Plugin URI: https://github.com/ilolioo/bsimgbed
  * Description: 将 WordPress 媒体库上传的图片接管到 BSImg 图床（bsimgbed），减轻站点存储压力并统一图片管理。
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: BSImg
  * Author URI: https://github.com/ilolioo/bsimgbed
  * License: Apache-2.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('BSIMGFORWP_VERSION', '1.1.0');
+define('BSIMGFORWP_VERSION', '1.2.0');
 define('BSIMGFORWP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('BSIMGFORWP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -29,14 +29,16 @@ function bsimgforwp_init() {
     $uploader = BSImgBed_Uploader::get_instance();
     $settings = BSImgBed_Settings::get_instance();
 
-    // 新上传的附件：上传到图床并记录 URL
+    // 新上传的附件：上传到图床并记录 URL（含「从 URL 导入」）
     add_filter('wp_handle_upload', array($uploader, 'handle_upload'), 10, 2);
+    add_filter('wp_handle_sideload', array($uploader, 'handle_sideload'), 10, 2);
     add_action('add_attachment', array($uploader, 'on_add_attachment'));
     // 附件 URL 使用图床地址
     add_filter('wp_get_attachment_url', array($uploader, 'filter_attachment_url'), 10, 2);
     add_filter('wp_get_attachment_image_src', array($uploader, 'filter_attachment_image_src'), 10, 4);
-    // 确保响应式图片等也使用图床 URL
     add_filter('wp_calculate_image_srcset', array($uploader, 'filter_srcset'), 10, 5);
+    // REST API（古腾堡等）返回的附件数据使用图床 URL
+    add_filter('rest_prepare_attachment', array($uploader, 'filter_rest_attachment'), 10, 3);
 }
 add_action('plugins_loaded', 'bsimgforwp_init');
 

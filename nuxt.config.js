@@ -1,3 +1,9 @@
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+
+const packageJson = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf-8'))
+const appVersion = packageJson.version || '1.0.0'
+
 export default defineNuxtConfig({
   ssr: false, // 关闭服务端渲染，变成纯 SPA
 
@@ -65,7 +71,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: ''
+      apiBase: '',
+      appVersion
     }
   }
 })

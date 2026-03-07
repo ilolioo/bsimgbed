@@ -77,6 +77,7 @@
               @select="imagesStore.toggleSelect(image.id)"
               @delete="confirmDelete(image)"
               @contextmenu="handleImageContextMenu"
+              @load-error="handleImageLoadError(image)"
             />
           </div>
         </div>
@@ -246,7 +247,7 @@ const settingsStore = useSettingsStore()
 const toastStore = useToastStore()
 
 // 游客未勾选「上传后展示」的图片：存本地，1 天内在首页可见，1 天后仅管理员可见
-const { list: guestPrivateList, load: loadGuestPrivateUploads } = useGuestPrivateUploads()
+const { list: guestPrivateList, load: loadGuestPrivateUploads, removeByUrl: removeGuestPrivateByUrl } = useGuestPrivateUploads()
 
 // 将本地未展示记录转为与 API 一致的图片结构，供卡片与查看器使用
 function guestItemToImage(item) {
@@ -382,6 +383,13 @@ function openViewer(image) {
 function closeViewer() {
   viewerVisible.value = false
   viewerImage.value = null
+}
+
+// 图片加载失败（如本机列表中的图片已被管理员删除）：从本地记录移除，不再展示
+function handleImageLoadError(image) {
+  if (image?.id && String(image.id).startsWith('local-') && image.url) {
+    removeGuestPrivateByUrl(image.url)
+  }
 }
 
 // 确认删除

@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
       nextBuckets = bodyBuckets.map(b => {
         let id = (b.id ?? b._id ?? '').toString().trim()
         const existing = id ? currentBuckets.find(x => x.id === id) : null
-        if (!id || id.startsWith('new-')) {
+        if (!id || id.startsWith('bs-')) {
           id = existing?.id || uuidv4()
         } else {
           // 自定义 ID：仅保留英文、数字、连字符、下划线，避免路径问题

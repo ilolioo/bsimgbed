@@ -26,6 +26,7 @@ class BSImgBed_Settings {
         add_action('admin_init', array($this, 'register_settings'));
         add_filter('plugin_action_links_' . plugin_basename(BSIMGFORWP_PLUGIN_DIR . 'bsimgforwp.php'), array($this, 'plugin_links'));
         add_action('admin_notices', array($this, 'maybe_show_notices'));
+        add_action('admin_init', array($this, 'handle_test_connection'));
     }
 
     public function add_menu() {
@@ -68,6 +69,48 @@ class BSImgBed_Settings {
         if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
             echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('BSImg 图床设置已保存。', 'bsimgforwp') . '</p></div>';
         }
+        if (isset($_GET['bsimgforwp_test']) && $_GET['bsimgforwp_test'] === 'ok') {
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('图床连接测试成功。', 'bsimgforwp') . '</p></div>';
+        }
+        if (isset($_GET['bsimgforwp_test']) && $_GET['bsimgforwp_test'] === 'fail') {
+            $msg = isset($_GET['message']) ? sanitize_text_field(wp_unslash($_GET['message'])) : __('图床连接测试失败。', 'bsimgforwp');
+            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__('图床连接测试失败：', 'bsimgforwp') . ' ' . esc_html($msg) . '</p></div>';
+        }
+    }
+
+    /**
+     * 处理「测试连接」请求：上传一张最小测试图到图床
+     */
+    public function handle_test_connection() {
+        if (!isset($_GET['action']) || $_GET['action'] !== 'bsimgforwp_test' || !current_user_can('manage_options')) {
+            return;
+        }
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'bsimgforwp_test')) {
+            wp_die(esc_html__('安全校验失败。', 'bsimgforwp'));
+        }
+        $uploader = BSImgBed_Uploader::get_instance();
+        $opts = get_option(self::OPTION_KEY, array());
+        $base_url = isset($opts['base_url']) ? trim($opts['base_url']) : '';
+        $redirect = admin_url('options-general.php?page=' . self::PAGE_SLUG);
+        if (empty($base_url)) {
+            wp_safe_redirect(add_query_arg(array('bsimgforwp_test' => 'fail', 'message' => urlencode(__('请先填写图床地址并保存。', 'bsimgforwp'))), $redirect));
+            exit;
+        }
+        // 最小 1x1 透明 GIF（约 43 字节）
+        $gif = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
+        $tmp = wp_tempnam('bsimgforwp');
+        if (!$tmp || file_put_contents($tmp, $gif) === false) {
+            wp_safe_redirect(add_query_arg(array('bsimgforwp_test' => 'fail', 'message' => urlencode(__('无法创建临时文件。', 'bsimgforwp'))), $redirect));
+            exit;
+        }
+        $result = $uploader->upload_to_bsimgbed($tmp, 'test.gif');
+        @unlink($tmp);
+        if (is_wp_error($result)) {
+            wp_safe_redirect(add_query_arg(array('bsimgforwp_test' => 'fail', 'message' => urlencode($result->get_error_message())), $redirect));
+            exit;
+        }
+        wp_safe_redirect(add_query_arg('bsimgforwp_test', 'ok', $redirect));
+        exit;
     }
 
     public function plugin_links($links) {
@@ -143,6 +186,16 @@ class BSImgBed_Settings {
                     </tr>
                 </table>
                 <?php submit_button(); ?>
+                <p class="submit">
+                    <?php
+                    $test_url = wp_nonce_url(
+                        add_query_arg('action', 'bsimgforwp_test', admin_url('admin.php')),
+                        'bsimgforwp_test'
+                    );
+                    ?>
+                    <a href="<?php echo esc_url($test_url); ?>" class="button button-secondary"><?php esc_html_e('测试图床连接', 'bsimgforwp'); ?></a>
+                    <span class="description" style="margin-left:8px;"><?php esc_html_e('将上传一张最小测试图以验证配置。', 'bsimgforwp'); ?></span>
+                </p>
             </form>
 
             <hr/>

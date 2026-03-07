@@ -47,5 +47,16 @@ export function useGuestPrivateUploads() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed))
   }
 
-  return { list, load, append }
+  /**
+   * 按 URL 移除一条记录（如图片已被管理员删除，加载失败时从本机列表移除，避免继续展示）
+   */
+  function removeByUrl(url) {
+    if (typeof window === 'undefined' || !url) return
+    const next = list.value.filter((item) => item.url !== url)
+    if (next.length === list.value.length) return
+    list.value = next
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+  }
+
+  return { list, load, append, removeByUrl }
 }

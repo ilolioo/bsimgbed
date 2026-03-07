@@ -166,6 +166,17 @@ class BSImgBed_Uploader {
     }
 
     /**
+     * 处理「从 URL 导入」：同步到图床并记录，供 add_attachment 写入 meta
+     * 第二个参数为 WordPress 的 $overrides，此处未使用
+     */
+    public function handle_sideload($upload, $overrides = array()) {
+        if (empty($upload['file']) || !$this->is_ready()) {
+            return $upload;
+        }
+        return $this->handle_upload($upload, 'upload');
+    }
+
+    /**
      * 附件创建后，将图床 URL 写入 post meta
      */
     public function on_add_attachment($attachment_id) {
@@ -240,5 +251,19 @@ class BSImgBed_Uploader {
             }
         }
         return $sources;
+    }
+
+    /**
+     * REST API 附件响应中使用图床 URL（古腾堡、APP 等）
+     */
+    public function filter_rest_attachment($response, $post, $request) {
+        if (!is_object($response) || !isset($response->data['source_url'])) {
+            return $response;
+        }
+        $bsimg_url = get_post_meta($post->ID, self::META_KEY, true);
+        if (is_string($bsimg_url) && $bsimg_url !== '') {
+            $response->data['source_url'] = $bsimg_url;
+        }
+        return $response;
     }
 }

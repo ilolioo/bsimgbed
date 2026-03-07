@@ -353,11 +353,11 @@
                       type="text"
                       class="input w-full font-mono"
                       placeholder="如 backup、images，留空则自动生成"
-                      :disabled="!String(b.id).startsWith('new-')"
+                      :disabled="!String(b.id).startsWith('bs-')"
                       maxlength="64"
                     />
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {{ String(b.id).startsWith('new-') ? '仅新建时可设置，保存后不可修改；建议使用英文、数字、连字符' : '保存后不可修改' }}
+                      {{ String(b.id).startsWith('bs-') ? '仅新建时可设置，保存后不可修改；建议使用英文、数字、连字符' : '保存后不可修改' }}
                     </p>
                   </div>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -557,7 +557,7 @@ function formatSize(bytes) {
 }
 
 function addBucket() {
-  const id = 'new-' + Date.now()
+  const id = 'bs-' + Date.now()
   storageBuckets.value.push({
     id,
     name: '新储存桶',
