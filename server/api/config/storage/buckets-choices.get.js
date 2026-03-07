@@ -1,5 +1,5 @@
 import { getBucketsConfig } from '../../../utils/storage.js'
-import { extractToken, verifyToken } from '../../../utils/jwt.js'
+import { optionalAuthMiddleware } from '../../../utils/authMiddleware.js'
 
 /**
  * 获取当前用户可选的储存桶列表（用于首页上传下拉）
@@ -8,18 +8,13 @@ import { extractToken, verifyToken } from '../../../utils/jwt.js'
  */
 export default defineEventHandler(async (event) => {
   try {
+    await optionalAuthMiddleware(event)
+    const user = event.context.user
+    const isAdmin = user && user.role === 'admin'
+
     const { defaultId, buckets } = await getBucketsConfig()
     const list = buckets || []
     const defaultBucketId = defaultId || list[0]?.id || 'default'
-
-    let isAdmin = false
-    const token = extractToken(event)
-    if (token) {
-      try {
-        const user = await verifyToken(token)
-        isAdmin = !!user
-      } catch (_) {}
-    }
 
     let choices
     if (isAdmin) {

@@ -160,6 +160,29 @@
             </p>
           </div>
 
+          <div class="flex items-center gap-3">
+            <input
+              id="registrationEnabled"
+              v-model="appSettings.registrationEnabled"
+              type="checkbox"
+              class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+            />
+            <label for="registrationEnabled" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              允许开放注册（访客可在注册页自行注册账号）
+            </label>
+          </div>
+          <div class="flex items-center gap-3">
+            <input
+              id="registrationEmailVerification"
+              v-model="appSettings.registrationEmailVerification"
+              type="checkbox"
+              class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+            />
+            <label for="registrationEmailVerification" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              注册邮箱验证（开启后需填写邮箱，验证邮件中的链接后才能登录；需在「通知」中配置邮件）
+            </label>
+          </div>
+
           <div class="pt-4">
             <button type="submit" class="btn-primary" :disabled="savingApp">
               {{ savingApp ? '保存中...' : '保存设置' }}
@@ -447,6 +470,126 @@
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">账户设置</h2>
 
         <div class="space-y-6">
+          <!-- 用户管理（仅管理员在设置页可见，本页已受 admin 中间件保护） -->
+          <div v-if="authStore.isAdmin" class="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">用户管理</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">创建新用户，新用户角色为普通用户，仅能管理自己的图片与 API Key。</p>
+            <form @submit.prevent="createUser" class="flex flex-wrap gap-3 items-end mb-4">
+              <input
+                v-model="newUserForm.username"
+                type="text"
+                class="input w-40"
+                placeholder="用户名（至少3位）"
+              />
+              <input
+                v-model="newUserForm.password"
+                type="password"
+                class="input w-40"
+                placeholder="密码（至少6位）"
+              />
+              <button type="submit" class="btn-primary" :disabled="creatingUser">
+                {{ creatingUser ? '创建中...' : '创建用户' }}
+              </button>
+            </form>
+            <div v-if="userList.length" class="overflow-x-auto">
+              <table class="w-full text-sm text-left text-gray-700 dark:text-gray-300">
+                <thead>
+                  <tr class="border-b border-gray-200 dark:border-gray-600">
+                    <th class="py-2 pr-4">用户名</th>
+                    <th class="py-2 pr-4">角色</th>
+                    <th class="py-2 pr-4">状态</th>
+                    <th class="py-2">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="u in userList"
+                    :key="u.id"
+                    class="border-b border-gray-100 dark:border-gray-700"
+                  >
+                    <td class="py-2 pr-4 font-medium">{{ u.username }}</td>
+                    <td class="py-2 pr-4">{{ u.role === 'admin' ? '管理员' : '普通用户' }}</td>
+                    <td class="py-2 pr-4">
+                      <span v-if="u.disabled" class="text-amber-600 dark:text-amber-400">已禁用</span>
+                      <span v-else class="text-green-600 dark:text-green-400">正常</span>
+                    </td>
+                    <td class="py-2">
+                      <button
+                        type="button"
+                        class="text-primary-600 dark:text-primary-400 hover:underline mr-3"
+                        @click="openEditUser(u)"
+                      >
+                        编辑
+                      </button>
+                      <button
+                        v-if="u.id !== authStore.user?.id && u.username !== authStore.user?.username"
+                        type="button"
+                        class="text-amber-600 dark:text-amber-400 hover:underline"
+                        @click="toggleUserDisabled(u)"
+                      >
+                        {{ u.disabled ? '启用' : '禁用' }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- 编辑用户弹层 -->
+            <div
+              v-if="editingUser"
+              class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+              @click.self="editingUser = null"
+            >
+              <div class="card p-6 w-full max-w-md">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">编辑用户</h3>
+                <form @submit.prevent="saveEditUser" class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">用户名</label>
+                    <input
+                      v-model="editForm.username"
+                      type="text"
+                      class="input w-full"
+                      placeholder="至少3位"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">角色</label>
+                    <select v-model="editForm.role" class="input w-full">
+                      <option value="user">普通用户</option>
+                      <option value="admin">管理员</option>
+                    </select>
+                  </div>
+                  <div v-if="editingUser.id !== authStore.user?.id && editingUser.username !== authStore.user?.username" class="flex items-center gap-2">
+                    <input
+                      id="edit-disabled"
+                      v-model="editForm.disabled"
+                      type="checkbox"
+                      class="rounded border-gray-300 dark:border-gray-600 text-primary-600"
+                    />
+                    <label for="edit-disabled" class="text-sm text-gray-700 dark:text-gray-300">禁用账号</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">新密码（不填则不修改）</label>
+                    <input
+                      v-model="editForm.newPassword"
+                      type="password"
+                      class="input w-full"
+                      placeholder="留空保持原密码"
+                    />
+                  </div>
+                  <div class="flex gap-2 pt-2">
+                    <button type="submit" class="btn-primary" :disabled="savingEditUser">
+                      {{ savingEditUser ? '保存中...' : '保存' }}
+                    </button>
+                    <button type="button" class="btn-secondary" @click="editingUser = null">
+                      取消
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
           <!-- 修改用户名 -->
           <div>
             <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">修改用户名</h3>
@@ -503,7 +646,7 @@ import { useSettingsStore } from '~/stores/settings'
 import { useToastStore } from '~/stores/toast'
 
 definePageMeta({
-  middleware: 'auth'
+  middleware: ['auth', 'admin']
 })
 
 const authStore = useAuthStore()
@@ -517,6 +660,13 @@ const tabs = [
   { id: 'storage', label: '存储配置' },
   { id: 'account', label: '账户设置' }
 ]
+// 用户管理（仅管理员）
+const userList = ref([])
+const newUserForm = reactive({ username: '', password: '' })
+const creatingUser = ref(false)
+const editingUser = ref(null)
+const editForm = reactive({ username: '', role: 'user', disabled: false, newPassword: '' })
+const savingEditUser = ref(false)
 const activeTab = ref('app')
 
 // 应用设置
@@ -526,7 +676,9 @@ const appSettings = reactive({
   favicon: '',
   backgroundUrl: '',
   backgroundBlur: 0,
-  siteUrl: ''
+  siteUrl: '',
+  registrationEnabled: true,
+  registrationEmailVerification: false
 })
 const logoError = ref(false)
 const faviconError = ref(false)
@@ -621,6 +773,8 @@ async function saveAppSettings() {
       backgroundUrl: appSettings.backgroundUrl,
       backgroundBlur: appSettings.backgroundBlur,
       siteUrl: appSettings.siteUrl,
+      registrationEnabled: appSettings.registrationEnabled,
+      registrationEmailVerification: appSettings.registrationEmailVerification,
       announcement: announcementSettings
     })
 
@@ -794,10 +948,111 @@ async function updatePassword() {
   }
 }
 
+async function fetchUserList() {
+  if (!authStore.isAdmin) return
+  try {
+    const res = await $fetch('/api/admin/users', { headers: authStore.authHeader })
+    if (res.success && res.data) userList.value = res.data
+  } catch (_) {}
+}
+
+function openEditUser(u) {
+  editingUser.value = u
+  editForm.username = u.username
+  editForm.role = u.role || 'user'
+  editForm.disabled = !!u.disabled
+  editForm.newPassword = ''
+}
+
+async function saveEditUser() {
+  if (!editingUser.value) return
+  if (!editForm.username.trim() || editForm.username.trim().length < 3) {
+    toastStore.error('用户名至少 3 位')
+    return
+  }
+  savingEditUser.value = true
+  try {
+    const body = {
+      username: editForm.username.trim(),
+      role: editForm.role,
+      disabled: editForm.disabled
+    }
+    if (editForm.newPassword) body.newPassword = editForm.newPassword
+    const res = await $fetch(`/api/admin/users/${editingUser.value.id}`, {
+      method: 'PUT',
+      body,
+      headers: authStore.authHeader
+    })
+    if (res.success) {
+      toastStore.success('已更新')
+      editingUser.value = null
+      await fetchUserList()
+    } else {
+      toastStore.error(res.message || '更新失败')
+    }
+  } catch (e) {
+    toastStore.error(e.data?.message || '更新失败')
+  } finally {
+    savingEditUser.value = false
+  }
+}
+
+async function toggleUserDisabled(u) {
+  try {
+    const res = await $fetch(`/api/admin/users/${u.id}`, {
+      method: 'PUT',
+      body: { disabled: !u.disabled },
+      headers: authStore.authHeader
+    })
+    if (res.success) {
+      toastStore.success(u.disabled ? '已启用' : '已禁用')
+      await fetchUserList()
+    } else {
+      toastStore.error(res.message || '操作失败')
+    }
+  } catch (e) {
+    toastStore.error(e.data?.message || '操作失败')
+  }
+}
+
+async function createUser() {
+  const name = newUserForm.username.trim()
+  const pwd = newUserForm.password
+  if (!name || name.length < 3) {
+    toastStore.error('用户名至少 3 位')
+    return
+  }
+  if (!pwd || pwd.length < 6) {
+    toastStore.error('密码至少 6 位')
+    return
+  }
+  creatingUser.value = true
+  try {
+    const res = await $fetch('/api/admin/users', {
+      method: 'POST',
+      body: { username: name, password: pwd },
+      headers: authStore.authHeader
+    })
+    if (res.success) {
+      toastStore.success('用户已创建')
+      newUserForm.username = ''
+      newUserForm.password = ''
+      await fetchUserList()
+    } else {
+      toastStore.error(res.message || '创建失败')
+    }
+  } catch (e) {
+    toastStore.error(e.data?.message || '创建用户失败')
+  } finally {
+    creatingUser.value = false
+  }
+}
+
 // 初始化
 onMounted(async () => {
   await settingsStore.fetchAppSettings()
   await fetchStorageConfig()
+  await fetchUserList()
 
   // 同步到本地状态
   appSettings.appName = settingsStore.appSettings.appName || 'bsimgbed'
@@ -806,6 +1061,8 @@ onMounted(async () => {
   appSettings.backgroundUrl = settingsStore.appSettings.backgroundUrl || ''
   appSettings.backgroundBlur = settingsStore.appSettings.backgroundBlur || 0
   appSettings.siteUrl = settingsStore.appSettings.siteUrl || ''
+  appSettings.registrationEnabled = settingsStore.appSettings.registrationEnabled !== false
+  appSettings.registrationEmailVerification = !!settingsStore.appSettings.registrationEmailVerification
 
   const announcement = settingsStore.appSettings.announcement || {}
   announcementSettings.enabled = announcement.enabled || false

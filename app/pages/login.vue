@@ -20,7 +20,7 @@
               <Icon name="heroicons:photo" class="w-8 h-8 text-white" />
             </div>
           </div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">管理员登录</h1>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">登录</h1>
           <div class="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
             <p>{{ appName }} - 面向个人的图床应用</p>
           </div>
@@ -98,6 +98,10 @@
             <span>{{ loading ? '登录中...' : '登录' }}</span>
           </button>
         </form>
+        <p class="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+          没有账号？
+          <NuxtLink to="/register" class="text-primary-600 dark:text-primary-400 hover:underline">注册</NuxtLink>
+        </p>
       </div>
     </div>
   </div>
@@ -128,12 +132,16 @@ const form = ref({
 const loading = ref(false)
 const showPassword = ref(false)
 
-// 如果已登录，重定向到首页；否则拉取公共设置以显示应用名称
+const route = useRoute()
+
 onMounted(() => {
   if (authStore.isAuthenticated) {
     router.push('/')
   } else {
     settingsStore.fetchPublicAppSettings()
+    if (route.query.verified === '1') {
+      toastStore.success('邮箱验证成功，请登录')
+    }
   }
 })
 

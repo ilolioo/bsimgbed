@@ -1,24 +1,9 @@
 import db from '../../utils/db.js'
-import { verifyToken, extractToken } from '../../utils/jwt.js'
+import { authMiddleware } from '../../utils/authMiddleware.js'
 
 export default defineEventHandler(async (event) => {
   try {
-    // 验证登录
-    const token = extractToken(event)
-    if (!token) {
-      throw createError({
-        statusCode: 401,
-        message: '请先登录'
-      })
-    }
-
-    const user = await verifyToken(token)
-    if (!user) {
-      throw createError({
-        statusCode: 401,
-        message: 'Token 无效或已过期'
-      })
-    }
+    await authMiddleware(event)
 
     // 获取私有 API 配置
     const config = await db.settings.findOne({ key: 'privateApiConfig' })

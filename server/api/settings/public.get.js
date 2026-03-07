@@ -21,6 +21,8 @@ export default defineEventHandler(async (event) => {
           favicon: '',
           backgroundUrl: '',
           backgroundBlur: 0,
+          registrationEnabled: true,
+          registrationEmailVerification: false,
           announcement: defaultAnnouncement
         }
       }
@@ -34,6 +36,8 @@ export default defineEventHandler(async (event) => {
         favicon: settings.value.favicon || '',
         backgroundUrl: settings.value.backgroundUrl || '',
         backgroundBlur: settings.value.backgroundBlur || 0,
+        registrationEnabled: settings.value.registrationEnabled !== false,
+        registrationEmailVerification: !!settings.value.registrationEmailVerification,
         announcement: settings.value.announcement || defaultAnnouncement
       }
     }

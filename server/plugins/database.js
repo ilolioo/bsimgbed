@@ -14,10 +14,25 @@ async function initDefaultUser() {
       username: 'baisiimg',
       password: hashedPassword,
       passwordChanged: false,
+      role: 'admin',
+      disabled: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     })
     console.log('[Database] 默认管理员用户已创建 (用户名: baisiimg, 密码: baisiimg)')
+  } else {
+    const updates = {}
+    if (existingUser.role === undefined) {
+      updates.role = 'admin'
+    }
+    if (existingUser.disabled === undefined) {
+      updates.disabled = false
+    }
+    if (Object.keys(updates).length) {
+      updates.updatedAt = new Date().toISOString()
+      await db.users.update({ _id: existingUser._id }, { $set: updates })
+      if (updates.role) console.log('[Database] 已为现有用户 baisiimg 设置 role: admin')
+    }
   }
 }
 
@@ -58,10 +73,12 @@ async function initJwtSecret() {
   }
 }
 
-// 初始化默认 ApiKey
+// 初始化默认 ApiKey（归属默认管理员）
 async function initDefaultApiKey() {
   const existingKey = await db.apikeys.findOne({ isDefault: true })
   if (!existingKey) {
+    const adminUser = await db.users.findOne({ username: 'baisiimg' })
+    const adminId = adminUser ? adminUser._id : null
     const apiKey = `sk-${uuidv4().replace(/-/g, '')}`
     await db.apikeys.insert({
       _id: uuidv4(),
@@ -69,6 +86,7 @@ async function initDefaultApiKey() {
       name: '默认密钥',
       isDefault: true,
       enabled: true,
+      userId: adminId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     })
@@ -129,9 +147,11 @@ async function initAppSettings() {
       _id: uuidv4(),
       key: 'appSettings',
       value: {
-        appName: 'bsimgbed',                    // 应用名称
-        appLogo: '',                             // 应用 Logo URL
-        favicon: ''                              // 浏览器标签页图标，留空用默认
+        appName: 'bsimgbed',
+        appLogo: '',
+        favicon: '',
+        registrationEnabled: true,
+        registrationEmailVerification: false
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -144,17 +164,21 @@ async function initAppSettings() {
 async function createIndexes() {
   // 用户表索引
   await db.users.ensureIndex({ fieldName: 'username', unique: true })
+  await db.users.ensureIndex({ fieldName: 'email' })
+  await db.users.ensureIndex({ fieldName: 'emailVerificationToken' })
 
   // 图片表索引
   await db.images.ensureIndex({ fieldName: 'uuid', unique: true })
   await db.images.ensureIndex({ fieldName: 'uploadedAt' })
   await db.images.ensureIndex({ fieldName: 'isDeleted' })
   await db.images.ensureIndex({ fieldName: 'uploadedBy' })
+  await db.images.ensureIndex({ fieldName: 'userId' })
   await db.images.ensureIndex({ fieldName: 'moderationStatus' })  // 审核状态索引
   await db.images.ensureIndex({ fieldName: 'isNsfw' })            // 违规标记索引
 
   // ApiKey 表索引
   await db.apikeys.ensureIndex({ fieldName: 'key', unique: true })
+  await db.apikeys.ensureIndex({ fieldName: 'userId' })
 
   // 设置表索引
   await db.settings.ensureIndex({ fieldName: 'key', unique: true })
@@ -171,11 +195,53 @@ async function createIndexes() {
   console.log('[Database] 数据库索引已创建')
 }
 
+// 多用户迁移：为已有 apikeys、images 补全 userId（归属默认管理员）
+async function migrateMultiUser() {
+  const adminUser = await db.users.findOne({ username: 'baisiimg' })
+  if (!adminUser) return
+
+  const adminId = adminUser._id
+
+  const keysWithoutUserId = await db.apikeys.find({ userId: { $exists: false } })
+  if (keysWithoutUserId.length > 0) {
+    for (const k of keysWithoutUserId) {
+      await db.apikeys.update(
+        { _id: k._id },
+        { $set: { userId: adminId, updatedAt: new Date().toISOString() } }
+      )
+    }
+    console.log('[Database] 多用户迁移: 已为', keysWithoutUserId.length, '个 ApiKey 设置 userId')
+  }
+
+  const imagesWithoutUserId = await db.images.find({ userId: { $exists: false } })
+  if (imagesWithoutUserId.length > 0) {
+    for (const img of imagesWithoutUserId) {
+      await db.images.update(
+        { _id: img._id },
+        { $set: { userId: adminId } }
+      )
+    }
+    console.log('[Database] 多用户迁移: 已为', imagesWithoutUserId.length, '张图片设置 userId')
+  }
+
+  const usersWithoutDisabled = await db.users.find({ disabled: { $exists: false } })
+  if (usersWithoutDisabled.length > 0) {
+    for (const u of usersWithoutDisabled) {
+      await db.users.update(
+        { _id: u._id },
+        { $set: { disabled: false, updatedAt: new Date().toISOString() } }
+      )
+    }
+    console.log('[Database] 多用户迁移: 已为', usersWithoutDisabled.length, '个用户设置 disabled')
+  }
+}
+
 // 数据库初始化
 export async function initDatabase() {
   try {
     await createIndexes()
     await initDefaultUser()
+    await migrateMultiUser()
     await initJwtSecret()
     await initDefaultApiKey()
     await initPublicApiConfig()

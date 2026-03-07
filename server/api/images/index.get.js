@@ -1,44 +1,38 @@
 import db from '../../utils/db.js'
-import { verifyToken, extractToken } from '../../utils/jwt.js'
+import { optionalAuthMiddleware } from '../../utils/authMiddleware.js'
 
 export default defineEventHandler(async (event) => {
   try {
-    // 获取查询参数
+    await optionalAuthMiddleware(event)
+    const user = event.context.user
+
     const query = getQuery(event)
     const page = parseInt(query.page) || 1
     const limit = parseInt(query.limit) || 20
     const skip = (page - 1) * limit
 
-    // 检查用户是否已登录
-    const token = extractToken(event)
-    let isAdmin = false
-
-    if (token) {
-      try {
-        const user = await verifyToken(token)
-        isAdmin = !!user
-      } catch (e) {
-        // Token 无效，视为未登录
-      }
-    }
+    const isAdmin = user && user.role === 'admin'
 
     // 获取私有 API 配置，检查是否允许首页展示私有图片
     const privateConfig = await db.settings.findOne({ key: 'privateApiConfig' })
-    // 默认不显示私有图片，只有明确设置为 true 时才显示
     const showPrivateOnHomepage = privateConfig?.value?.showOnHomepage === true
 
-    // 构建查询条件
-    // 如果配置允许展示私有图片，则所有人都能看到私有图片
-    // 否则未登录用户只能看到公开上传的图片
     let queryCondition
     if (isAdmin) {
-      // 管理员可以看到所有非违规的图片（违规图片不在首页显示）
       queryCondition = { isDeleted: false, isNsfw: { $ne: true } }
-    } else if (showPrivateOnHomepage) {
-      // 配置开启时展示所有非违规图片
+    } else if (user && showPrivateOnHomepage) {
       queryCondition = { isDeleted: false, isNsfw: { $ne: true } }
+    } else if (user) {
+      // 普通用户：仅看公开图 + 自己上传的图
+      queryCondition = {
+        isDeleted: false,
+        isNsfw: { $ne: true },
+        $or: [
+          { uploadedByType: 'public' },
+          { userId: user.userId }
+        ]
+      }
     } else {
-      // 配置关闭且未登录时只展示公开的非违规图片
       queryCondition = {
         isDeleted: false,
         uploadedByType: 'public',

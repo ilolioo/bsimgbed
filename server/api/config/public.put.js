@@ -1,25 +1,11 @@
 import db from '../../utils/db.js'
-import { verifyToken, extractToken } from '../../utils/jwt.js'
+import { authMiddleware, requireAdmin } from '../../utils/authMiddleware.js'
 import { validateProviderConfig, getDefaultContentSafetyConfig } from '../../utils/moderation.js'
 
 export default defineEventHandler(async (event) => {
   try {
-    // 验证登录
-    const token = extractToken(event)
-    if (!token) {
-      throw createError({
-        statusCode: 401,
-        message: '请先登录'
-      })
-    }
-
-    const user = await verifyToken(token)
-    if (!user) {
-      throw createError({
-        statusCode: 401,
-        message: 'Token 无效或已过期'
-      })
-    }
+    await authMiddleware(event)
+    requireAdmin(event)
 
     // 获取请求体
     const body = await readBody(event)

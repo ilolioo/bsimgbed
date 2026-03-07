@@ -147,7 +147,8 @@ export default defineEventHandler(async (event) => {
     // 获取用户信息（通过 ApiKey 关联）
     const uploadedBy = keyDoc.name || 'API用户'
 
-    // 保存到数据库
+    const userId = keyDoc.userId || null
+
     const imageDoc = {
       _id: uuidv4(),
       uuid: imageUuid,
@@ -163,6 +164,7 @@ export default defineEventHandler(async (event) => {
       uploadedBy: uploadedBy,
       uploadedByType: 'private',
       apiKeyId: keyDoc._id,
+      userId,
       ip: clientIP,
       uploadedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()

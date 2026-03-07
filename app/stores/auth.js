@@ -134,6 +134,9 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     authHeader: (state) => {
       return state.token ? { 'Authorization': `Bearer ${state.token}` } : {}
+    },
+    isAdmin: (state) => {
+      return state.user?.role === 'admin'
     }
   }
 })

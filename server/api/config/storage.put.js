@@ -1,15 +1,13 @@
 import db from '../../utils/db.js'
-import { verifyToken, extractToken } from '../../utils/jwt.js'
+import { authMiddleware, requireAdmin } from '../../utils/authMiddleware.js'
 import { v4 as uuidv4 } from 'uuid'
 const BUCKETS_KEY = 'storageBuckets'
 const PLACEHOLDER = '****'
 
 export default defineEventHandler(async (event) => {
   try {
-    const token = extractToken(event)
-    if (!token) throw createError({ statusCode: 401, message: '请先登录' })
-    const user = await verifyToken(token)
-    if (!user) throw createError({ statusCode: 401, message: 'Token 无效或已过期' })
+    await authMiddleware(event)
+    requireAdmin(event)
 
     const body = await readBody(event)
     const { defaultId: bodyDefaultId, buckets: bodyBuckets } = body

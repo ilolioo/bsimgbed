@@ -1,24 +1,10 @@
 import db from '../../utils/db.js'
-import { verifyToken, extractToken } from '../../utils/jwt.js'
+import { authMiddleware, requireAdmin } from '../../utils/authMiddleware.js'
 
 export default defineEventHandler(async (event) => {
   try {
-    // 验证登录
-    const token = extractToken(event)
-    if (!token) {
-      throw createError({
-        statusCode: 401,
-        message: '请先登录'
-      })
-    }
-
-    const user = await verifyToken(token)
-    if (!user) {
-      throw createError({
-        statusCode: 401,
-        message: 'Token 无效或已过期'
-      })
-    }
+    await authMiddleware(event)
+    requireAdmin(event)
 
     // 获取应用设置
     const settings = await db.settings.findOne({ key: 'appSettings' })
@@ -43,6 +29,8 @@ export default defineEventHandler(async (event) => {
           backgroundUrl: '',
           backgroundBlur: 0,
           siteUrl: '',
+          registrationEnabled: true,
+          registrationEmailVerification: false,
           deletedImagesCount: deletedCount,
           announcement: defaultAnnouncement
         }
@@ -58,6 +46,8 @@ export default defineEventHandler(async (event) => {
         backgroundUrl: settings.value.backgroundUrl || '',
         backgroundBlur: settings.value.backgroundBlur || 0,
         siteUrl: settings.value.siteUrl || '',
+        registrationEnabled: settings.value.registrationEnabled !== false,
+        registrationEmailVerification: !!settings.value.registrationEmailVerification,
         deletedImagesCount: deletedCount,
         announcement: settings.value.announcement || defaultAnnouncement
       }

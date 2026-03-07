@@ -1,24 +1,10 @@
 import db from '../../utils/db.js'
-import { verifyToken, extractToken } from '../../utils/jwt.js'
+import { authMiddleware, requireAdmin } from '../../utils/authMiddleware.js'
 
 export default defineEventHandler(async (event) => {
   try {
-    // 验证登录
-    const token = extractToken(event)
-    if (!token) {
-      throw createError({
-        statusCode: 401,
-        message: '请先登录'
-      })
-    }
-
-    const user = await verifyToken(token)
-    if (!user) {
-      throw createError({
-        statusCode: 401,
-        message: 'Token 无效或已过期'
-      })
-    }
+    await authMiddleware(event)
+    requireAdmin(event)
 
     // 获取当前设置
     const currentSettings = await db.settings.findOne({ key: 'appSettings' })
@@ -77,6 +63,13 @@ export default defineEventHandler(async (event) => {
         siteUrlValue = siteUrlValue.replace(/\/+$/, '')
       }
       updatedValue.siteUrl = siteUrlValue
+    }
+
+    if (body.registrationEnabled !== undefined) {
+      updatedValue.registrationEnabled = !!body.registrationEnabled
+    }
+    if (body.registrationEmailVerification !== undefined) {
+      updatedValue.registrationEmailVerification = !!body.registrationEmailVerification
     }
 
     // 更新 announcement（如果传递了）

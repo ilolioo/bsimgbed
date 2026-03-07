@@ -17,8 +17,8 @@ export default defineEventHandler(async (event) => {
     let uploadedByType = 'url'
     let apiKeyId = null
 
+    let uploadUserId = null
     if (apiKey) {
-      // API Key 认证
       const keyDoc = await db.apikeys.findOne({ key: apiKey, enabled: true })
       if (!keyDoc) {
         throw createError({
@@ -29,11 +29,12 @@ export default defineEventHandler(async (event) => {
       uploadedBy = keyDoc.name || 'API用户'
       uploadedByType = 'url-api'
       apiKeyId = keyDoc._id
+      uploadUserId = keyDoc.userId || null
     } else {
-      // 登录认证
       await authMiddleware(event)
       const user = event.context.user
       uploadedBy = user.username || '管理员'
+      uploadUserId = user.userId || null
     }
 
     // 解析请求体
@@ -218,10 +219,8 @@ export default defineEventHandler(async (event) => {
           updatedAt: new Date().toISOString()
         }
 
-        // 如果是 API Key 上传，添加 apiKeyId
-        if (apiKeyId) {
-          imageDoc.apiKeyId = apiKeyId
-        }
+        if (apiKeyId) imageDoc.apiKeyId = apiKeyId
+        if (uploadUserId) imageDoc.userId = uploadUserId
 
         await db.images.insert(imageDoc)
 

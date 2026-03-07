@@ -376,8 +376,17 @@ async function sendTelegramNotification(config, payload) {
  */
 function escapeMarkdown(text) {
   if (!text) return ''
-  // 在 Telegram Markdown 模式下，只需要转义 _ * ` [ 这几个字符
   return String(text).replace(/([_*`\[])/g, '\\$1')
+}
+
+function escapeHtml(text) {
+  if (!text) return ''
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 /**
@@ -801,6 +810,41 @@ export async function testTelegram(telegramConfig) {
 }
 
 /**
+ * 发送注册邮箱验证邮件
+ * @param {string} toEmail - 收件人邮箱
+ * @param {string} username - 用户名
+ * @param {string} verifyUrl - 验证链接
+ */
+export async function sendVerificationEmail(toEmail, username, verifyUrl) {
+  const config = await getNotificationConfig()
+  const { email } = config
+  if (!email?.service || !email?.user || !email?.pass) {
+    throw new Error('邮件服务未配置，请联系管理员配置通知邮箱')
+  }
+  const transporter = nodemailer.createTransport({
+    service: email.service,
+    auth: { user: email.user, pass: email.pass }
+  })
+  const htmlContent = `
+    <div class="header">
+      <h1>邮箱验证</h1>
+    </div>
+    <div class="content">
+      <p>你好，<strong>${escapeHtml(username)}</strong>：</p>
+      <p>你正在注册账号，请点击下方链接完成邮箱验证（链接 24 小时内有效）：</p>
+      <p style="margin: 20px 0;"><a href="${escapeHtml(verifyUrl)}" style="color: #007bff; word-break: break-all;">${escapeHtml(verifyUrl)}</a></p>
+      <p style="color: #666; font-size: 14px;">如非本人操作，请忽略此邮件。</p>
+    </div>
+  `
+  await transporter.sendMail({
+    from: email.user,
+    to: toEmail,
+    subject: '[bsimgbed] 请验证你的邮箱',
+    html: generateEmailTemplate(htmlContent)
+  })
+}
+
+/**
  * 测试 Email 连接
  */
 export async function testEmail(emailConfig) {
@@ -904,6 +948,7 @@ export default {
   sendLoginNotification,
   sendUploadNotification,
   sendNsfwNotification,
+  sendVerificationEmail,
   testWebhook,
   testTelegram,
   testEmail,

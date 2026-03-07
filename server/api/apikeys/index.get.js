@@ -1,29 +1,15 @@
 import db from '../../utils/db.js'
-import { verifyToken, extractToken } from '../../utils/jwt.js'
+import { authMiddleware } from '../../utils/authMiddleware.js'
 
 export default defineEventHandler(async (event) => {
   try {
-    // 验证登录
-    const token = extractToken(event)
-    if (!token) {
-      throw createError({
-        statusCode: 401,
-        message: '请先登录'
-      })
-    }
+    await authMiddleware(event)
+    const user = event.context.user
 
-    const user = await verifyToken(token)
-    if (!user) {
-      throw createError({
-        statusCode: 401,
-        message: 'Token 无效或已过期'
-      })
-    }
+    const isAdmin = user.role === 'admin'
+    const query = isAdmin ? {} : { userId: user.userId }
+    const apiKeys = await db.apikeys.find(query)
 
-    // 获取所有 ApiKey
-    const apiKeys = await db.apikeys.find({})
-
-    // 按创建时间排序
     apiKeys.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
 
     // 返回 ApiKey 列表

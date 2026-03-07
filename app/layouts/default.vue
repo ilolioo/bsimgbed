@@ -79,9 +79,9 @@
               <span class="hidden sm:inline">API</span>
             </NuxtLink>
 
-            <!-- 设置 -->
+            <!-- 设置（仅管理员） -->
             <NuxtLink
-              v-if="authStore.isAuthenticated"
+              v-if="authStore.isAdmin"
               to="/settings"
               class="nav-link nav-link-icon sm:nav-link-text"
               :class="{ 'nav-link-active': route.path === '/settings' }"
@@ -91,9 +91,9 @@
               <span class="hidden sm:inline">设置</span>
             </NuxtLink>
 
-            <!-- 统计 -->
+            <!-- 统计（仅管理员） -->
             <NuxtLink
-              v-if="authStore.isAuthenticated"
+              v-if="authStore.isAdmin"
               to="/stats"
               class="nav-link nav-link-icon sm:nav-link-text"
               :class="{ 'nav-link-active': route.path === '/stats' }"
@@ -103,9 +103,9 @@
               <span class="hidden sm:inline">统计</span>
             </NuxtLink>
 
-            <!-- 通知 -->
+            <!-- 通知（仅管理员） -->
             <NuxtLink
-              v-if="authStore.isAuthenticated"
+              v-if="authStore.isAdmin"
               to="/notification"
               class="nav-link nav-link-icon sm:nav-link-text"
               :class="{ 'nav-link-active': route.path === '/notification' }"
@@ -139,16 +139,26 @@
               <Icon name="heroicons:arrow-right-on-rectangle" class="w-5 h-5 flex-shrink-0" />
               <span class="hidden sm:inline">登出</span>
             </button>
-            <NuxtLink
-              v-else
-              to="/login"
-              class="nav-link nav-link-icon sm:nav-link-text"
-              :class="{ 'nav-link-active': route.path === '/login' }"
-              title="登录"
-            >
-              <Icon name="heroicons:arrow-left-on-rectangle" class="w-5 h-5 flex-shrink-0" />
-              <span class="hidden sm:inline">登录</span>
-            </NuxtLink>
+            <template v-else>
+              <NuxtLink
+                to="/register"
+                class="nav-link nav-link-icon sm:nav-link-text"
+                :class="{ 'nav-link-active': route.path === '/register' }"
+                title="注册"
+              >
+                <Icon name="heroicons:user-plus" class="w-5 h-5 flex-shrink-0" />
+                <span class="hidden sm:inline">注册</span>
+              </NuxtLink>
+              <NuxtLink
+                to="/login"
+                class="nav-link nav-link-icon sm:nav-link-text"
+                :class="{ 'nav-link-active': route.path === '/login' }"
+                title="登录"
+              >
+                <Icon name="heroicons:arrow-left-on-rectangle" class="w-5 h-5 flex-shrink-0" />
+                <span class="hidden sm:inline">登录</span>
+              </NuxtLink>
+            </template>
 
             <!-- 暗黑模式切换 -->
             <ThemeToggle class="flex-shrink-0" />

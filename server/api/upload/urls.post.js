@@ -105,7 +105,6 @@ async function downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse =
     originalName += `.${fileExt}`
   }
 
-  // 保存到数据库
   const imageDoc = {
     _id: uuidv4(),
     uuid: imageUuid,
@@ -119,8 +118,9 @@ async function downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse =
     isWebp: isWebp,
     isDeleted: false,
     uploadedBy: user.username || '管理员',
-    uploadedByType: 'url', // 标记为URL上传
-    sourceUrl: url, // 保存原始URL
+    uploadedByType: 'url',
+    sourceUrl: url,
+    userId: user.userId || null,
     ip: clientIP,
     uploadedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()

@@ -1,27 +1,12 @@
 import db from '../../utils/db.js'
-import { verifyToken, extractToken } from '../../utils/jwt.js'
+import { authMiddleware } from '../../utils/authMiddleware.js'
 import { v4 as uuidv4 } from 'uuid'
 
 export default defineEventHandler(async (event) => {
   try {
-    // 验证登录
-    const token = extractToken(event)
-    if (!token) {
-      throw createError({
-        statusCode: 401,
-        message: '请先登录'
-      })
-    }
+    await authMiddleware(event)
+    const user = event.context.user
 
-    const user = await verifyToken(token)
-    if (!user) {
-      throw createError({
-        statusCode: 401,
-        message: 'Token 无效或已过期'
-      })
-    }
-
-    // 获取 ApiKey ID
     const id = getRouterParam(event, 'id')
     if (!id) {
       throw createError({
@@ -30,12 +15,20 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 查找 ApiKey
     const apiKey = await db.apikeys.findOne({ _id: id })
     if (!apiKey) {
       throw createError({
         statusCode: 404,
         message: 'ApiKey 不存在'
+      })
+    }
+
+    const isOwner = apiKey.userId === user.userId
+    const isAdmin = user.role === 'admin'
+    if (!isOwner && !isAdmin) {
+      throw createError({
+        statusCode: 403,
+        message: '无权操作该 ApiKey'
       })
     }
 

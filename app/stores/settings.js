@@ -46,12 +46,13 @@ export const useSettingsStore = defineStore('settings', {
         const response = await $fetch('/api/settings/public')
 
         if (response.success) {
-          // 只更新公共字段，保留其他字段
           this.appSettings.appName = response.data.appName
           this.appSettings.appLogo = response.data.appLogo
           this.appSettings.favicon = response.data.favicon || ''
           this.appSettings.backgroundUrl = response.data.backgroundUrl
           this.appSettings.backgroundBlur = response.data.backgroundBlur
+          this.appSettings.registrationEnabled = response.data.registrationEnabled !== false
+          this.appSettings.registrationEmailVerification = !!response.data.registrationEmailVerification
           this.appSettings.announcement = response.data.announcement || {
             enabled: false,
             content: '',

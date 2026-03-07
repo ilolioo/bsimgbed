@@ -1,17 +1,12 @@
 import db from '../../utils/db.js'
-import { verifyToken, extractToken } from '../../utils/jwt.js'
+import { optionalAuthMiddleware } from '../../utils/authMiddleware.js'
 import { getDefaultContentSafetyConfig, MODERATION_PROVIDERS } from '../../utils/moderation.js'
 
 export default defineEventHandler(async (event) => {
   try {
-    // 检查是否登录（可选）
-    const token = extractToken(event)
-    let isAdmin = false
-
-    if (token) {
-      const user = await verifyToken(token)
-      isAdmin = !!user
-    }
+    await optionalAuthMiddleware(event)
+    const user = event.context.user
+    const isAdmin = user && user.role === 'admin'
 
     // 获取公共 API 配置
     const config = await db.settings.findOne({ key: 'publicApiConfig' })
