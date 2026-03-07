@@ -529,6 +529,14 @@
                   >
                     {{ u.disabled ? '启用' : '禁用' }}
                   </button>
+                  <button
+                    v-if="u.id !== authStore.user?.id && u.username !== authStore.user?.username"
+                    type="button"
+                    class="text-red-600 dark:text-red-400 hover:underline ml-2"
+                    @click="deleteUser(u)"
+                  >
+                    删除
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -1026,6 +1034,24 @@ async function toggleUserDisabled(u) {
     }
   } catch (e) {
     toastStore.error(e.data?.message || '操作失败')
+  }
+}
+
+async function deleteUser(u) {
+  if (!confirm(`确定要删除用户「${u.username}」吗？其名下的图片与 API Key 将转移给管理员。`)) return
+  try {
+    const res = await $fetch(`/api/admin/users/${u.id}`, {
+      method: 'DELETE',
+      headers: authStore.authHeader
+    })
+    if (res.success) {
+      toastStore.success('用户已删除')
+      await fetchUserList()
+    } else {
+      toastStore.error(res.message || '删除失败')
+    }
+  } catch (e) {
+    toastStore.error(e.data?.message || '删除失败')
   }
 }
 
