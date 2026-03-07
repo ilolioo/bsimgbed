@@ -1,11 +1,10 @@
 import db from '../../utils/db.js'
-import { authMiddleware, requireAdmin } from '../../utils/authMiddleware.js'
+import { authMiddleware } from '../../utils/authMiddleware.js'
 import { v4 as uuidv4 } from 'uuid'
 
 export default defineEventHandler(async (event) => {
   try {
     await authMiddleware(event)
-    requireAdmin(event)
     const user = event.context.user
 
     const body = await readBody(event)

@@ -1,12 +1,13 @@
 import db from '../../utils/db.js'
-import { authMiddleware, requireAdmin } from '../../utils/authMiddleware.js'
+import { authMiddleware } from '../../utils/authMiddleware.js'
 
 export default defineEventHandler(async (event) => {
   try {
     await authMiddleware(event)
-    requireAdmin(event)
+    const user = event.context.user
 
-    const apiKeys = await db.apikeys.find({})
+    const query = user.role === 'admin' ? {} : { userId: user.userId }
+    const apiKeys = await db.apikeys.find(query)
 
     apiKeys.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
 

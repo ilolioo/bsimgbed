@@ -485,7 +485,8 @@
 
     <!-- 私有 API 配置 -->
     <div v-show="activeTab === 'private'" class="space-y-6">
-      <div class="card p-6">
+      <!-- 私有 API 系统配置（仅管理员可见） -->
+      <div v-if="authStore.isAdmin" class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">私有 API 配置 <span class="text-sm font-normal text-gray-500 dark:text-gray-400">- 登录后使用</span></h2>
 
         <form @submit.prevent="savePrivateConfig" class="space-y-4">
@@ -682,6 +683,16 @@
 
     <!-- API 文档 -->
     <div v-show="activeTab === 'docs'" class="space-y-4">
+      <!-- 概述 -->
+      <div class="card p-5">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-2">概述</h2>
+        <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside">
+          <li><strong>公共上传</strong>：无需认证，需管理员在「公共配置」中开启；支持 multipart/form-data。</li>
+          <li><strong>私有上传 / URL 上传 / 批量 URL</strong>：需在请求头携带 <code class="text-purple-600 dark:text-purple-400">X-API-Key</code>，或使用登录后的 Cookie。API Key 可在本页「私有配置」中创建与管理。</li>
+          <li>上传成功后返回的 <code class="text-gray-700 dark:text-gray-300">data.url</code> 为相对路径，完整访问地址为：<code class="text-gray-700 dark:text-gray-300">{{ baseUrl }}/i/&#123;uuid&#125;.&#123;格式&#125;</code>，例如 <code class="text-gray-700 dark:text-gray-300">{{ baseUrl }}/i/xxx.webp</code>。</li>
+        </ul>
+      </div>
+
       <!-- 上传 API -->
       <div class="card p-5">
         <div class="flex items-center gap-3 mb-4">
@@ -690,7 +701,7 @@
           </div>
           <div>
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">上传 API</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">支持公共/私有上传、URL 拉取、批量 URL；新图片存入系统设置中的默认储存桶</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">支持公共/私有上传、URL 拉取、批量 URL；未指定储存桶时使用系统默认储存桶</p>
           </div>
         </div>
 
@@ -743,32 +754,36 @@
           <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">请求参数</h4>
           <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 space-y-2">
             <div>
-              <span class="text-xs font-medium text-blue-600 dark:text-blue-400">方式一：multipart/form-data</span>
+              <span class="text-xs font-medium text-blue-600 dark:text-blue-400">方式一：multipart/form-data（公共 / 私有）</span>
               <div class="mt-1">
                 <code class="text-sm text-gray-700 dark:text-gray-300">Content-Type: multipart/form-data</code><br/>
-                <code class="text-sm text-gray-700 dark:text-gray-300">file: 图片文件</code>
+                <code class="text-sm text-gray-700 dark:text-gray-300">file: 图片文件（必填）</code><br/>
+                <code class="text-sm text-gray-700 dark:text-gray-300">bucketId: 储存桶 ID（可选，不传则使用默认储存桶）</code>
               </div>
             </div>
             <div class="border-t border-gray-200 dark:border-gray-700 pt-2">
-              <span class="text-xs font-medium text-purple-600 dark:text-purple-400">方式二：JSON + Base64（仅私有API）</span>
+              <span class="text-xs font-medium text-purple-600 dark:text-purple-400">方式二：JSON + Base64（仅私有 API）</span>
               <div class="mt-1">
                 <code class="text-sm text-gray-700 dark:text-gray-300">Content-Type: application/json</code><br/>
-                <code class="text-sm text-gray-700 dark:text-gray-300">base64: base64编码的图片数据（支持data URI前缀）</code><br/>
-                <code class="text-sm text-gray-700 dark:text-gray-300">filename: 文件名（可选）</code>
+                <code class="text-sm text-gray-700 dark:text-gray-300">base64: base64 编码的图片数据（支持 data:image/...;base64, 前缀）</code><br/>
+                <code class="text-sm text-gray-700 dark:text-gray-300">filename: 文件名（可选）</code><br/>
+                <code class="text-sm text-gray-700 dark:text-gray-300">bucketId: 储存桶 ID（可选）</code>
               </div>
             </div>
             <div class="border-t border-gray-200 dark:border-gray-700 pt-2">
               <span class="text-xs font-medium text-amber-600 dark:text-amber-400">URL 上传：POST /api/upload/url</span>
               <div class="mt-1">
                 <code class="text-sm text-gray-700 dark:text-gray-300">Content-Type: application/json</code><br/>
-                <code class="text-sm text-gray-700 dark:text-gray-300">url: 图片地址（需登录或 X-API-Key）</code>
+                <code class="text-sm text-gray-700 dark:text-gray-300">url: 图片地址（必填）</code><br/>
+                <code class="text-sm text-gray-700 dark:text-gray-300">bucketId、returnBase64、showOnHomepage（可选）</code>
               </div>
             </div>
             <div class="border-t border-gray-200 dark:border-gray-700 pt-2">
               <span class="text-xs font-medium text-amber-600 dark:text-amber-400">批量 URL：POST /api/upload/urls</span>
               <div class="mt-1">
                 <code class="text-sm text-gray-700 dark:text-gray-300">Content-Type: application/json</code><br/>
-                <code class="text-sm text-gray-700 dark:text-gray-300">urls: 图片地址数组 ["url1", "url2", ...]</code>
+                <code class="text-sm text-gray-700 dark:text-gray-300">urls: 图片地址数组 ["url1", "url2", ...]（必填）</code><br/>
+                <code class="text-sm text-gray-700 dark:text-gray-300">bucketId、showOnHomepage（可选）</code>
               </div>
             </div>
           </div>
@@ -892,19 +907,19 @@ fetch('{{ baseUrl }}/api/upload/urls', {
         </div>
       </div>
 
-      <!-- 响应格式 -->
+      <!-- 响应格式与图片访问 -->
       <div class="card p-5">
         <div class="flex items-center gap-3 mb-3">
           <div class="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-lg">
             <Icon name="heroicons:arrow-down-tray" class="w-4 h-4 text-green-600 dark:text-green-400" />
           </div>
           <div>
-            <h2 class="text-base font-semibold text-gray-900 dark:text-white">响应格式</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">上传成功后的返回数据结构</p>
+            <h2 class="text-base font-semibold text-gray-900 dark:text-white">响应格式与图片访问</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400">上传成功后的返回数据结构；图片访问地址为 站点根地址 + data.url</p>
           </div>
         </div>
 
-        <div class="relative">
+        <div class="relative mb-3">
           <pre class="bg-gray-900 text-gray-100 rounded-lg p-3 text-sm overflow-x-auto"><code>{
   "success": true,
   "message": "上传成功",
@@ -928,6 +943,9 @@ fetch('{{ baseUrl }}/api/upload/urls', {
             <Icon name="heroicons:clipboard-document" class="w-4 h-4" />
           </button>
         </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          <strong>图片访问地址</strong>：<code class="text-gray-800 dark:text-gray-200">{{ baseUrl }}</code> + <code class="text-gray-800 dark:text-gray-200">data.url</code>，即 <code class="text-gray-800 dark:text-gray-200">{{ baseUrl }}/i/&#123;uuid&#125;.&#123;format&#125;</code>，例如 <code class="text-gray-800 dark:text-gray-200">{{ baseUrl }}/i/file-uuid.webp</code>。
+        </p>
       </div>
     </div>
 
@@ -992,20 +1010,25 @@ import { useToastStore } from '~/stores/toast'
 import { copyToClipboard } from '../utils/clipboard'
 
 definePageMeta({
-  middleware: ['auth', 'admin']
+  middleware: ['auth']
 })
 
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const toastStore = useToastStore()
 
-// 标签页
-const tabs = [
-  { id: 'public', label: '公共配置' },
-  { id: 'private', label: '私有配置' },
-  { id: 'docs', label: 'API文档' }
-]
-const activeTab = ref('public')
+// 标签页：管理员显示全部，普通用户仅显示私有配置与 API 文档
+const tabs = computed(() => {
+  const base = [
+    { id: 'private', label: '私有配置' },
+    { id: 'docs', label: 'API文档' }
+  ]
+  if (authStore.isAdmin) {
+    return [{ id: 'public', label: '公共配置' }, ...base]
+  }
+  return base
+})
+const activeTab = ref('private')
 
 // 可用格式
 const availableFormats = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'avif', 'svg', 'bmp', 'ico', 'apng', 'tiff', 'tif']
@@ -1405,48 +1428,37 @@ async function removeFromBlacklist(item) {
 
 // 初始化
 onMounted(async () => {
-  // 获取配置（authStore.init() 已在插件中调用）
-  await Promise.all([
-    settingsStore.fetchPublicApiConfig(),
-    settingsStore.fetchPrivateApiConfig(),
-    settingsStore.fetchApiKeys()
-  ])
+  await settingsStore.fetchApiKeys()
 
-  // 同步配置到本地状态
-  const fetchedPublicConfig = settingsStore.publicApiConfig
-  Object.assign(publicConfig, fetchedPublicConfig)
-
-  // 确保内容安全配置存在（使用默认配置作为回退）
-  if (!publicConfig.contentSafety) {
-    publicConfig.contentSafety = { ...defaultContentSafetyConfig }
-  }
-
-  // 确保 autoBlacklistIp 存在
-  if (publicConfig.contentSafety.autoBlacklistIp === undefined) {
-    publicConfig.contentSafety.autoBlacklistIp = false
-  }
-
-  // 确保所有 provider 配置存在（兼容新增的 provider）
-  if (!publicConfig.contentSafety.providers) {
-    publicConfig.contentSafety.providers = { ...defaultContentSafetyConfig.providers }
-  } else {
-    // 确保 nsfw_detector 配置存在
-    if (!publicConfig.contentSafety.providers['nsfw_detector']) {
-      publicConfig.contentSafety.providers['nsfw_detector'] = {
-        name: 'nsfw_detector',
-        apiUrl: '',
-        apiKey: '',
-        threshold: 0.8
-      }
-    } else if (publicConfig.contentSafety.providers['nsfw_detector'].threshold === undefined) {
-      // 确保 threshold 存在（兼容旧配置）
-      publicConfig.contentSafety.providers['nsfw_detector'].threshold = 0.8
+  if (authStore.isAdmin) {
+    await Promise.all([
+      settingsStore.fetchPublicApiConfig(),
+      settingsStore.fetchPrivateApiConfig()
+    ])
+    const fetchedPublicConfig = settingsStore.publicApiConfig
+    Object.assign(publicConfig, fetchedPublicConfig)
+    if (!publicConfig.contentSafety) {
+      publicConfig.contentSafety = { ...defaultContentSafetyConfig }
     }
+    if (publicConfig.contentSafety.autoBlacklistIp === undefined) {
+      publicConfig.contentSafety.autoBlacklistIp = false
+    }
+    if (!publicConfig.contentSafety.providers) {
+      publicConfig.contentSafety.providers = { ...defaultContentSafetyConfig.providers }
+    } else {
+      if (!publicConfig.contentSafety.providers['nsfw_detector']) {
+        publicConfig.contentSafety.providers['nsfw_detector'] = {
+          name: 'nsfw_detector',
+          apiUrl: '',
+          apiKey: '',
+          threshold: 0.8
+        }
+      } else if (publicConfig.contentSafety.providers['nsfw_detector'].threshold === undefined) {
+        publicConfig.contentSafety.providers['nsfw_detector'].threshold = 0.8
+      }
+    }
+    Object.assign(privateConfig, settingsStore.privateApiConfig)
+    await fetchBlacklist()
   }
-
-  Object.assign(privateConfig, settingsStore.privateApiConfig)
-
-  // 获取黑名单列表
-  await fetchBlacklist()
 })
 </script>

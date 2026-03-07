@@ -163,10 +163,12 @@ volumes:
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/api/upload/public` | 公共上传（multipart/form-data，无需认证） |
-| POST | `/api/upload/private` | 私有上传（需 `X-API-Key`；支持 multipart/form-data 或 JSON+Base64） |
-| POST | `/api/upload/url` | URL 上传（需 API Key，请求体 `{"url": "图片地址"}`） |
-| POST | `/api/upload/urls` | 批量 URL 上传（需 API Key，请求体 `{"urls": ["url1", "url2", ...]}`） |
+| POST | `/api/upload/public` | 公共上传（multipart/form-data，无需认证；需在后台开启公共上传） |
+| POST | `/api/upload/private` | 私有上传（请求头 `X-API-Key`；支持 multipart/form-data 或 JSON+Base64；可选表单/ body 参数 `bucketId`） |
+| POST | `/api/upload/url` | URL 上传（需 `X-API-Key`，请求体 `{"url": "图片地址"}`，可选 `bucketId`、`returnBase64`、`showOnHomepage`） |
+| POST | `/api/upload/urls` | 批量 URL 上传（需 `X-API-Key`，请求体 `{"urls": ["url1", "url2", ...]}`, 可选 `bucketId`、`showOnHomepage`） |
+
+**认证说明**：私有上传、URL 上传、批量 URL 均需在请求头携带 `X-API-Key`（或在浏览器内使用登录后的 Cookie）。API Key 可在登录后 **API 管理 → 私有配置** 中创建与管理。
 
 上传成功后返回示例：
 
@@ -188,7 +190,7 @@ volumes:
 }
 ```
 
-图片访问地址：`{站点根地址}/i/{uuid}.{格式}`，例如 `/i/xxx.webp`。
+**图片访问地址**：`{站点根地址}` + `data.url`，即 `{站点根地址}/i/{uuid}.{格式}`，例如 `https://your-domain.com/i/xxx.webp`。
 
 ## 常见问题
 
