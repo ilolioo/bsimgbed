@@ -398,6 +398,24 @@
                       />
                     </button>
                   </div>
+                  <!-- 容量界面可见 -->
+                  <div class="flex items-center justify-between py-1">
+                    <div>
+                      <label class="text-sm font-medium text-gray-700 dark:text-gray-300">容量界面可见</label>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">关闭后，该储存桶不会在「容量」页显示</p>
+                    </div>
+                    <button
+                      type="button"
+                      @click="b.showOnCapacity = !b.showOnCapacity"
+                      class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                      :class="b.showOnCapacity !== false ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
+                    >
+                      <span
+                        class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                        :class="b.showOnCapacity !== false ? 'translate-x-6' : 'translate-x-1'"
+                      />
+                    </button>
+                  </div>
                   <!-- WebDAV 配置 -->
                   <div v-if="b.driver === 'webdav'" class="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                     <p class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
@@ -782,6 +800,7 @@ function addBucket() {
     sizeLimitMB: 1024,
     usedSize: 0,
     allowGuest: true,
+    showOnCapacity: true,
     webdav: { baseUrl: '', username: '', password: '', hasPassword: false },
     telegram: { token: '', chatId: '', apiBaseUrl: '', hasToken: false }
   })
@@ -887,6 +906,7 @@ async function fetchStorageConfig() {
         sizeLimitMB: Math.round((b.sizeLimit ?? 1024 * 1024 * 1024) / 1024 / 1024),
         usedSize: b.usedSize ?? 0,
         allowGuest: b.allowGuest !== false,
+        showOnCapacity: b.showOnCapacity !== false,
         webdav: b.webdav ? { baseUrl: b.webdav.baseUrl || '', username: b.webdav.username || '', password: '', hasPassword: !!b.webdav.hasPassword } : { baseUrl: '', username: '', password: '', hasPassword: false },
         telegram: b.telegram ? { token: '', chatId: b.telegram.chatId || '', apiBaseUrl: b.telegram.apiBaseUrl || '', hasToken: !!b.telegram.hasToken } : { token: '', chatId: '', apiBaseUrl: '', hasToken: false }
       }))
@@ -906,6 +926,7 @@ async function saveStorageConfig() {
       driver: b.driver,
       sizeLimit: (b.sizeLimitMB || 1024) * 1024 * 1024,
       allowGuest: b.allowGuest !== false,
+      showOnCapacity: b.showOnCapacity !== false,
       webdav: b.driver === 'webdav' ? { baseUrl: b.webdav.baseUrl, username: b.webdav.username, password: b.webdav.password || undefined } : undefined,
       telegram: b.driver === 'telegram' ? { token: b.telegram.token || undefined, chatId: b.telegram.chatId, apiBaseUrl: b.telegram.apiBaseUrl || undefined } : undefined
     }))

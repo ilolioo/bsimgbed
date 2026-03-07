@@ -6,12 +6,14 @@ import { getBucketsConfig } from '../../../utils/storage.js'
 export default defineEventHandler(async (event) => {
   try {
     const { buckets } = await getBucketsConfig()
-    const list = (buckets || []).map(b => ({
-      id: b.id,
-      name: b.name || b.id,
-      usedSize: b.usedSize ?? 0,
-      sizeLimit: b.sizeLimit ?? 1024 * 1024 * 1024
-    }))
+    const list = (buckets || [])
+      .filter(b => b.showOnCapacity !== false)
+      .map(b => ({
+        id: b.id,
+        name: b.name || b.id,
+        usedSize: b.usedSize ?? 0,
+        sizeLimit: b.sizeLimit ?? 1024 * 1024 * 1024
+      }))
     return { success: true, data: { buckets: list } }
   } catch (error) {
     console.error('[Config] 获取储存桶用量失败:', error)

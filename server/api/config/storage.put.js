@@ -42,6 +42,7 @@ export default defineEventHandler(async (event) => {
         const sizeLimit = typeof b.sizeLimit === 'number' ? b.sizeLimit : (existing?.sizeLimit ?? 1024 * 1024 * 1024)
         const usedSize = existing?.usedSize ?? 0
         const allowGuest = b.allowGuest !== undefined ? !!b.allowGuest : (existing?.allowGuest !== false)
+        const showOnCapacity = b.showOnCapacity !== undefined ? !!b.showOnCapacity : (existing?.showOnCapacity !== false)
         const out = {
           id,
           name: (b.name !== undefined ? b.name : existing?.name) || id || '未命名',
@@ -49,6 +50,7 @@ export default defineEventHandler(async (event) => {
           sizeLimit,
           usedSize,
           allowGuest,
+          showOnCapacity,
           webdav: null,
           telegram: null
         }

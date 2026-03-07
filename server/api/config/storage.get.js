@@ -16,6 +16,7 @@ export default defineEventHandler(async (event) => {
         sizeLimit: b.sizeLimit ?? 1024 * 1024 * 1024,
         usedSize: b.usedSize ?? 0,
         allowGuest: b.allowGuest !== false,
+        showOnCapacity: b.showOnCapacity !== false,
         webdav: b.webdav ? {
           baseUrl: b.webdav.baseUrl || '',
           username: b.webdav.username || '',
