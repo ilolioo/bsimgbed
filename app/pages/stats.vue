@@ -9,25 +9,116 @@
 
         <div class="space-y-4">
           <!-- 回收站 -->
-          <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">回收站</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                删除的图片进入回收站，但仍占用存储空间，清空后可释放空间
-              </p>
-              <p class="text-sm text-orange-600 dark:text-orange-400 mt-1">
-                <span class="mr-6">总量：{{ stats.deletedImagesCount }}</span>
-                占用空间：{{ formatFileSize(stats.deletedSize) }}
-              </p>
-            </div>
-            <div class="flex items-center gap-4">
+          <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-medium text-gray-900 dark:text-white">回收站</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  删除的图片进入回收站，可在此查看与还原，清空后永久删除并释放空间
+                </p>
+                <p class="text-sm text-orange-600 dark:text-orange-400 mt-1">
+                  <span class="mr-6">总量：{{ stats.deletedImagesCount }}</span>
+                  占用空间：{{ formatFileSize(stats.deletedSize) }}
+                </p>
+              </div>
               <button
                 @click="showHardDeleteModal = true"
-                class="btn-danger"
+                class="btn-danger shrink-0"
                 :disabled="stats.deletedImagesCount === 0"
               >
                 清空回收站
               </button>
+            </div>
+
+            <!-- 回收站图片列表 -->
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <h4 class="font-medium text-gray-900 dark:text-white">已删除图片</h4>
+                <button
+                  @click="fetchDeletedImages(deletedPagination.page)"
+                  class="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                  :disabled="loadingDeletedImages"
+                >
+                  <Icon v-if="loadingDeletedImages" name="heroicons:arrow-path" class="animate-spin h-4 w-4" />
+                  {{ loadingDeletedImages ? '加载中...' : '刷新列表' }}
+                </button>
+              </div>
+              <div class="max-h-80 overflow-y-auto">
+                <div v-if="loadingDeletedImages && deletedImages.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
+                  <Icon name="heroicons:arrow-path" class="animate-spin h-8 w-8 mx-auto mb-2" />
+                  <p>加载中...</p>
+                </div>
+                <div v-else-if="deletedImages.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
+                  <Icon name="heroicons:trash" class="h-12 w-12 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
+                  <p>回收站为空</p>
+                </div>
+                <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
+                  <div
+                    v-for="image in deletedImages"
+                    :key="image.id"
+                    class="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors flex items-center justify-between gap-4"
+                  >
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                      <a
+                        :href="image.url + '?token=' + encodeURIComponent(authStore.token)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="shrink-0 w-12 h-12 rounded overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
+                      >
+                        <img
+                          v-if="image.url"
+                          :src="image.url + '?token=' + encodeURIComponent(authStore.token)"
+                          :alt="image.originalName"
+                          class="w-full h-full object-cover"
+                          @error="($e) => ($e.target.style.display = 'none')"
+                        />
+                        <Icon v-else name="heroicons:photo" class="w-6 h-6 text-gray-400" />
+                      </a>
+                      <div class="min-w-0">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate" :title="image.originalName">{{ image.originalName }}</p>
+                        <div class="flex items-center gap-3 mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                          <span>{{ formatFileSize(image.size) }}</span>
+                          <span>{{ image.width }}×{{ image.height }}</span>
+                          <span>上传于 {{ formatDate(image.uploadedAt) }}</span>
+                          <span v-if="image.deletedAt">删除于 {{ formatDate(image.deletedAt) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      :disabled="restoringId === image.id"
+                      class="btn-secondary text-sm shrink-0 flex items-center gap-1"
+                      @click="restoreDeletedImage(image)"
+                    >
+                      <Icon v-if="restoringId === image.id" name="heroicons:arrow-path" class="animate-spin w-4 h-4" />
+                      <Icon v-else name="heroicons:arrow-uturn-left" class="w-4 h-4" />
+                      {{ restoringId === image.id ? '还原中...' : '还原' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div v-if="deletedPagination.totalPages > 1" class="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <p class="text-sm text-gray-500 dark:text-gray-400">共 {{ deletedPagination.total }} 张</p>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    :disabled="deletedPagination.page <= 1"
+                    class="px-3 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-800"
+                    @click="fetchDeletedImages(deletedPagination.page - 1)"
+                  >
+                    上一页
+                  </button>
+                  <span class="text-sm text-gray-600 dark:text-gray-400">{{ deletedPagination.page }} / {{ deletedPagination.totalPages }}</span>
+                  <button
+                    type="button"
+                    :disabled="deletedPagination.page >= deletedPagination.totalPages"
+                    class="px-3 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-800"
+                    @click="fetchDeletedImages(deletedPagination.page + 1)"
+                  >
+                    下一页
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -339,6 +430,12 @@ const toastStore = useToastStore()
 const showHardDeleteModal = ref(false)
 const loadingStats = ref(false)
 
+// 回收站列表（仅管理员）
+const deletedImages = ref([])
+const deletedPagination = reactive({ page: 1, limit: 10, total: 0, totalPages: 0 })
+const loadingDeletedImages = ref(false)
+const restoringId = ref(null)
+
 // 违规图片相关
 const loadingNsfwImages = ref(false)
 const nsfwImages = ref([])
@@ -390,16 +487,59 @@ function formatDate(dateStr) {
   })
 }
 
+// 获取回收站图片列表
+async function fetchDeletedImages(page = 1) {
+  loadingDeletedImages.value = true
+  try {
+    const response = await $fetch('/api/images/deleted', {
+      params: { page, limit: deletedPagination.limit },
+      headers: authStore.authHeader
+    })
+    if (response.success && response.data) {
+      deletedImages.value = response.data.images
+      Object.assign(deletedPagination, response.data.pagination)
+    }
+  } catch (error) {
+    console.error('获取回收站列表失败:', error)
+    toastStore.error('获取回收站列表失败')
+  } finally {
+    loadingDeletedImages.value = false
+  }
+}
+
+// 还原回收站中的图片
+async function restoreDeletedImage(image) {
+  restoringId.value = image.id
+  try {
+    const response = await $fetch(`/api/images/${image.id}/restore`, {
+      method: 'PUT',
+      headers: authStore.authHeader
+    })
+    if (response.success) {
+      toastStore.success(response.message || '已还原')
+      await fetchDeletedImages(deletedPagination.page)
+      await fetchStats(true)
+      await fetchNsfwImages(nsfwPagination.page)
+    } else {
+      toastStore.error(response.message || '还原失败')
+    }
+  } catch (error) {
+    console.error('还原失败:', error)
+    toastStore.error(error.data?.message || '还原失败')
+  } finally {
+    restoringId.value = null
+  }
+}
+
 // 清空回收站
 async function hardDeleteImages() {
   try {
     const result = await settingsStore.hardDeleteImages()
     if (result.success) {
       toastStore.success(`已清空回收站，删除了 ${result.count} 张图片`)
-      // 刷新统计数据
       await fetchStats(true)
-      // 刷新违规图片列表
       await fetchNsfwImages()
+      await fetchDeletedImages(1)
     } else {
       toastStore.error(result.message || '删除失败')
     }
@@ -540,9 +680,8 @@ async function clearNsfwImages() {
 
 // 初始化
 onMounted(async () => {
-  // 获取统计数据
   await fetchStats()
-  // 获取违规图片列表
   await fetchNsfwImages()
+  await fetchDeletedImages()
 })
 </script>
