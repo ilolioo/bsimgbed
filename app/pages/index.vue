@@ -147,7 +147,7 @@
         >
           <!-- 复制链接子菜单 -->
           <div class="py-1">
-            <div class="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+            <div class="px-3 py-1.5 text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">
               {{ copyMenuTitle }}
             </div>
             <button
@@ -156,19 +156,8 @@
               @click="handleCopyFromMenu(item.type)"
               class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:clipboard-document" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <Icon name="heroicons:clipboard-document" class="w-4 h-4 text-gray-400" />
               {{ item.label }}
-            </button>
-          </div>
-
-          <!-- 下载图片 -->
-          <div class="border-t border-gray-200 dark:border-gray-700 py-1">
-            <button
-              @click="handleDownloadFromMenu"
-              class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
-            >
-              <Icon name="heroicons:arrow-down-tray" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
-              下载图片
             </button>
           </div>
 
@@ -181,14 +170,14 @@
               @click="handleSetAsBackgroundFromMenu"
               class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:photo" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <Icon name="heroicons:photo" class="w-4 h-4 text-gray-400" />
               设为全局背景
             </button>
             <button
               @click="handleSetAsLogoFromMenu"
               class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:sparkles" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <Icon name="heroicons:sparkles" class="w-4 h-4 text-gray-400" />
               设为网站Logo
             </button>
           </div>
@@ -202,7 +191,7 @@
               @click="handleDeleteFromMenu"
               class="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:trash" class="w-4 h-4 text-red-600 dark:text-red-400" />
+              <Icon name="heroicons:trash" class="w-4 h-4" />
               删除图片
             </button>
           </div>
@@ -392,7 +381,7 @@ async function handleBatchDelete() {
 function handleImageContextMenu(event, image) {
   // 计算菜单位置，确保不超出视口
   const menuWidth = 160
-  const menuHeight = authStore.isAuthenticated ? 324 : 244
+  const menuHeight = authStore.isAuthenticated ? 280 : 200
 
   let x = event.clientX
   let y = event.clientY
@@ -464,34 +453,6 @@ function handleDeleteFromMenu() {
     confirmDelete(contextMenuImage.value)
   }
   hideContextMenu()
-}
-
-// 从菜单下载图片
-async function handleDownloadFromMenu() {
-  if (!contextMenuImage.value) {
-    hideContextMenu()
-    return
-  }
-  const fullUrl = window.location.origin + contextMenuImage.value.url
-  const filename = contextMenuImage.value.originalName || contextMenuImage.value.filename || `image.${contextMenuImage.value.format || 'png'}`
-  hideContextMenu()
-  try {
-    const res = await fetch(fullUrl)
-    if (!res.ok) throw new Error('下载失败')
-    const blob = await res.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    a.style.display = 'none'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    toastStore.success('图片已开始下载')
-  } catch (e) {
-    toastStore.error('下载失败，请稍后重试')
-  }
 }
 
 // 复制链接

@@ -66,31 +66,6 @@ export const useImagesStore = defineStore('images', {
       await this.fetchImages()
     },
 
-    /**
-     * 将本次上传的图片追加到列表顶部（用于游客未勾选「展示在主页」时，仍可在当前会话的展示区查看和操作，刷新/清缓存后仅管理员可见）
-     * @param {Array<{id, uuid, filename, originalName?, format, size, width, height, url, uploadedBy?, uploadedAt}>} items - 上传接口返回的图片列表
-     */
-    appendUploadedImages(items) {
-      if (!items || !items.length) return
-      const authStore = useAuthStore()
-      const uploadedBy = authStore.isAuthenticated ? (authStore.user?.username || '管理员') : '访客'
-      const list = items.map((item) => ({
-        id: item.id,
-        uuid: item.uuid,
-        filename: item.filename,
-        originalName: item.originalName ?? item.filename,
-        format: item.format,
-        size: item.size,
-        width: item.width ?? 0,
-        height: item.height ?? 0,
-        url: item.url ?? `/i/${item.uuid}.${item.format}`,
-        uploadedBy: item.uploadedBy ?? uploadedBy,
-        uploadedAt: item.uploadedAt
-      }))
-      this.images = [...list, ...this.images]
-      this.pagination.total = (this.pagination.total || 0) + list.length
-    },
-
     // 上传图片
     async uploadImage(file) {
       const authStore = useAuthStore()

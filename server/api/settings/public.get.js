@@ -18,7 +18,6 @@ export default defineEventHandler(async (event) => {
         data: {
           appName: 'bsimgbed',
           appLogo: '',
-          appFavicon: '',
           backgroundUrl: '',
           backgroundBlur: 0,
           announcement: defaultAnnouncement
@@ -31,7 +30,6 @@ export default defineEventHandler(async (event) => {
       data: {
         appName: settings.value.appName || 'bsimgbed',
         appLogo: settings.value.appLogo || '',
-        appFavicon: settings.value.appFavicon || '',
         backgroundUrl: settings.value.backgroundUrl || '',
         backgroundBlur: settings.value.backgroundBlur || 0,
         announcement: settings.value.announcement || defaultAnnouncement

@@ -6,7 +6,6 @@ export const useSettingsStore = defineStore('settings', {
     appSettings: {
       appName: 'bsimgbed',
       appLogo: '',
-      appFavicon: '',
       backgroundUrl: '',
       backgroundBlur: 0,
       deletedImagesCount: 0,
@@ -25,8 +24,7 @@ export const useSettingsStore = defineStore('settings', {
       convertToWebp: false,
       convertToPng: false,
       rateLimit: 10,
-      allowConcurrent: false,
-      autoRename: true
+      allowConcurrent: false
     },
     privateApiConfig: {
       maxFileSize: 100 * 1024 * 1024,
@@ -34,8 +32,7 @@ export const useSettingsStore = defineStore('settings', {
       compressionQuality: 80,
       convertToWebp: false,
       convertToPng: false,
-      showOnHomepage: false,
-      autoRename: true
+      showOnHomepage: false
     },
     apiKeys: [],
     loading: false
@@ -51,7 +48,6 @@ export const useSettingsStore = defineStore('settings', {
           // 只更新公共字段，保留其他字段
           this.appSettings.appName = response.data.appName
           this.appSettings.appLogo = response.data.appLogo
-          this.appSettings.appFavicon = response.data.appFavicon
           this.appSettings.backgroundUrl = response.data.backgroundUrl
           this.appSettings.backgroundBlur = response.data.backgroundBlur
           this.appSettings.announcement = response.data.announcement || {

@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
     // 构建查询条件
     // 如果配置允许展示私有图片，则所有人都能看到私有图片
-    // 否则未登录用户只能看到公开上传的图片；且游客上传的图片需勾选“展示在主页”才对游客可见
+    // 否则未登录用户只能看到公开上传的图片
     let queryCondition
     if (isAdmin) {
       // 管理员可以看到所有非违规的图片（违规图片不在首页显示）
@@ -38,13 +38,8 @@ export default defineEventHandler(async (event) => {
       // 配置开启时展示所有非违规图片
       queryCondition = { isDeleted: false, isNsfw: { $ne: true } }
     } else {
-      // 配置关闭且未登录：只展示公开上传且“展示在主页”为是的图片（showOnHomepage 缺省视为 true）
-      queryCondition = {
-        isDeleted: false,
-        uploadedByType: 'public',
-        isNsfw: { $ne: true },
-        $or: [{ showOnHomepage: true }, { showOnHomepage: { $exists: false } }]
-      }
+      // 配置关闭且未登录时只展示公开的非违规图片
+      queryCondition = { isDeleted: false, uploadedByType: 'public', isNsfw: { $ne: true } }
     }
 
     // 获取总数与当前页数据（数据库层排序分页，避免全量加载）

@@ -3,7 +3,7 @@ import { getImageMetadata, saveUploadedFile } from '../../utils/image.js'
 import { authMiddleware } from '../../utils/authMiddleware.js'
 import { getRandomHeaders } from '../../utils/fetchHeaders.js'
 import { processImageWithConfig } from '../../utils/upload.js'
-import { getBucketsConfig, getUniqueStorageFilename } from '../../utils/storage.js'
+import { getBucketsConfig } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
 
 // 供第三方API调用
@@ -187,25 +187,21 @@ export default defineEventHandler(async (event) => {
         // 获取图片元数据
         const metadata = await getImageMetadata(processedBuffer)
 
-        // 从URL提取原始文件名（用于展示与可选存储名）
+        // 保存文件到所选储存桶
+        const filename = `${imageUuid}.${finalFormat}`
+        const bucketId = await saveUploadedFile(processedBuffer, filename, bucketIdToUse)
+
+        // 从URL提取原始文件名
         let originalName = imageUrl.pathname.split('/').pop() || 'image'
         if (!originalName.includes('.')) {
           originalName += `.${fileExt}`
         }
-        const decodedOriginal = decodeURIComponent(originalName)
 
-        // 根据「自动重命名」配置决定存储文件名
-        const autoRename = config.autoRename !== false
-        const filename = autoRename
-          ? `${imageUuid}.${finalFormat}`
-          : await getUniqueStorageFilename(bucketIdToUse, decodedOriginal, finalFormat)
-        const bucketId = await saveUploadedFile(processedBuffer, filename, bucketIdToUse)
-        // 保存到数据库（展示用解码后的文件名）
-        const displayOriginalName = decodedOriginal.includes('.') ? decodedOriginal : `${decodedOriginal}.${fileExt}`
+        // 保存到数据库
         const imageDoc = {
           _id: uuidv4(),
           uuid: imageUuid,
-          originalName: displayOriginalName,
+          originalName: originalName,
           filename: filename,
           bucketId: bucketId || undefined,
           format: finalFormat,

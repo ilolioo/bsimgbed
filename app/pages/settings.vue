@@ -2,7 +2,7 @@
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">系统设置</h1>
 
-    <!-- 标签页 -->
+    <!-- 标签页：应用设置 / 公告设置 / 存储配置 / 账户设置 - 昼夜主题适配 -->
     <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
       <button
         v-for="tab in tabs"
@@ -10,8 +10,8 @@
         @click="activeTab = tab.id"
         class="px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors"
         :class="activeTab === tab.id
-          ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-          : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+          ? 'border-primary-500 text-primary-700 dark:text-primary-300'
+          : 'border-transparent text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'"
       >
         {{ tab.label }}
       </button>
@@ -61,34 +61,6 @@
                 @error="logoError = true"
               />
               <span v-if="logoError" class="text-sm text-red-500 dark:text-red-400">图片加载失败</span>
-            </div>
-          </div>
-
-          <!-- Favicon -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Favicon URL
-            </label>
-            <input
-              v-model="appSettings.appFavicon"
-              type="text"
-              class="input"
-              placeholder="留空则与 Logo 一致"
-            />
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              浏览器标签页图标，留空则使用应用 Logo，均未设置时使用默认图标
-            </p>
-
-            <!-- Favicon 预览 -->
-            <div v-if="appSettings.appFavicon" class="mt-3 flex items-center gap-3">
-              <span class="text-sm text-gray-600 dark:text-gray-400">预览：</span>
-              <img
-                :src="appSettings.appFavicon"
-                alt="Favicon 预览"
-                class="h-6 w-6 rounded object-cover"
-                @error="faviconError = true"
-              />
-              <span v-if="faviconError" class="text-sm text-red-500 dark:text-red-400">图片加载失败</span>
             </div>
           </div>
 
@@ -175,7 +147,7 @@
     <div v-show="activeTab === 'announcement'" class="space-y-6">
       <div class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Icon name="heroicons:megaphone" class="w-5 h-5 text-primary-500" />
+          <Icon name="heroicons:megaphone" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
           公告设置
         </h2>
 
@@ -210,7 +182,7 @@
                   type="radio"
                   v-model="announcementSettings.displayType"
                   value="modal"
-                  class="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                  class="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 focus:ring-primary-500"
                 />
                 <span class="text-sm text-gray-700 dark:text-gray-300">弹窗提醒</span>
               </label>
@@ -219,7 +191,7 @@
                   type="radio"
                   v-model="announcementSettings.displayType"
                   value="banner"
-                  class="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                  class="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 focus:ring-primary-500"
                 />
                 <span class="text-sm text-gray-700 dark:text-gray-300">顶部横幅</span>
               </label>
@@ -337,7 +309,7 @@
                     <Icon :name="editingBucketId === b.id ? 'heroicons:chevron-up' : 'heroicons:pencil-square'" class="w-4 h-4" />
                     {{ editingBucketId === b.id ? '收起' : '编辑' }}
                   </button>
-                  <button v-if="storageBuckets.length > 1" type="button" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="删除" @click="removeBucket(b.id)">
+                  <button v-if="storageBuckets.length > 1" type="button" class="p-2 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="删除" @click="removeBucket(b.id)">
                     <Icon name="heroicons:trash" class="w-4 h-4" />
                   </button>
                 </div>
@@ -385,7 +357,7 @@
                   <!-- WebDAV 配置 -->
                   <div v-if="b.driver === 'webdav'" class="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                     <p class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                      <Icon name="heroicons:cloud-arrow-up" class="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                      <Icon name="heroicons:cloud-arrow-up" class="w-4 h-4 text-blue-500" />
                       WebDAV 配置
                     </p>
                     <div class="space-y-2">
@@ -399,7 +371,7 @@
                   <!-- Telegram 配置 -->
                   <div v-if="b.driver === 'telegram'" class="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                     <p class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                      <Icon name="heroicons:paper-airplane" class="w-4 h-4 text-sky-500 dark:text-sky-400" />
+                      <Icon name="heroicons:paper-airplane" class="w-4 h-4 text-sky-500" />
                       Telegram 配置
                     </p>
                     <div class="space-y-2">
@@ -509,13 +481,11 @@ const activeTab = ref('app')
 const appSettings = reactive({
   appName: 'bsimgbed',
   appLogo: '',
-  appFavicon: '',
   backgroundUrl: '',
   backgroundBlur: 0,
   siteUrl: ''
 })
 const logoError = ref(false)
-const faviconError = ref(false)
 const backgroundError = ref(false)
 const savingApp = ref(false)
 
@@ -582,14 +552,12 @@ const savingPassword = ref(false)
 async function saveAppSettings() {
   savingApp.value = true
   logoError.value = false
-  faviconError.value = false
   backgroundError.value = false
 
   try {
     const result = await settingsStore.saveAppSettings({
       appName: appSettings.appName,
       appLogo: appSettings.appLogo,
-      appFavicon: appSettings.appFavicon,
       backgroundUrl: appSettings.backgroundUrl,
       backgroundBlur: appSettings.backgroundBlur,
       siteUrl: appSettings.siteUrl,
@@ -773,7 +741,6 @@ onMounted(async () => {
   // 同步到本地状态
   appSettings.appName = settingsStore.appSettings.appName || 'bsimgbed'
   appSettings.appLogo = settingsStore.appSettings.appLogo || ''
-  appSettings.appFavicon = settingsStore.appSettings.appFavicon || ''
   appSettings.backgroundUrl = settingsStore.appSettings.backgroundUrl || ''
   appSettings.backgroundBlur = settingsStore.appSettings.backgroundBlur || 0
   appSettings.siteUrl = settingsStore.appSettings.siteUrl || ''

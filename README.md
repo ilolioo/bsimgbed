@@ -12,16 +12,38 @@ _✨ 简单易用的个人图床系统，基于 Nuxt.js 构建 ✨_
   <img src="https://img.shields.io/badge/Apache-License2.0-green" alt="License">
 </a>
 
-<a href="https://github.com/ilolioo/bsimgbed">
+<a href="https://github.comilolioo/bsimgbed">
   <img src="https://img.shields.io/badge/bsimgbed-图床-blue" alt="bsimgbed">
 </a>
 
 
 
-[功能特性](#功能特性) • [快速开始](#快速开始) • [API 文档](#api-文档) • [常见问题](#常见问题)
+[功能特性](#功能特性) • [快速开始](#快速开始) • [配置说明](#配置说明) • [API 文档](#api-文档) • [常见问题](#常见问题)
 
 </div>
 
+## 项目预览
+
+<details>
+<summary>点击展开查看项目截图</summary>
+
+![项目预览1](md-images/img1.jpg)
+
+![项目预览2](md-images/img2.jpg)
+
+![项目预览3](md-images/img3.jpg)
+
+![项目预览4](md-images/img4.jpg)
+
+![项目预览5](md-images/img5.jpg)
+
+![项目预览6](md-images/img6.jpg)
+
+![项目预览7](md-images/img7.jpg)
+
+![项目预览8](md-images/img8.jpg)
+
+</details>
 
 ## 功能特性
 
@@ -67,29 +89,23 @@ _✨ 简单易用的个人图床系统，基于 Nuxt.js 构建 ✨_
 ## 快速开始
 
 ### Docker Compose 部署（推荐）
-1. **克隆项目**
-```bash
-cd /opt
-git clone https://github.com/ilolioo/bsimgbed.git
-cd /opt/bsimgbed
-```
 
-2. **构建并启动服务**
 ```bash
-docker compose up -d --build
-```
-3. **访问系统**
-- `http://localhost:5198`
+# 1. 创建 bsimgbed 目录
+mkdir -p /root/bsimgbed && cd /root/bsimgbed
 
-5. **停止服务**
-```bash
-docker compose down
+
+# 2. 下载docker-compose.yml文件
+wget https://raw.githubusercontent.com/ilolioo/bsimgbed/refs/heads/main/docker-compose.yml
+
+# 使用 docker-compose
+docker compose up -d
 ```
 
 ### Docker run部署
 
 ```bash
-docker run -d --name bsimgbed -p 5198:3000 -v ./db:/app/db -v ./uploads:/app/uploads ghcr.io/ilolioo/bsimgbed:latest
+docker run -d --name bsimgbed -p 3000:3000 -v ./db:/app/db -v ./uploads:/app/uploads ghcr.io/chaos-zhu/bsimgbed:latest
 ```
 
 

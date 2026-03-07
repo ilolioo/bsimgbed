@@ -33,8 +33,7 @@ export default defineEventHandler(async (event) => {
           compressionQuality: 80,
           convertToWebp: false,
           convertToPng: false,
-          showOnHomepage: false,
-          autoRename: true
+          showOnHomepage: false
         }
       }
     }

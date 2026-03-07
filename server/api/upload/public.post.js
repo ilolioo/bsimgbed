@@ -1,7 +1,7 @@
 import db from '../../utils/db.js'
 import { getImageMetadata, saveUploadedFile } from '../../utils/image.js'
 import { parseFormData, processImageWithConfig } from '../../utils/upload.js'
-import { getBucketsConfig, getUniqueStorageFilename } from '../../utils/storage.js'
+import { getBucketsConfig } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
 import {
   checkPublicRateLimit,
@@ -59,8 +59,8 @@ export default defineEventHandler(async (event) => {
       acquirePublicConcurrency(clientIP)
     }
 
-    // 解析表单数据（含可选 bucketId、showOnHomepage）
-    const { file, bucketId: requestedBucketId, showOnHomepage } = await parseFormData(event)
+    // 解析表单数据（含可选 bucketId）
+    const { file, bucketId: requestedBucketId } = await parseFormData(event)
 
     if (!file) {
       releasePublicConcurrency(clientIP)
@@ -113,17 +113,14 @@ export default defineEventHandler(async (event) => {
     // 获取图片元数据
     const metadata = await getImageMetadata(processedBuffer)
 
-    // 根据「自动重命名」配置决定存储文件名：开则用 UUID，关则用原始文件名（去重）
-    const autoRename = config.autoRename !== false
-    const filename = autoRename
-      ? `${imageUuid}.${finalFormat}`
-      : await getUniqueStorageFilename(bucketIdToUse, file.originalFilename, finalFormat)
+    // 保存文件到所选储存桶
+    const filename = `${imageUuid}.${finalFormat}`
     const bucketId = await saveUploadedFile(processedBuffer, filename, bucketIdToUse)
 
     // 判断是否启用内容安全检测
     const contentSafetyEnabled = config.contentSafety?.enabled || false
 
-    // 保存到数据库（showOnHomepage：游客上传的图片是否在主页展示，默认 true）
+    // 保存到数据库
     const imageDoc = {
       _id: uuidv4(),
       uuid: imageUuid,
@@ -141,7 +138,6 @@ export default defineEventHandler(async (event) => {
       ip: clientIP,
       uploadedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      showOnHomepage: showOnHomepage !== false,
       // 内容审核相关字段
       // 如果未启用内容安全检测，状态直接设为 skipped
       moderationStatus: contentSafetyEnabled ? 'pending' : 'skipped',
@@ -199,7 +195,7 @@ export default defineEventHandler(async (event) => {
       console.error('[Upload] 发送上传通知失败:', err)
     })
 
-    // 返回结果（不包含敏感信息）；与列表接口字段一致，便于前端直接加入展示区（未勾选展示在主页时仅靠本地状态可见）
+    // 返回结果（不包含敏感信息）
     return {
       success: true,
       message: '上传成功',
@@ -207,13 +203,11 @@ export default defineEventHandler(async (event) => {
         id: imageDoc._id,
         uuid: imageUuid,
         filename: filename,
-        originalName: file.originalFilename,
         format: finalFormat,
         size: processedBuffer.length,
         width: metadata.width || 0,
         height: metadata.height || 0,
         url: `/i/${imageUuid}.${finalFormat}`,
-        uploadedBy: '访客',
         uploadedAt: imageDoc.uploadedAt
       }
     }

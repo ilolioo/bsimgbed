@@ -19,7 +19,7 @@
             </label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Icon name="heroicons:lock-closed" class="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                <Icon name="heroicons:lock-closed" class="w-5 h-5 text-gray-400" />
               </div>
               <input
                 id="oldPassword"
@@ -38,7 +38,7 @@
               >
                 <Icon
                   :name="showOld ? 'heroicons:eye-slash' : 'heroicons:eye'"
-                  class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
+                  class="w-5 h-5 text-gray-400 hover:text-gray-600"
                 />
               </button>
             </div>
@@ -50,7 +50,7 @@
             </label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Icon name="heroicons:key" class="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                <Icon name="heroicons:key" class="w-5 h-5 text-gray-400" />
               </div>
               <input
                 id="newPassword"
@@ -69,7 +69,7 @@
               >
                 <Icon
                   :name="showNew ? 'heroicons:eye-slash' : 'heroicons:eye'"
-                  class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
+                  class="w-5 h-5 text-gray-400 hover:text-gray-600"
                 />
               </button>
             </div>

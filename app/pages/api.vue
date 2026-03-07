@@ -2,7 +2,7 @@
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">API 管理</h1>
 
-    <!-- 标签页 -->
+    <!-- 标签页：公共配置 / 私有配置 / API文档 - 昼夜主题适配 -->
     <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
       <button
         v-for="tab in tabs"
@@ -10,8 +10,8 @@
         @click="activeTab = tab.id"
         class="px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors"
         :class="activeTab === tab.id
-          ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-          : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+          ? 'border-primary-500 text-primary-700 dark:text-primary-300'
+          : 'border-transparent text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'"
       >
         {{ tab.label }}
       </button>
@@ -194,25 +194,6 @@
             </button>
           </div>
 
-          <!-- 自动重命名 -->
-          <div class="flex items-center justify-between">
-            <div>
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">上传自动重命名</label>
-              <p class="text-xs text-gray-500 dark:text-gray-400">关闭后保留用户原始文件名（重名时自动加后缀）</p>
-            </div>
-            <button
-              type="button"
-              @click="publicConfig.autoRename = !publicConfig.autoRename"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-              :class="publicConfig.autoRename !== false ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
-            >
-              <span
-                class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                :class="publicConfig.autoRename !== false ? 'translate-x-6' : 'translate-x-1'"
-              />
-            </button>
-          </div>
-
           <div class="pt-4">
             <button type="submit" class="btn-primary" :disabled="saving">
               {{ saving ? '保存中...' : '保存配置' }}
@@ -225,7 +206,7 @@
       <div class="card p-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Icon name="heroicons:exclamation-triangle" class="w-5 h-5 text-orange-500 dark:text-orange-400" />
+            <Icon name="heroicons:exclamation-triangle" class="w-5 h-5 text-orange-500" />
             内容安全
           </h2>
           <button
@@ -310,12 +291,12 @@
           <!-- nsfw_detector 配置 -->
           <div v-if="publicConfig.contentSafety.provider === 'nsfw_detector'" class="space-y-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div class="flex items-center gap-2 mb-2">
-              <Icon name="heroicons:server" class="w-4 h-4 text-blue-500 dark:text-blue-400" />
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">自建服务配置 <a href="https://github.com/chaos-zhu/nsfw_detector" class="text-blue-500 dark:text-blue-400 hover:underline" target="_blank">开源地址</a></span>
+              <Icon name="heroicons:server" class="w-4 h-4 text-blue-500" />
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">自建服务配置 <a href="https://github.com/chaos-zhu/nsfw_detector" class="text-blue-500" target="_blank">开源地址</a></span>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                API 地址 <span class="text-red-500 dark:text-red-400">*</span>
+                API 地址 <span class="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -465,7 +446,7 @@
               <div class="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
                 {{ item.reason || '未指定原因' }}
               </div>
-              <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              <div class="text-xs text-gray-400 mt-1">
                 添加于 {{ formatDate(item.createdAt) }}
               </div>
             </div>
@@ -621,25 +602,6 @@
             </button>
           </div>
 
-          <!-- 自动重命名 -->
-          <div class="flex items-center justify-between">
-            <div>
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">上传自动重命名</label>
-              <p class="text-xs text-gray-500 dark:text-gray-400">关闭后保留用户原始文件名（重名时自动加后缀）</p>
-            </div>
-            <button
-              type="button"
-              @click="privateConfig.autoRename = !privateConfig.autoRename"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-              :class="privateConfig.autoRename !== false ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
-            >
-              <span
-                class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                :class="privateConfig.autoRename !== false ? 'translate-x-6' : 'translate-x-1'"
-              />
-            </button>
-          </div>
-
           <div class="pt-4">
             <button type="submit" class="btn-primary" :disabled="saving">
               {{ saving ? '保存中...' : '保存配置' }}
@@ -679,20 +641,20 @@
                 </code>
                 <button
                   @click="toggleShowKey(key.id)"
-                  class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                  class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   <Icon v-if="showKeyId === key.id" name="heroicons:eye-slash" class="w-4 h-4" />
                   <Icon v-else name="heroicons:eye" class="w-4 h-4" />
                 </button>
                 <button
                   @click="copyApiKey(key.key)"
-                  class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                  class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   title="复制"
                 >
                   <Icon name="heroicons:clipboard-document" class="w-4 h-4" />
                 </button>
               </div>
-              <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              <div class="text-xs text-gray-400 mt-1">
                 创建于 {{ formatDate(key.createdAt) }}
               </div>
             </div>
@@ -1111,7 +1073,6 @@ const publicConfig = reactive({
   convertToPng: false,
   rateLimit: 10,
   allowConcurrent: false,
-  autoRename: true,
   contentSafety: { ...defaultContentSafetyConfig }
 })
 
@@ -1122,8 +1083,7 @@ const privateConfig = reactive({
   compressionQuality: 80,
   convertToWebp: false,
   convertToPng: false,
-  showOnHomepage: false,
-  autoRename: true
+  showOnHomepage: false
 })
 
 // ApiKey 列表
@@ -1268,7 +1228,6 @@ async function savePublicConfig() {
       convertToPng: publicConfig.convertToPng,
       rateLimit: publicConfig.rateLimit,
       allowConcurrent: publicConfig.allowConcurrent,
-      autoRename: publicConfig.autoRename !== false,
       contentSafety: publicConfig.contentSafety
     })
 
@@ -1294,8 +1253,7 @@ async function savePrivateConfig() {
       compressionQuality: privateConfig.compressionQuality,
       convertToWebp: privateConfig.convertToWebp,
       convertToPng: privateConfig.convertToPng,
-      showOnHomepage: privateConfig.showOnHomepage,
-      autoRename: privateConfig.autoRename !== false
+      showOnHomepage: privateConfig.showOnHomepage
     })
 
     if (result.success) {
