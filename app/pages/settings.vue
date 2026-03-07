@@ -196,7 +196,7 @@
     <div v-show="activeTab === 'announcement'" class="space-y-6">
       <div class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Icon name="heroicons:megaphone" class="w-5 h-5 text-primary-500" />
+          <Icon name="heroicons:megaphone" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
           公告设置
         </h2>
 
@@ -313,7 +313,7 @@
           <div class="flex items-center justify-between mb-3">
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">储存桶列表</span>
             <button type="button" class="btn-secondary text-sm inline-flex items-center gap-1.5" @click="addBucket">
-              <Icon name="heroicons:plus" class="w-4 h-4" />
+              <Icon name="heroicons:plus" class="w-4 h-4 icon-theme" />
               添加储存桶
             </button>
           </div>
@@ -352,7 +352,7 @@
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                   <button v-if="storageDefaultId !== b.id" type="button" class="btn-secondary text-sm inline-flex items-center gap-1" @click="storageDefaultId = b.id">
-                    <Icon name="heroicons:star" class="w-4 h-4" />
+                    <Icon name="heroicons:star" class="w-4 h-4 icon-theme" />
                     设为默认
                   </button>
                   <button type="button" class="btn-secondary text-sm inline-flex items-center gap-1" @click="toggleEditBucket(getBucketKey(b))">
@@ -360,7 +360,7 @@
                     {{ editingBucketId === getBucketKey(b) ? '收起' : '编辑' }}
                   </button>
                   <button v-if="storageBuckets.length > 1" type="button" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="删除" @click="removeBucket(b.id)">
-                    <Icon name="heroicons:trash" class="w-4 h-4" />
+                    <Icon name="heroicons:trash" class="w-4 h-4 icon-theme" />
                   </button>
                 </div>
               </div>

@@ -659,7 +659,7 @@
                   class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                   title="复制"
                 >
-                  <Icon name="heroicons:clipboard-document" class="w-4 h-4" />
+                  <Icon name="heroicons:clipboard-document" class="w-4 h-4 icon-theme" />
                 </button>
               </div>
               <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
@@ -834,7 +834,7 @@ curl -X POST "{{ baseUrl }}/api/upload/urls" \
               class="absolute top-1.5 right-1.5 p-1.5 text-gray-400 hover:text-white transition-colors"
               title="复制代码"
             >
-              <Icon name="heroicons:clipboard-document" class="w-4 h-4" />
+              <Icon name="heroicons:clipboard-document" class="w-4 h-4 icon-theme" />
             </button>
           </div>
         </div>
@@ -908,7 +908,7 @@ fetch('{{ baseUrl }}/api/upload/urls', {
               class="absolute top-1.5 right-1.5 p-1.5 text-gray-400 hover:text-white transition-colors"
               title="复制代码"
             >
-              <Icon name="heroicons:clipboard-document" class="w-4 h-4" />
+              <Icon name="heroicons:clipboard-document" class="w-4 h-4 icon-theme" />
             </button>
           </div>
         </div>
@@ -947,7 +947,7 @@ fetch('{{ baseUrl }}/api/upload/urls', {
             class="absolute top-1.5 right-1.5 p-1.5 text-gray-400 hover:text-white transition-colors"
             title="复制代码"
           >
-            <Icon name="heroicons:clipboard-document" class="w-4 h-4" />
+            <Icon name="heroicons:clipboard-document" class="w-4 h-4 icon-theme" />
           </button>
         </div>
         <p class="text-sm text-gray-600 dark:text-gray-400">

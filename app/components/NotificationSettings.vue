@@ -145,7 +145,7 @@
         </div>
         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
           <button type="button" @click="testWebhook" class="btn-secondary" :disabled="testing || !config.webhook.url">
-            <Icon name="heroicons:paper-airplane" class="w-4 h-4 mr-2" />
+            <Icon name="heroicons:paper-airplane" class="w-4 h-4 mr-2 icon-theme" />
             {{ testing ? '测试中...' : '发送测试通知' }}
           </button>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">点击发送一条测试通知，验证 Webhook 配置是否正确</p>
@@ -172,7 +172,7 @@
         </div>
         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
           <button type="button" @click="testTelegram" class="btn-secondary" :disabled="testingTelegram || !config.telegram.token || !config.telegram.chatId">
-            <Icon name="heroicons:paper-airplane" class="w-4 h-4 mr-2" />
+            <Icon name="heroicons:paper-airplane" class="w-4 h-4 mr-2 icon-theme" />
             {{ testingTelegram ? '测试中...' : '发送测试通知' }}
           </button>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">点击发送一条测试通知，验证 Telegram 配置是否正确</p>
@@ -209,7 +209,7 @@
         </div>
         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
           <button type="button" @click="testEmail" class="btn-secondary" :disabled="testingEmail || !config.email.service || !config.email.user || !config.email.pass">
-            <Icon name="heroicons:paper-airplane" class="w-4 h-4 mr-2" />
+            <Icon name="heroicons:paper-airplane" class="w-4 h-4 mr-2 icon-theme" />
             {{ testingEmail ? '测试中...' : '发送测试通知' }}
           </button>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">点击发送一条测试通知，验证邮件配置是否正确</p>
@@ -231,7 +231,7 @@
         </div>
         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
           <button type="button" @click="testServerChan" class="btn-secondary" :disabled="testingServerChan || !config.serverchan.sendKey">
-            <Icon name="heroicons:paper-airplane" class="w-4 h-4 mr-2" />
+            <Icon name="heroicons:paper-airplane" class="w-4 h-4 mr-2 icon-theme" />
             {{ testingServerChan ? '测试中...' : '发送测试通知' }}
           </button>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">点击发送一条测试通知，验证 Server酱 配置是否正确</p>

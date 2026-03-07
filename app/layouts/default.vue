@@ -52,7 +52,7 @@
               :class="{ 'nav-link-active': route.path === '/' }"
               title="首页"
             >
-              <Icon name="heroicons:home" class="w-5 h-5 flex-shrink-0" />
+              <Icon name="heroicons:home" class="w-5 h-5 flex-shrink-0 text-current" />
               <span class="hidden sm:inline">首页</span>
             </NuxtLink>
 
@@ -63,7 +63,7 @@
               :class="{ 'nav-link-active': route.path === '/capacity' }"
               title="容量"
             >
-              <Icon name="heroicons:circle-stack" class="w-5 h-5 flex-shrink-0" />
+              <Icon name="heroicons:circle-stack" class="w-5 h-5 flex-shrink-0 text-current" />
               <span class="hidden sm:inline">容量</span>
             </NuxtLink>
 
@@ -75,7 +75,7 @@
               :class="{ 'nav-link-active': route.path === '/api' }"
               title="API"
             >
-              <Icon name="heroicons:code-bracket" class="w-5 h-5 flex-shrink-0" />
+              <Icon name="heroicons:code-bracket" class="w-5 h-5 flex-shrink-0 text-current" />
               <span class="hidden sm:inline">API</span>
             </NuxtLink>
 
@@ -87,7 +87,7 @@
               :class="{ 'nav-link-active': route.path === '/settings' }"
               title="设置"
             >
-              <Icon name="heroicons:cog-6-tooth" class="w-5 h-5 flex-shrink-0" />
+              <Icon name="heroicons:cog-6-tooth" class="w-5 h-5 flex-shrink-0 text-current" />
               <span class="hidden sm:inline">设置</span>
             </NuxtLink>
 
@@ -99,7 +99,7 @@
               :class="{ 'nav-link-active': route.path === '/stats' }"
               title="统计"
             >
-              <Icon name="heroicons:chart-bar" class="w-5 h-5 flex-shrink-0" />
+              <Icon name="heroicons:chart-bar" class="w-5 h-5 flex-shrink-0 text-current" />
               <span class="hidden sm:inline">统计</span>
             </NuxtLink>
 
@@ -110,7 +110,7 @@
               :class="{ 'nav-link-active': route.path === '/about' }"
               title="关于"
             >
-              <Icon name="heroicons:information-circle" class="w-5 h-5 flex-shrink-0" />
+              <Icon name="heroicons:information-circle" class="w-5 h-5 flex-shrink-0 text-current" />
               <span class="hidden sm:inline">关于</span>
             </NuxtLink>
 
@@ -124,7 +124,7 @@
               class="nav-link nav-link-icon sm:nav-link-text text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
               title="登出"
             >
-              <Icon name="heroicons:arrow-right-on-rectangle" class="w-5 h-5 flex-shrink-0" />
+              <Icon name="heroicons:arrow-right-on-rectangle" class="w-5 h-5 flex-shrink-0 text-current" />
               <span class="hidden sm:inline">登出</span>
             </button>
             <template v-else>
@@ -134,7 +134,7 @@
                 :class="{ 'nav-link-active': route.path === '/register' }"
                 title="注册"
               >
-                <Icon name="heroicons:user-plus" class="w-5 h-5 flex-shrink-0" />
+                <Icon name="heroicons:user-plus" class="w-5 h-5 flex-shrink-0 text-current" />
                 <span class="hidden sm:inline">注册</span>
               </NuxtLink>
               <NuxtLink
@@ -143,7 +143,7 @@
                 :class="{ 'nav-link-active': route.path === '/login' }"
                 title="登录"
               >
-                <Icon name="heroicons:arrow-left-on-rectangle" class="w-5 h-5 flex-shrink-0" />
+                <Icon name="heroicons:arrow-left-on-rectangle" class="w-5 h-5 flex-shrink-0 text-current" />
                 <span class="hidden sm:inline">登录</span>
               </NuxtLink>
             </template>

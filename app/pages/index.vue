@@ -240,7 +240,7 @@
         aria-label="返回顶部"
         title="返回顶部"
       >
-        <Icon name="heroicons:arrow-up" class="w-6 h-6 flex-shrink-0" />
+        <Icon name="heroicons:arrow-up" class="w-6 h-6 flex-shrink-0 text-current" />
       </button>
     </Transition>
   </div>

@@ -130,7 +130,7 @@
           <!-- 列表内容 -->
           <div class="max-h-96 overflow-y-auto">
             <div v-if="loadingNsfwImages && nsfwImages.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
-              <Icon name="heroicons:arrow-path" class="animate-spin h-8 w-8 mx-auto mb-2" />
+              <Icon name="heroicons:arrow-path" class="animate-spin h-8 w-8 mx-auto mb-2 text-gray-500 dark:text-gray-400" />
               <p>加载中...</p>
             </div>
             <div v-else-if="nsfwImages.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">

@@ -14,7 +14,7 @@
           <!-- 标题 -->
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <Icon name="heroicons:megaphone" class="w-5 h-5 text-primary-500" />
+              <Icon name="heroicons:megaphone" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
               公告
             </h3>
             <button
