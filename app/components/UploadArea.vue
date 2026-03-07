@@ -107,7 +107,7 @@
             type="checkbox"
             class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
           />
-          <span class="text-xs text-gray-600 dark:text-gray-400">游客上传的图片展示在主页</span>
+          <span class="text-xs text-gray-600 dark:text-gray-400">上传后展示</span>
         </label>
       </div>
 
