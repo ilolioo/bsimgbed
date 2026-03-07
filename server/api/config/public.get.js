@@ -1,6 +1,6 @@
 import db from '../../utils/db.js'
 import { optionalAuthMiddleware } from '../../utils/authMiddleware.js'
-import { getDefaultContentSafetyConfig, MODERATION_PROVIDERS } from '../../utils/moderation.js'
+import { getDefaultContentSafetyConfig } from '../../utils/moderation.js'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -34,13 +34,14 @@ export default defineEventHandler(async (event) => {
       const defaultProviders = getDefaultContentSafetyConfig().providers
       for (const [key, defaultProvider] of Object.entries(defaultProviders)) {
         if (configData.contentSafety.providers?.[key]) {
-          // 如果没有 apiKey，使用默认值
-          if (!configData.contentSafety.providers[key].apiKey) {
+          if (!configData.contentSafety.providers[key].apiKey && defaultProvider.apiKey) {
             configData.contentSafety.providers[key].apiKey = defaultProvider.apiKey
           }
-          // 如果没有 name，使用默认值
           if (!configData.contentSafety.providers[key].name) {
             configData.contentSafety.providers[key].name = defaultProvider.name
+          }
+          if (defaultProvider.uploadUrl && !configData.contentSafety.providers[key].uploadUrl) {
+            configData.contentSafety.providers[key].uploadUrl = defaultProvider.uploadUrl
           }
         }
       }

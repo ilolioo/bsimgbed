@@ -16,7 +16,7 @@ export const MODERATION_PROVIDERS = {
     name: 'Elysia Tools',
     uploadUrl: 'https://elysiatools.com/upload/nsfw-image-detector',
     apiUrl: 'https://elysiatools.com/zh/api/tools/nsfw-image-detector'
-    // 不需要 API Key 和阈值配置，使用 isSafe 字段判断
+    // 无需 API Key 与阈值，以 isSafe 字段判定；可选在设置中覆盖 uploadUrl/apiUrl
   },
   'nsfw_detector': {
     name: 'nsfw_detector',
@@ -213,15 +213,16 @@ const providerAdapters = {
 
         const result = await detectResponse.json()
 
-        // 解析响应 - 使用 isSafe 字段判断
+        // 解析响应 - 使用 isSafe 字段判断（兼容 data.data 与 data 两种嵌套）
         if (!result.data) {
           return {
             success: false,
             error: 'API返回数据格式错误'
           }
         }
-        const isSafe = result.data.data.isSafe === true
-        const confidence = result.data.confidence || 0
+        const payload = result.data.data || result.data
+        const isSafe = payload?.isSafe === true
+        const confidence = result.data.confidence ?? payload?.confidence ?? 0
 
         return {
           success: true,
@@ -305,16 +306,17 @@ const providerAdapters = {
 
         const result = await response.json()
 
-        // 解析响应
-        if (result.status !== 'success') {
+        // 解析响应（兼容 code/msg 与 status/result 两种常见格式）
+        const success = result.code === 200 || result.msg === 'success' || result.status === 'success'
+        if (!success) {
           return {
             success: false,
-            error: `API返回错误: ${JSON.stringify(result) || 'unknown error'}`
+            error: `API返回错误: ${result.msg || result.message || JSON.stringify(result) || 'unknown error'}`
           }
         }
 
-        // 使用配置的阈值判断是否违规（默认80%）
-        const nsfwScore = result.result?.nsfw || 0
+        // nsfw 分数：优先 result.data（标准 nsfw_detector），其次 result.result
+        const nsfwScore = Number(result.data?.nsfw ?? result.result?.nsfw ?? 0)
         const threshold = config.threshold !== undefined ? config.threshold : 0.8
         const isNsfw = nsfwScore >= threshold
 
@@ -399,7 +401,6 @@ export async function moderateImage(imageId, filename, contentSafetyConfig, buck
 
   try {
     // 通过存储驱动读取图片（按储存桶，bucketId 可选）
-    const bucketId = arguments[3]
     const exists = await fileExists(filename, bucketId)
     if (!exists) {
       return {

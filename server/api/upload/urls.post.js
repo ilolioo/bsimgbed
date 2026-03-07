@@ -5,9 +5,10 @@ import { getRandomHeaders } from '../../utils/fetchHeaders.js'
 import { processImageWithConfig, generateTimestampId } from '../../utils/upload.js'
 import { getBucketsConfig } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
+import { createModerationTask } from '../../utils/moderationQueue.js'
 
-// 下载单个URL的图片，保存到指定储存桶
-async function downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse = null, showOnHomepage = true) {
+// 下载单个URL的图片，保存到指定储存桶（contentSafetyEnabled 与公共 API 配置一致，按储存桶审核）
+async function downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse = null, showOnHomepage = true, contentSafetyEnabled = false) {
   // 验证URL格式
   let imageUrl
   try {
@@ -124,10 +125,22 @@ async function downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse =
     showOnHomepage: showOnHomepage !== false,
     ip: clientIP,
     uploadedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    moderationStatus: contentSafetyEnabled ? 'pending' : 'skipped',
+    moderationResult: contentSafetyEnabled ? null : { skipped: true, reason: '内容安全检测未启用' },
+    moderationChecked: !contentSafetyEnabled,
+    isNsfw: false
   }
 
   await db.images.insert(imageDoc)
+
+  if (contentSafetyEnabled) {
+    try {
+      await createModerationTask(imageDoc._id, imageUuid, filename, bucketId)
+    } catch (err) {
+      console.error('[Upload] 创建审核任务失败:', err)
+    }
+  }
 
   return {
     id: imageDoc._id,
@@ -170,9 +183,13 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 获取私有 API 配置
-    const configDoc = await db.settings.findOne({ key: 'privateApiConfig' })
+    // 获取私有 API 配置与内容安全配置（内容安全与公共 API 共用，按储存桶审核）
+    const [configDoc, publicConfigDoc] = await Promise.all([
+      db.settings.findOne({ key: 'privateApiConfig' }),
+      db.settings.findOne({ key: 'publicApiConfig' })
+    ])
     const config = configDoc?.value || {}
+    const contentSafetyEnabled = publicConfigDoc?.value?.contentSafety?.enabled || false
 
     // 解析上传目标储存桶
     const { defaultId, buckets } = await getBucketsConfig()
@@ -222,7 +239,7 @@ export default defineEventHandler(async (event) => {
       })
 
       try {
-        const result = await downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse, requestedShowOnHomepage !== false)
+        const result = await downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse, requestedShowOnHomepage !== false, contentSafetyEnabled)
         successCount++
         results.push({
           url,

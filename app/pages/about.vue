@@ -10,7 +10,7 @@
           关于项目
         </h2>
         <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
-          bsimgbed 是一个简单易用的个人图床应用，支持本地磁盘、WebDAV、Telegram 等多种存储方式，可自由切换无需重启。提供公共/私有 API、API Key 管理、内容安全与通知等能力，适合自建图床与图片管理。
+          bsimgbed 是一个简单易用的个人图床应用，支持本地磁盘、WebDAV、Telegram 等多种存储方式，可自由切换无需重启。提供公共/私有 API、API Key 管理、内容安全（NSFW 检测、违规自动处理）与通知等能力，适合自建图床与图片管理。
         </p>
       </div>
 

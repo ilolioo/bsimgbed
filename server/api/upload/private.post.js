@@ -4,6 +4,7 @@ import { parseFormData, processImageWithConfig, generateTimestampId } from '../.
 import { getBucketsConfig } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
 import { sendUploadNotification } from '../../utils/notification.js'
+import { createModerationTask } from '../../utils/moderationQueue.js'
 
 /**
  * 解析 base64 字符串，支持带 data URI 前缀和纯 base64
@@ -147,6 +148,10 @@ export default defineEventHandler(async (event) => {
     const filename = `${imageUuid}.${finalFormat}`
     const bucketId = await saveUploadedFile(processedBuffer, filename, bucketIdToUse)
 
+    // 内容安全：与公共 API 共用配置，按储存桶审核
+    const publicConfigDoc = await db.settings.findOne({ key: 'publicApiConfig' })
+    const contentSafetyEnabled = publicConfigDoc?.value?.contentSafety?.enabled || false
+
     // 获取用户信息（通过 ApiKey 关联）
     const uploadedBy = keyDoc.name || 'API用户'
 
@@ -171,10 +176,22 @@ export default defineEventHandler(async (event) => {
       showOnHomepage: requestedShowOnHomepage,
       ip: clientIP,
       uploadedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      moderationStatus: contentSafetyEnabled ? 'pending' : 'skipped',
+      moderationResult: contentSafetyEnabled ? null : { skipped: true, reason: '内容安全检测未启用' },
+      moderationChecked: !contentSafetyEnabled,
+      isNsfw: false
     }
 
     await db.images.insert(imageDoc)
+
+    if (contentSafetyEnabled) {
+      try {
+        await createModerationTask(imageDoc._id, imageUuid, filename, bucketId)
+      } catch (err) {
+        console.error('[Upload] 创建审核任务失败:', err)
+      }
+    }
 
     // 获取站点 URL 配置，用于生成完整图片链接
     const appSettingsDoc = await db.settings.findOne({ key: 'appSettings' })

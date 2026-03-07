@@ -24,11 +24,11 @@ const RETRY_INTERVAL = 60 * 1000  // 重试间隔 1 分钟
 const PROCESS_INTERVAL = 5 * 1000  // 正常处理间隔 5 秒
 
 /**
- * 创建审核任务
+ * 创建审核任务（多储存桶时务必传入 bucketId，与图片实际所在桶一致，否则处理时会从库表补全）
  * @param {string} imageId - 图片ID
  * @param {string} imageUuid - 图片UUID
  * @param {string} filename - 文件名
- * @param {string} [bucketId] - 储存桶 ID（用于按桶读取图片）
+ * @param {string} [bucketId] - 储存桶 ID，图片所在桶，用于按桶读取文件
  * @returns {Promise<object>} - 创建的任务
  */
 export async function createModerationTask(imageId, imageUuid, filename, bucketId) {
@@ -126,8 +126,15 @@ async function processTask(task) {
       return { success: true, retry: false }
     }
 
-    // 执行审核（按任务所属储存桶读取图片）
-    const result = await moderateImage(task.imageId, task.filename, contentSafetyConfig, task.bucketId)
+    // 确定储存桶：任务未带 bucketId 时从图片表补全（兼容旧任务与多储存桶）
+    let bucketIdToUse = task.bucketId
+    if (bucketIdToUse == null || bucketIdToUse === '') {
+      const image = await db.images.findOne({ _id: task.imageId })
+      if (image?.bucketId) bucketIdToUse = image.bucketId
+    }
+
+    // 执行审核（按所属储存桶读取图片）
+    const result = await moderateImage(task.imageId, task.filename, contentSafetyConfig, bucketIdToUse)
 
     if (result.success) {
       // 审核成功
