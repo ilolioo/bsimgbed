@@ -961,11 +961,18 @@ fetch('{{ baseUrl }}/api/upload/urls', {
           名称
         </label>
         <input
+          v-if="authStore.isAdmin"
           v-model="newKeyName"
           type="text"
           class="input"
           placeholder="请输入 ApiKey 名称"
         />
+        <div v-else class="input bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed">
+          {{ authStore.user?.username || '—' }}
+        </div>
+        <p v-if="!authStore.isAdmin" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          普通用户密钥名称固定为用户名，仅管理员可修改
+        </p>
       </div>
     </Modal>
 
@@ -1290,14 +1297,15 @@ async function savePrivateConfig() {
   }
 }
 
-// 添加 ApiKey
+// 添加 ApiKey（管理员可填名称，普通用户名称固定为用户名）
 async function addApiKey() {
-  if (!newKeyName.value.trim()) {
+  const name = authStore.isAdmin ? newKeyName.value.trim() : (authStore.user?.username || '')
+  if (!name) {
     toastStore.error('请输入 ApiKey 名称')
     return
   }
 
-  const result = await settingsStore.createApiKey(newKeyName.value.trim())
+  const result = await settingsStore.createApiKey(name)
   if (result.success) {
     toastStore.success('ApiKey 已创建')
     showAddKeyModal.value = false

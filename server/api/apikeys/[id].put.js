@@ -39,8 +39,9 @@ export default defineEventHandler(async (event) => {
       updatedAt: new Date().toISOString()
     }
 
-    if (name !== undefined) {
-      updateData.name = name.trim()
+    // 仅管理员可修改名称
+    if (user.role === 'admin' && name !== undefined) {
+      updateData.name = String(name).trim()
     }
 
     if (enabled !== undefined) {

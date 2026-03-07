@@ -8,13 +8,20 @@ export default defineEventHandler(async (event) => {
     const user = event.context.user
 
     const body = await readBody(event)
-    const { name } = body
-
-    if (!name || !name.trim()) {
-      throw createError({
-        statusCode: 400,
-        message: '请输入 ApiKey 名称'
-      })
+    const isAdmin = user.role === 'admin'
+    // 普通用户：名称固定为用户名；管理员：使用请求体中的名称
+    let nameToUse
+    if (isAdmin) {
+      const { name } = body
+      if (!name || !String(name).trim()) {
+        throw createError({
+          statusCode: 400,
+          message: '请输入 ApiKey 名称'
+        })
+      }
+      nameToUse = String(name).trim()
+    } else {
+      nameToUse = user.username || '用户'
     }
 
     const apiKey = `sk-${uuidv4().replace(/-/g, '')}`
@@ -22,7 +29,7 @@ export default defineEventHandler(async (event) => {
     const newKey = {
       _id: uuidv4(),
       key: apiKey,
-      name: name.trim(),
+      name: nameToUse,
       isDefault: false,
       enabled: true,
       userId: user.userId,
