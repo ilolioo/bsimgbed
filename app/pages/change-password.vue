@@ -79,16 +79,31 @@
             <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               确认新密码
             </label>
-            <input
-              id="confirmPassword"
-              v-model="form.confirmPassword"
-              type="password"
-              required
-              autocomplete="new-password"
-              class="input"
-              placeholder="再次输入新密码"
-              :disabled="loading"
-            />
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Icon name="heroicons:key" class="w-5 h-5 text-gray-400 dark:text-gray-500" />
+              </div>
+              <input
+                id="confirmPassword"
+                v-model="form.confirmPassword"
+                :type="showConfirm ? 'text' : 'password'"
+                required
+                autocomplete="new-password"
+                class="input !pl-10 !pr-10"
+                placeholder="再次输入新密码"
+                :disabled="loading"
+              />
+              <button
+                type="button"
+                @click="showConfirm = !showConfirm"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <Icon
+                  :name="showConfirm ? 'heroicons:eye-slash' : 'heroicons:eye'"
+                  class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
+                />
+              </button>
+            </div>
           </div>
 
           <button
@@ -130,6 +145,7 @@ const form = reactive({
 const loading = ref(false)
 const showOld = ref(false)
 const showNew = ref(false)
+const showConfirm = ref(false)
 
 onMounted(() => {
   if (!authStore.isAuthenticated) {

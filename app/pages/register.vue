@@ -99,16 +99,37 @@
           </div>
           <div>
             <label for="reg-confirm" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">确认密码</label>
-            <input
-              id="reg-confirm"
-              v-model="form.confirmPassword"
-              type="password"
-              required
-              autocomplete="new-password"
-              class="input"
-              placeholder="再次输入密码"
-              :disabled="loading"
-            />
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Icon name="heroicons:lock-closed" class="w-5 h-5 text-gray-400 dark:text-gray-500" />
+              </div>
+              <input
+                id="reg-confirm"
+                v-model="form.confirmPassword"
+                :type="showConfirmPassword ? 'text' : 'password'"
+                required
+                autocomplete="new-password"
+                class="input !pl-10 !pr-10"
+                placeholder="再次输入密码"
+                :disabled="loading"
+              />
+              <button
+                type="button"
+                @click="showConfirmPassword = !showConfirmPassword"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <Icon
+                  v-if="showConfirmPassword"
+                  name="heroicons:eye-slash"
+                  class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-400"
+                />
+                <Icon
+                  v-else
+                  name="heroicons:eye"
+                  class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-400"
+                />
+              </button>
+            </div>
           </div>
           <button
             type="submit"
@@ -152,6 +173,7 @@ const form = ref({
 })
 const loading = ref(false)
 const showPassword = ref(false)
+const showConfirmPassword = ref(false)
 
 onMounted(() => {
   settingsStore.fetchPublicAppSettings()
