@@ -52,9 +52,9 @@
         v-else-if="imagesStore.images.length === 0"
         class="text-center py-16"
       >
-        <Icon name="heroicons:photo" class="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+        <Icon name="heroicons:photo" class="w-24 h-24 mx-auto text-gray-400 dark:text-white mb-4" />
         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">暂无图片</h3>
-        <p class="text-gray-500 dark:text-gray-400">上传你的第一张图片吧</p>
+        <p class="text-gray-500 dark:text-gray-300">上传你的第一张图片吧</p>
       </div>
 
       <!-- 瀑布流图片列表 - 使用多列 Flexbox 布局避免加载新图片时位置变化 -->
@@ -147,16 +147,16 @@
         >
           <!-- 复制链接子菜单 -->
           <div class="py-1">
-            <div class="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+            <div class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 uppercase">
               {{ copyMenuTitle }}
             </div>
             <button
               v-for="item in copyOptions"
               :key="item.type"
               @click="handleCopyFromMenu(item.type)"
-              class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+              class="w-full px-3 py-2 text-left text-sm text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:clipboard-document" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <Icon name="heroicons:clipboard-document" class="w-4 h-4 text-gray-600 dark:text-white" />
               {{ item.label }}
             </button>
           </div>
@@ -165,9 +165,9 @@
           <div class="border-t border-gray-200 dark:border-gray-700 py-1">
             <button
               @click="handleDownloadFromMenu"
-              class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+              class="w-full px-3 py-2 text-left text-sm text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:arrow-down-tray" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <Icon name="heroicons:arrow-down-tray" class="w-4 h-4 text-gray-600 dark:text-white" />
               下载图片
             </button>
           </div>
@@ -179,16 +179,16 @@
           <div v-if="authStore.isAdmin" class="py-1">
             <button
               @click="handleSetAsBackgroundFromMenu"
-              class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+              class="w-full px-3 py-2 text-left text-sm text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:photo" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <Icon name="heroicons:photo" class="w-4 h-4 text-gray-600 dark:text-white" />
               设为全局背景
             </button>
             <button
               @click="handleSetAsLogoFromMenu"
-              class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+              class="w-full px-3 py-2 text-left text-sm text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:sparkles" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <Icon name="heroicons:sparkles" class="w-4 h-4 text-gray-600 dark:text-white" />
               设为网站Logo
             </button>
           </div>
@@ -200,9 +200,9 @@
           >
             <button
               @click="handleToggleShowOnHomepageFromMenu"
-              class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+              class="w-full px-3 py-2 text-left text-sm text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:eye" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <Icon name="heroicons:eye" class="w-4 h-4 text-gray-600 dark:text-white" />
               {{ contextMenuImage?.showOnHomepage !== false ? '设为仅自己可见' : '设为对所有人可见' }}
             </button>
           </div>

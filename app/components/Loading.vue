@@ -53,7 +53,7 @@ const colorClass = computed(() => {
   const colors = {
     primary: 'text-primary-600',
     white: 'text-white',
-    gray: 'text-gray-500'
+    gray: 'text-gray-600 dark:text-white'
   }
   return colors[props.color] || colors.primary
 })

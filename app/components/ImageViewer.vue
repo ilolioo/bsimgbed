@@ -11,7 +11,7 @@
           class="absolute top-4 right-4 text-white/80 hover:text-white transition-colors z-10"
           @click="close"
         >
-          <Icon name="heroicons:x-mark" class="w-8 h-8 text-gray-700 dark:text-gray-200" />
+          <Icon name="heroicons:x-mark" class="w-8 h-8 text-white" />
         </button>
 
         <!-- 图片 -->

@@ -250,7 +250,7 @@ async function handleLogout() {
 
 <style scoped>
 .nav-link {
-  @apply rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0;
+  @apply rounded-lg text-sm font-medium text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0;
 }
 
 /* 移动端图标样式 */

@@ -16,7 +16,7 @@
     <Icon
       v-else
       name="heroicons:moon-solid"
-      class="w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0"
+      class="w-5 h-5 text-gray-800 dark:text-white flex-shrink-0"
     />
   </button>
 </template>

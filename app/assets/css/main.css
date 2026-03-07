@@ -2,23 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 基础样式：文字与背景随昼夜主题过渡 */
+/* 基础样式：文字与背景随昼夜主题过渡（暗色下文字为白色，亮色下为深色） */
 body {
-  @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200;
+  @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white transition-colors duration-200;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* 全局文字工具类：主文案、次要文案，便于统一昼夜适配 */
 .text-body {
-  @apply text-gray-900 dark:text-gray-100;
+  @apply text-gray-900 dark:text-white;
 }
 .text-muted {
-  @apply text-gray-600 dark:text-gray-400;
+  @apply text-gray-600 dark:text-gray-300;
 }
 
-/* 图标随主题：未单独设色的图标使用此类即可适配昼夜 */
+/* 图标随主题：亮色下深色图标，暗色下白色图标 */
 .icon-theme {
-  @apply text-gray-600 dark:text-gray-400;
+  @apply text-gray-800 dark:text-white;
 }
 
 /* 隐藏 html 和 body 的滚动条，但保持滚动功能 */
@@ -91,7 +91,7 @@ select.input {
 }
 
 .dark select.input {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
 }
 
 /* 卡片样式（随主题过渡） */
