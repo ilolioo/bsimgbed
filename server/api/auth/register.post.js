@@ -4,22 +4,6 @@ import crypto from 'crypto'
 import { v4 as uuidv4 } from 'uuid'
 import { getNotificationConfig, sendVerificationEmail } from '../../utils/notification.js'
 
-function createDefaultApiKeyForUser(userId) {
-  const apiKey = `sk-${uuidv4().replace(/-/g, '')}`
-  const now = new Date().toISOString()
-  const newKey = {
-    _id: uuidv4(),
-    key: apiKey,
-    name: '默认',
-    isDefault: true,
-    enabled: true,
-    userId,
-    createdAt: now,
-    updatedAt: now
-  }
-  return db.apikeys.insert(newKey)
-}
-
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME_MIN_LEN = 4
 const USERNAME_REGEX = /^[a-zA-Z0-9_]+$/  // 仅允许英文、数字、下划线
@@ -134,12 +118,6 @@ export default defineEventHandler(async (event) => {
     }
 
     await db.users.insert(newUser)
-
-    try {
-      await createDefaultApiKeyForUser(newUser._id)
-    } catch (err) {
-      console.error('[Auth] 为新用户创建默认 ApiKey 失败:', err)
-    }
 
     if (emailVerification) {
       let baseUrl = appSettings.siteUrl || ''

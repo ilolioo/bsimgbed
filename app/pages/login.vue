@@ -24,7 +24,7 @@
           <div class="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
             <p>{{ appName }}</p>
           </div>
-        </div>7
+        </div>
 
         <!-- 登录表单 -->
         <form @submit.prevent="handleLogin" class="space-y-6">

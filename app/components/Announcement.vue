@@ -76,26 +76,35 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useSettingsStore } from '~/stores/settings'
+import { useAuthStore } from '~/stores/auth'
 
 const settingsStore = useSettingsStore()
+const authStore = useAuthStore()
 
-// localStorage key for dismissal
-const DISMISS_KEY = 'announcement_dismissed_until'
+const DISMISS_KEY_GUEST = 'announcement_guest_dismissed_until'
+const DISMISS_KEY_USER = 'announcement_user_dismissed_until'
 
-// 是否显示公告
 const visible = ref(false)
 
-// 公告配置
+// 按身份选取公告：未登录用游客公告，已登录用普通用户公告
 const announcement = computed(() => settingsStore.appSettings.announcement || {})
-const enabled = computed(() => announcement.value.enabled || false)
-const content = computed(() => announcement.value.content || '')
-const displayType = computed(() => announcement.value.displayType || 'modal')
+const currentBlock = computed(() => {
+  const a = announcement.value
+  if (authStore.isAuthenticated) return a.user || { enabled: false, content: '', displayType: 'modal' }
+  return a.guest || (a.enabled !== undefined ? a : { enabled: false, content: '', displayType: 'modal' })
+})
+const enabled = computed(() => currentBlock.value.enabled || false)
+const content = computed(() => currentBlock.value.content || '')
+const displayType = computed(() => currentBlock.value.displayType || 'modal')
 
-// 检查是否在"不再提示"有效期内
+function getDismissKey() {
+  return authStore.isAuthenticated ? DISMISS_KEY_USER : DISMISS_KEY_GUEST
+}
+
 function isDismissed() {
   if (typeof window === 'undefined') return false
 
-  const dismissedUntil = localStorage.getItem(DISMISS_KEY)
+  const dismissedUntil = localStorage.getItem(getDismissKey())
   if (!dismissedUntil) return false
 
   const dismissedTime = parseInt(dismissedUntil, 10)
@@ -110,9 +119,8 @@ function close() {
 // 不再提示（有效期1天）
 function dismissForDay() {
   if (typeof window !== 'undefined') {
-    // 设置24小时后过期
     const expireTime = Date.now() + 24 * 60 * 60 * 1000
-    localStorage.setItem(DISMISS_KEY, expireTime.toString())
+    localStorage.setItem(getDismissKey(), expireTime.toString())
   }
   visible.value = false
 }
@@ -124,11 +132,12 @@ function checkAndShowAnnouncement() {
   }
 }
 
-// 监听公告配置变化
+// 监听公告配置与登录状态变化
 watch(
-  () => settingsStore.appSettings.announcement,
-  (newAnnouncement) => {
-    if (newAnnouncement?.enabled && newAnnouncement?.content && !isDismissed()) {
+  () => ({ announcement: settingsStore.appSettings.announcement, isAuth: authStore.isAuthenticated }),
+  () => {
+    const block = currentBlock.value
+    if (block?.enabled && block?.content && !isDismissed()) {
       visible.value = true
     }
   },

@@ -11,9 +11,8 @@ export const useSettingsStore = defineStore('settings', {
       backgroundBlur: 0,
       deletedImagesCount: 0,
       announcement: {
-        enabled: false,
-        content: '',
-        displayType: 'modal'  // 'modal' | 'banner'
+        guest: { enabled: false, content: '', displayType: 'modal' },
+        user: { enabled: false, content: '', displayType: 'modal' }
       }
     },
     publicApiConfig: {
@@ -52,11 +51,8 @@ export const useSettingsStore = defineStore('settings', {
           this.appSettings.backgroundBlur = response.data.backgroundBlur
           this.appSettings.registrationEnabled = response.data.registrationEnabled !== false
           this.appSettings.registrationEmailVerification = !!response.data.registrationEmailVerification
-          this.appSettings.announcement = response.data.announcement || {
-            enabled: false,
-            content: '',
-            displayType: 'modal'
-          }
+          const defAnn = { guest: { enabled: false, content: '', displayType: 'modal' }, user: { enabled: false, content: '', displayType: 'modal' } }
+          this.appSettings.announcement = response.data.announcement || defAnn
         }
       } catch (error) {
         console.error('获取公共应用设置失败:', error)

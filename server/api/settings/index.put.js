@@ -69,27 +69,29 @@ export default defineEventHandler(async (event) => {
       updatedValue.registrationEnabled = !!body.registrationEnabled
     }
 
+    const defaultBlock = { enabled: false, content: '', displayType: 'modal' }
+    const defaultAnnouncement = { guest: { ...defaultBlock }, user: { ...defaultBlock } }
+
+    function mergeBlock(target, source) {
+      if (!source || typeof source !== 'object') return target
+      return {
+        enabled: source.enabled !== undefined ? !!source.enabled : target.enabled,
+        content: source.content !== undefined ? source.content : target.content,
+        displayType: source.displayType !== undefined && ['modal', 'banner'].includes(source.displayType) ? source.displayType : target.displayType
+      }
+    }
+
     // 更新 announcement（如果传递了）
     if (body.announcement !== undefined) {
       if (body.announcement === null) {
-        // 如果传递 null，重置为默认值
-        updatedValue.announcement = {
-          enabled: false,
-          content: '',
-          displayType: 'modal'
-        }
+        updatedValue.announcement = defaultAnnouncement
       } else {
-        // 部分更新公告配置
+        const cur = currentValue.announcement || {}
+        const curGuest = cur.guest || (cur.enabled !== undefined ? cur : defaultBlock)
+        const curUser = cur.user || defaultBlock
         updatedValue.announcement = {
-          enabled: body.announcement.enabled !== undefined
-            ? !!body.announcement.enabled
-            : (currentValue.announcement?.enabled || false),
-          content: body.announcement.content !== undefined
-            ? body.announcement.content
-            : (currentValue.announcement?.content || ''),
-          displayType: body.announcement.displayType !== undefined
-            ? (['modal', 'banner'].includes(body.announcement.displayType) ? body.announcement.displayType : 'modal')
-            : (currentValue.announcement?.displayType || 'modal')
+          guest: mergeBlock(curGuest, body.announcement.guest),
+          user: mergeBlock(curUser, body.announcement.user)
         }
       }
     }

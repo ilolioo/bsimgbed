@@ -7,11 +7,22 @@ export default defineEventHandler(async (event) => {
     const settings = await db.settings.findOne({ key: 'appSettings' })
     const notifConfig = await getNotificationConfig()
 
-    // 默认公告配置
-    const defaultAnnouncement = {
-      enabled: false,
-      content: '',
-      displayType: 'modal'  // 'modal' | 'banner'
+    const defaultBlock = { enabled: false, content: '', displayType: 'modal' }
+    const defaultAnnouncement = { guest: { ...defaultBlock }, user: { ...defaultBlock } }
+
+    function normalizeAnnouncement(ann) {
+      if (!ann || typeof ann !== 'object') return defaultAnnouncement
+      if (ann.guest && ann.user) {
+        return {
+          guest: { ...defaultBlock, ...ann.guest },
+          user: { ...defaultBlock, ...ann.user }
+        }
+      }
+      const legacy = ann.enabled !== undefined ? ann : defaultBlock
+      return {
+        guest: { ...defaultBlock, ...(ann.guest || legacy) },
+        user: { ...defaultBlock, ...(ann.user || defaultBlock) }
+      }
     }
 
     if (!settings) {
@@ -40,7 +51,7 @@ export default defineEventHandler(async (event) => {
         backgroundBlur: settings.value.backgroundBlur || 0,
         registrationEnabled: settings.value.registrationEnabled !== false,
         registrationEmailVerification: !!notifConfig.registrationEmailVerification,
-        announcement: settings.value.announcement || defaultAnnouncement
+        announcement: normalizeAnnouncement(settings.value.announcement)
       }
     }
   } catch (error) {

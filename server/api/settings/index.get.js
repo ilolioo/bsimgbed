@@ -12,11 +12,22 @@ export default defineEventHandler(async (event) => {
     // 获取已删除图片数量
     const deletedCount = await db.images.count({ isDeleted: true })
 
-    // 默认公告配置
-    const defaultAnnouncement = {
-      enabled: false,
-      content: '',
-      displayType: 'modal'  // 'modal' | 'banner'
+    const defaultBlock = { enabled: false, content: '', displayType: 'modal' }
+    const defaultAnnouncement = { guest: { ...defaultBlock }, user: { ...defaultBlock } }
+
+    function normalizeAnnouncement(ann) {
+      if (!ann || typeof ann !== 'object') return defaultAnnouncement
+      if (ann.guest && ann.user) {
+        return {
+          guest: { ...defaultBlock, ...ann.guest },
+          user: { ...defaultBlock, ...ann.user }
+        }
+      }
+      const legacy = ann.enabled !== undefined ? ann : defaultBlock
+      return {
+        guest: { ...defaultBlock, ...(ann.guest || legacy) },
+        user: { ...defaultBlock, ...(ann.user || defaultBlock) }
+      }
     }
 
     if (!settings) {
@@ -47,7 +58,7 @@ export default defineEventHandler(async (event) => {
         siteUrl: settings.value.siteUrl || '',
         registrationEnabled: settings.value.registrationEnabled !== false,
         deletedImagesCount: deletedCount,
-        announcement: settings.value.announcement || defaultAnnouncement
+        announcement: normalizeAnnouncement(settings.value.announcement)
       }
     }
   } catch (error) {

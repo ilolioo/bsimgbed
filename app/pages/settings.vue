@@ -188,84 +188,74 @@
           <Icon name="heroicons:megaphone" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
           公告设置
         </h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">可为游客（未登录）与普通用户（已登录）分别设置公告，展示形式支持弹窗或顶部横幅。</p>
 
-        <form @submit.prevent="saveAnnouncementSettings" class="space-y-4">
-          <!-- 启用开关 -->
-          <div class="flex items-center justify-between">
-            <div>
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">启用公告</label>
-              <p class="text-xs text-gray-500 dark:text-gray-400">开启后每次刷新页面都会显示公告</p>
+        <form @submit.prevent="saveAnnouncementSettings" class="space-y-8">
+          <!-- 游客公告 -->
+          <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">游客公告</h3>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-700 dark:text-gray-300">启用</span>
+              <button
+                type="button"
+                @click="announcementSettings.guest.enabled = !announcementSettings.guest.enabled"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                :class="announcementSettings.guest.enabled ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
+              >
+                <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform" :class="announcementSettings.guest.enabled ? 'translate-x-6' : 'translate-x-1'" />
+              </button>
             </div>
-            <button
-              type="button"
-              @click="announcementSettings.enabled = !announcementSettings.enabled"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-              :class="announcementSettings.enabled ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
-            >
-              <span
-                class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                :class="announcementSettings.enabled ? 'translate-x-6' : 'translate-x-1'"
-              />
-            </button>
+            <template v-if="announcementSettings.guest.enabled">
+              <div class="flex gap-4">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="radio" v-model="announcementSettings.guest.displayType" value="modal" class="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500" />
+                  <span class="text-sm text-gray-700 dark:text-gray-300">弹窗</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="radio" v-model="announcementSettings.guest.displayType" value="banner" class="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500" />
+                  <span class="text-sm text-gray-700 dark:text-gray-300">横幅</span>
+                </label>
+              </div>
+              <textarea v-model="announcementSettings.guest.content" rows="4" class="input w-full font-mono text-sm" placeholder="请输入公告内容，支持 HTML"></textarea>
+              <div v-if="announcementSettings.guest.content" class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div v-html="announcementSettings.guest.content" class="prose prose-sm dark:prose-invert max-w-none"></div>
+              </div>
+            </template>
           </div>
 
-          <!-- 展示形式 -->
-          <div v-if="announcementSettings.enabled">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              展示形式
-            </label>
-            <div class="flex gap-4">
-              <label class="inline-flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  v-model="announcementSettings.displayType"
-                  value="modal"
-                  class="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
-                />
-                <span class="text-sm text-gray-700 dark:text-gray-300">弹窗提醒</span>
-              </label>
-              <label class="inline-flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  v-model="announcementSettings.displayType"
-                  value="banner"
-                  class="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
-                />
-                <span class="text-sm text-gray-700 dark:text-gray-300">顶部横幅</span>
-              </label>
+          <!-- 普通用户公告 -->
+          <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">普通用户公告</h3>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-700 dark:text-gray-300">启用</span>
+              <button
+                type="button"
+                @click="announcementSettings.user.enabled = !announcementSettings.user.enabled"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                :class="announcementSettings.user.enabled ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
+              >
+                <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform" :class="announcementSettings.user.enabled ? 'translate-x-6' : 'translate-x-1'" />
+              </button>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              弹窗提醒：居中弹窗显示；顶部横幅：页面顶部显示，支持点击关闭
-            </p>
+            <template v-if="announcementSettings.user.enabled">
+              <div class="flex gap-4">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="radio" v-model="announcementSettings.user.displayType" value="modal" class="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500" />
+                  <span class="text-sm text-gray-700 dark:text-gray-300">弹窗</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="radio" v-model="announcementSettings.user.displayType" value="banner" class="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500" />
+                  <span class="text-sm text-gray-700 dark:text-gray-300">横幅</span>
+                </label>
+              </div>
+              <textarea v-model="announcementSettings.user.content" rows="4" class="input w-full font-mono text-sm" placeholder="请输入公告内容，支持 HTML"></textarea>
+              <div v-if="announcementSettings.user.content" class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div v-html="announcementSettings.user.content" class="prose prose-sm dark:prose-invert max-w-none"></div>
+              </div>
+            </template>
           </div>
 
-          <!-- 公告内容 -->
-          <div v-if="announcementSettings.enabled">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              公告内容
-            </label>
-            <textarea
-              v-model="announcementSettings.content"
-              rows="6"
-              class="input w-full font-mono text-sm"
-              placeholder="请输入公告内容，支持 HTML 语法，例如：&#10;<p>欢迎使用 <strong>bsimgbed</strong> 图床！</p>&#10;<p style='color: red;'>重要通知：系统将于今晚维护</p>"
-            ></textarea>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              支持 HTML 语法，可使用标签如 &lt;p&gt;、&lt;strong&gt;、&lt;a&gt;、&lt;span style="..."&gt; 等
-            </p>
-          </div>
-
-          <!-- 预览 -->
-          <div v-if="announcementSettings.enabled && announcementSettings.content" class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              预览效果
-            </label>
-            <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-              <div v-html="announcementSettings.content" class="prose prose-sm dark:prose-invert max-w-none"></div>
-            </div>
-          </div>
-
-          <div class="pt-4">
+          <div class="pt-2">
             <button type="submit" class="btn-primary" :disabled="savingAnnouncement">
               {{ savingAnnouncement ? '保存中...' : '保存公告设置' }}
             </button>
@@ -695,11 +685,11 @@ const faviconError = ref(false)
 const backgroundError = ref(false)
 const savingApp = ref(false)
 
-// 公告设置
+const defaultAnnouncementBlock = () => ({ enabled: false, content: '', displayType: 'modal' })
+// 公告设置：游客与普通用户分开
 const announcementSettings = reactive({
-  enabled: false,
-  content: '',
-  displayType: 'modal'
+  guest: defaultAnnouncementBlock(),
+  user: defaultAnnouncementBlock()
 })
 const savingAnnouncement = ref(false)
 
@@ -806,9 +796,16 @@ async function saveAnnouncementSettings() {
   try {
     const result = await settingsStore.updateAppSetting({
       announcement: {
-        enabled: announcementSettings.enabled,
-        content: announcementSettings.content,
-        displayType: announcementSettings.displayType
+        guest: {
+          enabled: announcementSettings.guest.enabled,
+          content: announcementSettings.guest.content,
+          displayType: announcementSettings.guest.displayType
+        },
+        user: {
+          enabled: announcementSettings.user.enabled,
+          content: announcementSettings.user.content,
+          displayType: announcementSettings.user.displayType
+        }
       }
     })
 
@@ -1098,9 +1095,23 @@ onMounted(async () => {
   appSettings.registrationEnabled = settingsStore.appSettings.registrationEnabled !== false
 
   const announcement = settingsStore.appSettings.announcement || {}
-  announcementSettings.enabled = announcement.enabled || false
-  announcementSettings.content = announcement.content || ''
-  announcementSettings.displayType = announcement.displayType || 'modal'
+  const def = defaultAnnouncementBlock()
+  if (announcement.guest && announcement.user) {
+    announcementSettings.guest.enabled = announcement.guest.enabled || false
+    announcementSettings.guest.content = announcement.guest.content || ''
+    announcementSettings.guest.displayType = announcement.guest.displayType || 'modal'
+    announcementSettings.user.enabled = announcement.user.enabled || false
+    announcementSettings.user.content = announcement.user.content || ''
+    announcementSettings.user.displayType = announcement.user.displayType || 'modal'
+  } else if (announcement.enabled !== undefined) {
+    announcementSettings.guest.enabled = announcement.enabled || false
+    announcementSettings.guest.content = announcement.content || ''
+    announcementSettings.guest.displayType = announcement.displayType || 'modal'
+    announcementSettings.user = { ...def }
+  } else {
+    announcementSettings.guest = { ...def }
+    announcementSettings.user = { ...def }
+  }
 
   newUsername.value = ''
 })
