@@ -305,6 +305,7 @@
               <div class="p-4 flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-3 flex-wrap min-w-0">
                   <span class="font-medium text-gray-900 dark:text-white truncate">{{ b.name }}</span>
+                  <span class="px-2 py-0.5 text-xs font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded shrink-0" :title="'储存桶 ID: ' + b.id">{{ b.id }}</span>
                   <span
                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium shrink-0"
                     :class="b.driver === 'local' ? 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300' : b.driver === 'webdav' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' : 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300'"
