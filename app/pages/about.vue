@@ -14,6 +14,20 @@
         </p>
       </div>
 
+      <!-- 版本信息 -->
+      <div class="card p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <Icon name="heroicons:information-circle" class="w-5 h-5 text-primary-500" />
+          版本信息
+        </h2>
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-gray-700 dark:text-gray-300">当前版本</span>
+          <span class="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm font-medium">
+            v{{ appVersion }}
+          </span>
+        </div>
+      </div>
+
       <!-- 版本信息（仅登录后显示） -->
       <!-- <div v-if="authStore.isAuthenticated" class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -118,6 +132,9 @@ import { useAuthStore } from '~/stores/auth'
 definePageMeta({
   title: '关于'
 })
+
+const { public: publicConfig } = useRuntimeConfig()
+const appVersion = publicConfig.appVersion || '1.0.0'
 
 const authStore = useAuthStore()
 

@@ -71,10 +71,9 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // 服务端运行时配置（不会暴露给客户端）
-    appVersion,
     public: {
-      apiBase: ''
+      apiBase: '',
+      appVersion
     }
   }
 })
