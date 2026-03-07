@@ -102,19 +102,6 @@ export async function parseFormData(event) {
     bucketId = (raw && String(raw).trim()) || null
   }
 
-  // 可选：游客上传的图片是否展示在主页（仅公共上传使用）
-  const showOnHomepageField = formData.find(
-    field => (field.name && (field.name === 'showOnHomepage' || field.name.toLowerCase() === 'showonhomepage'))
-  )
-  let showOnHomepage = true
-  if (showOnHomepageField && showOnHomepageField.data !== undefined && showOnHomepageField.data !== null) {
-    const raw = typeof showOnHomepageField.data === 'string'
-      ? showOnHomepageField.data
-      : (showOnHomepageField.data && typeof showOnHomepageField.data.toString === 'function' ? showOnHomepageField.data.toString() : '')
-    const str = (raw && String(raw).trim().toLowerCase()) || ''
-    showOnHomepage = str !== 'false' && str !== '0'
-  }
-
   return {
     file: {
       buffer: fileField.data,
@@ -122,8 +109,7 @@ export async function parseFormData(event) {
       mimetype: fileField.type,
       size: fileField.data.length
     },
-    bucketId: bucketId || undefined,
-    showOnHomepage
+    bucketId: bucketId || undefined
   }
 }
 

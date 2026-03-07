@@ -151,7 +151,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['click', 'select', 'delete', 'contextmenu', 'loadError'])
+const emit = defineEmits(['click', 'select', 'delete', 'contextmenu'])
 
 const imagesStore = useImagesStore()
 
@@ -183,7 +183,6 @@ function onImageLoad() {
 function onImageError() {
   imageLoaded.value = true
   imageError.value = true
-  emit('loadError')
 }
 
 // 处理右键菜单 - 触发事件让父组件处理

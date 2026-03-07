@@ -97,23 +97,6 @@
             <option v-for="opt in bucketChoices" :key="opt.id" :value="opt.id">{{ opt.name }}</option>
           </select>
         </div>
-        <!-- 游客上传是否展示在主页（仅未登录时显示） -->
-        <div v-if="!authStore.isAuthenticated" class="flex flex-col items-center gap-0.5">
-          <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-            <input
-              v-model="showGuestUploadOnHomepage"
-              type="checkbox"
-              class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
-            />
-            <span class="text-xs text-gray-600 dark:text-gray-400">上传后展示</span>
-          </label>
-          <p
-            v-if="!showGuestUploadOnHomepage"
-            class="text-xs text-amber-600 dark:text-amber-400 max-w-[240px] text-center"
-          >
-            不勾选时图片不会在首页公开展示，仅您在本机 1 天内可查看，请及时保存链接
-          </p>
-        </div>
       </div>
 
       <!-- 隐藏的文件输入（支持多选） -->
@@ -293,8 +276,6 @@ const publicApiEnabled = ref(null)
 const defaultApiKey = ref('')
 // 储存桶选项（游客仅能选允许的桶，管理员可选全部）
 const bucketChoices = ref([])
-// 游客上传的图片是否展示在主页（仅游客可见此选项，默认 true）
-const showGuestUploadOnHomepage = ref(true)
 const selectedBucketId = ref('')
 
 // 计算是否禁用上传（未登录且公共上传已禁用）
@@ -493,10 +474,6 @@ async function uploadSingleFile(file) {
   if (selectedBucketId.value) {
     formData.append('bucketId', selectedBucketId.value)
   }
-  // 游客上传时传递是否展示在主页（管理员上传不传，服务端不依赖该字段）
-  if (!authStore.isAuthenticated) {
-    formData.append('showOnHomepage', showGuestUploadOnHomepage.value ? 'true' : 'false')
-  }
   formData.append('file', file)
 
   // 根据登录状态选择 API
@@ -516,14 +493,7 @@ async function uploadSingleFile(file) {
   const data = await response.json()
 
   if (response.ok && data.success) {
-    const payload = data.data || {}
-    return {
-      success: true,
-      filename: file.name,
-      url: payload.url,
-      uploadedAt: payload.uploadedAt,
-      id: payload.id
-    }
+    return { success: true, filename: file.name }
   } else {
     return { success: false, filename: file.name, error: data.message || '上传失败' }
   }
@@ -573,16 +543,6 @@ async function uploadFiles(files) {
         const result = await uploadSingleFile(file)
         if (result.success) {
           successCount++
-          // 游客未勾选「上传后展示」时写入本地，1 天内在首页可见
-          if (!authStore.isAuthenticated && !showGuestUploadOnHomepage.value && result.url) {
-            const { append } = useGuestPrivateUploads()
-            append({
-              url: result.url,
-              uploadedAt: result.uploadedAt || new Date().toISOString(),
-              filename: file.name,
-              id: result.id
-            })
-          }
         } else {
           failCount++
           toastStore.error(`${result.filename}: ${result.error}`)

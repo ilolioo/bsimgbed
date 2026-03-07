@@ -59,8 +59,8 @@ export default defineEventHandler(async (event) => {
       acquirePublicConcurrency(clientIP)
     }
 
-    // 解析表单数据（含可选 bucketId、showOnHomepage）
-    const { file, bucketId: requestedBucketId, showOnHomepage } = await parseFormData(event)
+    // 解析表单数据（含可选 bucketId）
+    const { file, bucketId: requestedBucketId } = await parseFormData(event)
 
     if (!file) {
       releasePublicConcurrency(clientIP)
@@ -120,7 +120,7 @@ export default defineEventHandler(async (event) => {
     // 判断是否启用内容安全检测
     const contentSafetyEnabled = config.contentSafety?.enabled || false
 
-    // 保存到数据库（showOnHomepage：游客选择是否在主页展示，默认 true）
+    // 保存到数据库
     const imageDoc = {
       _id: uuidv4(),
       uuid: imageUuid,
@@ -135,7 +135,6 @@ export default defineEventHandler(async (event) => {
       isDeleted: false,
       uploadedBy: '访客',
       uploadedByType: 'public',
-      showOnHomepage: showOnHomepage !== false,  // 游客上传是否在主页展示，缺省为 true
       ip: clientIP,
       uploadedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
