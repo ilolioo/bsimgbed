@@ -23,13 +23,15 @@ export default defineEventHandler(async (event) => {
     } else if (user && showPrivateOnHomepage) {
       queryCondition = { isDeleted: false, isNsfw: { $ne: true } }
     } else if (user) {
-      // 普通用户：仅看公开图 + 自己上传的图
+      // 普通用户：公开图 + 自己上传的图 + 其他用户设为「上传后展示」的图
       queryCondition = {
         isDeleted: false,
         isNsfw: { $ne: true },
         $or: [
+          { userId: user.userId },
           { uploadedByType: 'public' },
-          { userId: user.userId }
+          { showOnHomepage: true },
+          { showOnHomepage: { $exists: false } }
         ]
       }
     } else {
@@ -63,7 +65,12 @@ export default defineEventHandler(async (event) => {
         height: img.height,
         url: `/i/${img.uuid}.${img.format}`,
         uploadedBy: img.uploadedBy,
-        uploadedAt: img.uploadedAt
+        uploadedAt: img.uploadedAt,
+        showOnHomepage: img.showOnHomepage !== false
+      }
+      // 当前用户为自己的图片或管理员时返回 userId，用于前端判断是否可改展示状态
+      if (isAdmin || (user && img.userId && img.userId === user.userId)) {
+        baseInfo.userId = img.userId
       }
 
       // 管理员可见额外信息

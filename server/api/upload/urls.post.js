@@ -7,7 +7,7 @@ import { getBucketsConfig } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
 
 // 下载单个URL的图片，保存到指定储存桶
-async function downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse = null) {
+async function downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse = null, showOnHomepage = true) {
   // 验证URL格式
   let imageUrl
   try {
@@ -121,6 +121,7 @@ async function downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse =
     uploadedByType: 'url',
     sourceUrl: url,
     userId: user.userId || null,
+    showOnHomepage: showOnHomepage !== false,
     ip: clientIP,
     uploadedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -151,7 +152,7 @@ export default defineEventHandler(async (event) => {
 
     // 解析请求体
     const body = await readBody(event)
-    const { urls, bucketId: requestedBucketId } = body
+    const { urls, bucketId: requestedBucketId, showOnHomepage: requestedShowOnHomepage = true } = body
 
     if (!urls || !Array.isArray(urls) || urls.length === 0) {
       throw createError({
@@ -221,7 +222,7 @@ export default defineEventHandler(async (event) => {
       })
 
       try {
-        const result = await downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse)
+        const result = await downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse, requestedShowOnHomepage !== false)
         successCount++
         results.push({
           url,

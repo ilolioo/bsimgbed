@@ -67,9 +67,9 @@
               <span class="hidden sm:inline">容量</span>
             </NuxtLink>
 
-            <!-- API -->
+            <!-- API（仅管理员） -->
             <NuxtLink
-              v-if="authStore.isAuthenticated"
+              v-if="authStore.isAdmin"
               to="/api"
               class="nav-link nav-link-icon sm:nav-link-text"
               :class="{ 'nav-link-active': route.path === '/api' }"

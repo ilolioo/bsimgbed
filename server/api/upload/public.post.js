@@ -143,7 +143,8 @@ export default defineEventHandler(async (event) => {
       moderationStatus: contentSafetyEnabled ? 'pending' : 'skipped',
       moderationResult: contentSafetyEnabled ? null : { skipped: true, reason: '内容安全检测未启用' },
       moderationChecked: !contentSafetyEnabled,  // 未启用时标记为已检测（跳过）
-      isNsfw: false
+      isNsfw: false,
+      showOnHomepage: true
     }
 
     await db.images.insert(imageDoc)

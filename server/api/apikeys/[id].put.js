@@ -1,11 +1,11 @@
 import db from '../../utils/db.js'
-import { authMiddleware } from '../../utils/authMiddleware.js'
+import { authMiddleware, requireAdmin } from '../../utils/authMiddleware.js'
 import { v4 as uuidv4 } from 'uuid'
 
 export default defineEventHandler(async (event) => {
   try {
     await authMiddleware(event)
-    const user = event.context.user
+    requireAdmin(event)
 
     const id = getRouterParam(event, 'id')
     if (!id) {
@@ -20,15 +20,6 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 404,
         message: 'ApiKey 不存在'
-      })
-    }
-
-    const isOwner = apiKey.userId === user.userId
-    const isAdmin = user.role === 'admin'
-    if (!isOwner && !isAdmin) {
-      throw createError({
-        statusCode: 403,
-        message: '无权操作该 ApiKey'
       })
     }
 

@@ -193,6 +193,20 @@
             </button>
           </div>
 
+          <!-- 首页展示状态（仅本人图片或管理员可见） -->
+          <div
+            v-if="authStore.isAuthenticated && canToggleShowOnHomepage(contextMenuImage)"
+            class="border-t border-gray-200 dark:border-gray-700 py-1"
+          >
+            <button
+              @click="handleToggleShowOnHomepageFromMenu"
+              class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+            >
+              <Icon name="heroicons:eye" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              {{ contextMenuImage?.showOnHomepage !== false ? '设为仅自己可见' : '设为首页展示' }}
+            </button>
+          </div>
+
           <!-- 分隔线 -->
           <div v-if="authStore.isAuthenticated" class="border-t border-gray-200 dark:border-gray-700"></div>
 
@@ -480,6 +494,39 @@ function handleSetAsLogoFromMenu() {
 function handleDeleteFromMenu() {
   if (contextMenuImage.value) {
     confirmDelete(contextMenuImage.value)
+  }
+  hideContextMenu()
+}
+
+// 是否可切换该图片的首页展示状态（仅本人上传或管理员）
+function canToggleShowOnHomepage(image) {
+  if (!image || !authStore.isAuthenticated) return false
+  if (authStore.isAdmin) return true
+  return image.userId && image.userId === authStore.user?.id
+}
+
+// 从菜单切换首页展示状态
+async function handleToggleShowOnHomepageFromMenu() {
+  const img = contextMenuImage.value
+  if (!img) {
+    hideContextMenu()
+    return
+  }
+  const next = img.showOnHomepage === false
+  try {
+    const res = await $fetch(`/api/images/${img.id}/show-on-homepage`, {
+      method: 'PUT',
+      headers: authStore.authHeader,
+      body: { showOnHomepage: next }
+    })
+    if (res?.success) {
+      toastStore.success(res.message || (next ? '已设为首页展示' : '已设为仅自己可见'))
+      await imagesStore.fetchImages(true)
+    } else {
+      toastStore.error(res?.message || '操作失败')
+    }
+  } catch (e) {
+    toastStore.error(e?.data?.message || '操作失败')
   }
   hideContextMenu()
 }

@@ -234,6 +234,17 @@ async function migrateMultiUser() {
     }
     console.log('[Database] 多用户迁移: 已为', usersWithoutDisabled.length, '个用户设置 disabled')
   }
+
+  const imagesWithoutShowOnHomepage = await db.images.find({ showOnHomepage: { $exists: false } })
+  if (imagesWithoutShowOnHomepage.length > 0) {
+    for (const img of imagesWithoutShowOnHomepage) {
+      await db.images.update(
+        { _id: img._id },
+        { $set: { showOnHomepage: true } }
+      )
+    }
+    console.log('[Database] 多用户迁移: 已为', imagesWithoutShowOnHomepage.length, '张图片设置 showOnHomepage: true')
+  }
 }
 
 // 数据库初始化

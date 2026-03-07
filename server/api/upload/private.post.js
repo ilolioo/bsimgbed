@@ -72,10 +72,12 @@ export default defineEventHandler(async (event) => {
     const contentType = getHeader(event, 'content-type') || ''
 
     let requestedBucketId = null
+    let requestedShowOnHomepage = true
     if (contentType.includes('application/json')) {
       // JSON 格式，支持 base64 上传
       const body = await readBody(event)
       if (body.bucketId) requestedBucketId = String(body.bucketId).trim() || null
+      if (body.showOnHomepage === false) requestedShowOnHomepage = false
 
       if (body.base64) {
         // base64 字符串上传
@@ -98,6 +100,7 @@ export default defineEventHandler(async (event) => {
       // multipart/form-data 格式
       const formResult = await parseFormData(event)
       file = formResult.file
+      requestedShowOnHomepage = formResult.showOnHomepage !== false
       requestedBucketId = formResult.bucketId || null
     }
 
@@ -165,6 +168,7 @@ export default defineEventHandler(async (event) => {
       uploadedByType: 'private',
       apiKeyId: keyDoc._id,
       userId,
+      showOnHomepage: requestedShowOnHomepage,
       ip: clientIP,
       uploadedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()

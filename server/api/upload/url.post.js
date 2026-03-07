@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
 
     // 解析请求体
     const body = await readBody(event)
-    const { url, returnBase64 = false, bucketId: requestedBucketId } = body
+    const { url, returnBase64 = false, bucketId: requestedBucketId, showOnHomepage: requestedShowOnHomepage = true } = body
 
     if (!url) {
       throw createError({
@@ -221,6 +221,7 @@ export default defineEventHandler(async (event) => {
 
         if (apiKeyId) imageDoc.apiKeyId = apiKeyId
         if (uploadUserId) imageDoc.userId = uploadUserId
+        imageDoc.showOnHomepage = requestedShowOnHomepage !== false
 
         await db.images.insert(imageDoc)
 

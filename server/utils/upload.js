@@ -102,6 +102,19 @@ export async function parseFormData(event) {
     bucketId = (raw && String(raw).trim()) || null
   }
 
+  // 可选：上传后是否在首页展示（仅登录用户有效）
+  const showField = formData.find(
+    field => (field.name && (field.name === 'showOnHomepage' || field.name.toLowerCase() === 'showonhomepage'))
+  )
+  let showOnHomepage = true
+  if (showField && showField.data !== undefined && showField.data !== null) {
+    const raw = typeof showField.data === 'string'
+      ? showField.data
+      : (showField.data && typeof showField.data.toString === 'function' ? showField.data.toString() : '')
+    const v = String(raw).trim().toLowerCase()
+    showOnHomepage = v === '1' || v === 'true' || v === 'yes'
+  }
+
   return {
     file: {
       buffer: fileField.data,
@@ -109,7 +122,8 @@ export async function parseFormData(event) {
       mimetype: fileField.type,
       size: fileField.data.length
     },
-    bucketId: bucketId || undefined
+    bucketId: bucketId || undefined,
+    showOnHomepage
   }
 }
 

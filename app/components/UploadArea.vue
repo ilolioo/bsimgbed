@@ -81,13 +81,13 @@
         </template>
       </div>
 
-      <!-- 储存桶选择：放在上传框底部栏内，点击不触发选择文件 -->
+      <!-- 储存桶选择与上传后展示：放在上传框底部栏内，点击不触发选择文件 -->
       <div
-        v-if="configLoaded && bucketChoices.length > 0"
+        v-if="configLoaded && (bucketChoices.length > 0 || authStore.isAuthenticated)"
         class="upload-box-options border-t border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-800/30 px-4 py-3 flex flex-wrap items-center justify-center gap-3"
         @click.stop
       >
-        <div class="flex items-center gap-2">
+        <div v-if="bucketChoices.length > 0" class="flex items-center gap-2">
           <span class="text-xs text-gray-500 dark:text-gray-400">上传到</span>
           <select
             v-model="selectedBucketId"
@@ -97,6 +97,18 @@
             <option v-for="opt in bucketChoices" :key="opt.id" :value="opt.id">{{ opt.name }}</option>
           </select>
         </div>
+        <!-- 登录用户可设置上传后是否在首页展示；游客只能上传后展示 -->
+        <label
+          v-if="authStore.isAuthenticated"
+          class="flex items-center gap-2 cursor-pointer select-none"
+        >
+          <input
+            v-model="showOnHomepage"
+            type="checkbox"
+            class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+          />
+          <span class="text-xs text-gray-600 dark:text-gray-300">上传后展示</span>
+        </label>
       </div>
 
       <!-- 隐藏的文件输入（支持多选） -->
@@ -277,6 +289,8 @@ const defaultApiKey = ref('')
 // 储存桶选项（游客仅能选允许的桶，管理员可选全部）
 const bucketChoices = ref([])
 const selectedBucketId = ref('')
+// 上传后是否在首页展示（仅登录用户有效，默认 true；游客始终为展示）
+const showOnHomepage = ref(true)
 
 // 计算是否禁用上传（未登录且公共上传已禁用）
 // 配置未加载时（null），不显示禁用状态，避免闪烁
@@ -474,6 +488,9 @@ async function uploadSingleFile(file) {
   if (selectedBucketId.value) {
     formData.append('bucketId', selectedBucketId.value)
   }
+  if (authStore.isAuthenticated) {
+    formData.append('showOnHomepage', showOnHomepage.value ? '1' : '0')
+  }
   formData.append('file', file)
 
   // 根据登录状态选择 API
@@ -651,7 +668,8 @@ async function handleUrlUpload() {
       },
       body: JSON.stringify({
         urls,
-        ...(selectedBucketId.value ? { bucketId: selectedBucketId.value } : {})
+        ...(selectedBucketId.value ? { bucketId: selectedBucketId.value } : {}),
+        showOnHomepage: showOnHomepage.value
       })
     })
 

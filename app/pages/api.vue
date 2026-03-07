@@ -992,7 +992,7 @@ import { useToastStore } from '~/stores/toast'
 import { copyToClipboard } from '../utils/clipboard'
 
 definePageMeta({
-  middleware: 'auth'
+  middleware: ['auth', 'admin']
 })
 
 const authStore = useAuthStore()
