@@ -142,7 +142,7 @@
         <div
           v-if="contextMenuVisible"
           ref="contextMenuRef"
-          class="fixed z-50 min-w-[160px] bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+          class="fixed z-50 min-w-[160px] max-h-[min(70vh,360px)] overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700"
           :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }"
         >
           <!-- 复制链接子菜单 -->
@@ -401,24 +401,19 @@ async function handleBatchDelete() {
   showBatchDeleteModal.value = false
 }
 
-// 显示右键菜单
+// 显示右键菜单（菜单设 max-height + overflow 后，按最大高度参与定位避免超出视口）
 function handleImageContextMenu(event, image) {
-  // 计算菜单位置，确保不超出视口
-  const menuWidth = 160
-  const menuHeight = authStore.isAuthenticated ? 280 : 200
+  const menuWidth = 180
+  const menuMaxHeight = Math.min(Math.floor(window.innerHeight * 0.7), 360)
+  const padding = 8
 
   let x = event.clientX
   let y = event.clientY
 
-  // 检查右边界
-  if (x + menuWidth > window.innerWidth) {
-    x = window.innerWidth - menuWidth - 10
-  }
-
-  // 检查下边界
-  if (y + menuHeight > window.innerHeight) {
-    y = window.innerHeight - menuHeight - 10
-  }
+  if (x + menuWidth > window.innerWidth - padding) x = window.innerWidth - menuWidth - padding
+  if (x < padding) x = padding
+  if (y + menuMaxHeight > window.innerHeight - padding) y = window.innerHeight - menuMaxHeight - padding
+  if (y < padding) y = padding
 
   contextMenuX.value = x
   contextMenuY.value = y
