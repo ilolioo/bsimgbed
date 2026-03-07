@@ -955,7 +955,6 @@ async function updatePassword() {
     })
 
     if (response.success) {
-      authStore.clearMustChangePassword()
       toastStore.success('密码已更新')
       passwordForm.oldPassword = ''
       passwordForm.newPassword = ''

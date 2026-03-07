@@ -32,7 +32,6 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const mustChangePassword = user.passwordChanged === false
     const role = user.role || 'user'
 
     return {
@@ -43,8 +42,7 @@ export default defineEventHandler(async (event) => {
           id: user._id,
           username: user.username,
           role
-        },
-        mustChangePassword
+        }
       }
     }
   } catch (error) {

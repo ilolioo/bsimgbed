@@ -159,7 +159,7 @@ async function handleLogin() {
 
     if (result.success) {
       toastStore.success('登录成功')
-      router.push(result.mustChangePassword ? '/change-password' : '/')
+      router.push('/')
     } else {
       toastStore.error(result.message || '用户名或密码错误')
     }

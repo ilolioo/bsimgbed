@@ -6,9 +6,9 @@
           <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-amber-500/20 flex items-center justify-center">
             <Icon name="heroicons:key" class="w-7 h-7 text-amber-600 dark:text-amber-400" />
           </div>
-          <h1 class="text-xl font-bold text-gray-900 dark:text-white">首次登录请修改密码</h1>
+          <h1 class="text-xl font-bold text-gray-900 dark:text-white">修改密码</h1>
           <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            为保障账号安全，请先设置新密码后再使用系统
+            设置新密码以保障账号安全
           </p>
         </div>
 
@@ -134,10 +134,6 @@ const showNew = ref(false)
 onMounted(() => {
   if (!authStore.isAuthenticated) {
     router.push('/login')
-    return
-  }
-  if (!authStore.mustChangePassword) {
-    router.push('/')
   }
 })
 
@@ -171,8 +167,7 @@ async function handleSubmit() {
     })
 
     if (response.success) {
-      authStore.clearMustChangePassword()
-      toastStore.success('密码已修改，请使用新密码登录')
+      toastStore.success('密码已修改')
       form.oldPassword = ''
       form.newPassword = ''
       form.confirmPassword = ''
