@@ -98,17 +98,22 @@
           </select>
         </div>
         <!-- 登录用户可设置上传后是否在首页展示；游客只能上传后展示 -->
-        <label
-          v-if="authStore.isAuthenticated"
-          class="flex items-center gap-2 cursor-pointer select-none"
-        >
-          <input
-            v-model="showOnHomepage"
-            type="checkbox"
-            class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
-          />
-          <span class="text-xs text-gray-600 dark:text-gray-300">上传后展示</span>
-        </label>
+        <div v-if="authStore.isAuthenticated" class="flex flex-col items-center gap-0.5">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              v-model="showOnHomepage"
+              type="checkbox"
+              class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+            />
+            <span class="text-xs text-gray-600 dark:text-gray-300">上传后展示</span>
+          </label>
+          <span
+            v-if="!showOnHomepage"
+            class="text-xs text-amber-600 dark:text-amber-400"
+          >
+            未勾选时，仅您本人在首页可见
+          </span>
+        </div>
       </div>
 
       <!-- 隐藏的文件输入（支持多选） -->
