@@ -60,10 +60,16 @@
                 required
                 autocomplete="username"
                 class="input !pl-10"
-                placeholder="至少 3 位"
+                :class="{ 'border-green-500 dark:border-green-500': usernameStatus === 'available', 'border-red-500 dark:border-red-500': usernameStatus === 'taken' || usernameStatus === 'invalid' }"
+                placeholder="请输入用户名"
                 :disabled="loading"
+                @input="onUsernameInput"
               />
             </div>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">用户名至少 4 位，不能为纯数字，仅支持英文、数字、下划线</p>
+            <p v-if="usernameStatus === 'checking'" class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">检测中…</p>
+            <p v-else-if="usernameStatus === 'available'" class="mt-0.5 text-xs text-green-600 dark:text-green-400">用户名可用</p>
+            <p v-else-if="usernameStatus === 'taken' || usernameStatus === 'invalid'" class="mt-0.5 text-xs text-red-600 dark:text-red-400">{{ usernameStatusMessage }}</p>
           </div>
           <div>
             <label for="reg-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">密码</label>
@@ -162,6 +168,9 @@ const router = useRouter()
 const settingsStore = useSettingsStore()
 const toastStore = useToastStore()
 
+const USERNAME_MIN_LEN = 4
+const USERNAME_REGEX = /^[a-zA-Z0-9_]+$/
+
 const appName = computed(() => settingsStore.appSettings?.appName || 'bsimgbed')
 const appLogo = computed(() => settingsStore.appSettings?.appLogo || '')
 const registrationEnabled = computed(() => settingsStore.appSettings?.registrationEnabled !== false)
@@ -177,10 +186,56 @@ const form = ref({
 const loading = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
+const usernameStatus = ref('idle') // idle | checking | available | taken | invalid
+const usernameStatusMessage = ref('')
+let usernameCheckTimer = null
 
 onMounted(() => {
   settingsStore.fetchPublicAppSettings()
 })
+
+function onUsernameInput() {
+  const raw = form.value.username.trim()
+  if (usernameCheckTimer) clearTimeout(usernameCheckTimer)
+  if (!raw || raw.length < USERNAME_MIN_LEN) {
+    usernameStatus.value = 'idle'
+    usernameStatusMessage.value = ''
+    return
+  }
+  if (/^\d+$/.test(raw) || !USERNAME_REGEX.test(raw)) {
+    usernameStatus.value = 'invalid'
+    usernameStatusMessage.value = /^\d+$/.test(raw) ? '用户名不能为纯数字' : '用户名仅支持英文、数字、下划线'
+    return
+  }
+  usernameStatus.value = 'checking'
+  usernameStatusMessage.value = ''
+  usernameCheckTimer = setTimeout(async () => {
+    usernameCheckTimer = null
+    try {
+      const res = await $fetch('/api/auth/check-username', {
+        query: { username: raw }
+      })
+      if (res.success) {
+        usernameStatus.value = res.available ? 'available' : 'taken'
+        usernameStatusMessage.value = res.message || (res.available ? '用户名可用' : '用户名已存在')
+      } else {
+        usernameStatus.value = 'idle'
+      }
+    } catch (e) {
+      usernameStatus.value = 'idle'
+    }
+  }, 400)
+}
+
+function validateUsername() {
+  const raw = form.value.username.trim()
+  if (!raw || raw.length < USERNAME_MIN_LEN) return '用户名至少 4 位'
+  if (/^\d+$/.test(raw)) return '用户名不能为纯数字'
+  if (!USERNAME_REGEX.test(raw)) return '用户名仅支持英文、数字、下划线'
+  if (usernameStatus.value === 'checking') return '正在检测用户名，请稍候'
+  if (usernameStatus.value === 'taken' || usernameStatus.value === 'invalid') return usernameStatusMessage.value || '请更换用户名'
+  return null
+}
 
 async function handleRegister() {
   if (!registrationEnabled.value) return
@@ -192,8 +247,9 @@ async function handleRegister() {
     toastStore.error('请填写邮箱')
     return
   }
-  if (form.value.username.trim().length < 3) {
-    toastStore.error('用户名至少 3 位')
+  const usernameErr = validateUsername()
+  if (usernameErr) {
+    toastStore.error(usernameErr)
     return
   }
   if (form.value.password.length < 6) {

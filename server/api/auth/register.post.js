@@ -21,6 +21,8 @@ function createDefaultApiKeyForUser(userId) {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const USERNAME_MIN_LEN = 4
+const USERNAME_REGEX = /^[a-zA-Z0-9_]+$/  // 仅允许英文、数字、下划线
 
 export default defineEventHandler(async (event) => {
   try {
@@ -61,10 +63,22 @@ export default defineEventHandler(async (event) => {
     }
 
     const name = String(username).trim()
-    if (name.length < 3) {
+    if (name.length < USERNAME_MIN_LEN) {
       throw createError({
         statusCode: 400,
-        message: '用户名长度至少 3 位'
+        message: '用户名至少 4 位'
+      })
+    }
+    if (/^\d+$/.test(name)) {
+      throw createError({
+        statusCode: 400,
+        message: '用户名不能为纯数字'
+      })
+    }
+    if (!USERNAME_REGEX.test(name)) {
+      throw createError({
+        statusCode: 400,
+        message: '用户名仅支持英文、数字、下划线'
       })
     }
 

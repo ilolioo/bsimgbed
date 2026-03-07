@@ -22,9 +22,9 @@
           </div>
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white">登录</h1>
           <div class="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-            <p>{{ appName }} - 面向个人的图床应用</p>
+            <p>{{ appName }}</p>
           </div>
-        </div>
+        </div>7
 
         <!-- 登录表单 -->
         <form @submit.prevent="handleLogin" class="space-y-6">
