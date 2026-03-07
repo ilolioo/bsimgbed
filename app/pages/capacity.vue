@@ -71,7 +71,10 @@
           :style="{ animationDelay: `${index * 50}ms` }"
         >
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-            <span class="font-medium text-gray-900 dark:text-white truncate min-w-0">{{ b.name }}</span>
+            <div class="flex items-center gap-2 min-w-0 flex-wrap">
+              <span class="font-medium text-gray-900 dark:text-white truncate">{{ b.name }}</span>
+              <span class="px-2 py-0.5 text-xs font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded shrink-0" :title="'储存桶 ID: ' + b.id">{{ b.id }}</span>
+            </div>
             <div class="flex items-center gap-3 flex-shrink-0 flex-wrap">
               <span class="text-sm font-mono text-gray-600 dark:text-gray-400">
                 {{ formatSize(b.usedSize) }} / {{ formatSize(b.sizeLimit) }}
