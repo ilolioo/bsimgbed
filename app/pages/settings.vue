@@ -668,6 +668,7 @@ async function fetchStorageConfig() {
     if (response.success && response.data) {
       storageDefaultId.value = response.data.defaultId || 'default'
       storageBuckets.value = (response.data.buckets || []).map(b => ({
+        _editKey: b.id,
         id: b.id,
         name: b.name || b.id,
         driver: (b.driver || 'local').toLowerCase(),
