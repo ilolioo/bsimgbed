@@ -33,6 +33,8 @@ class BSImgBed_Uploader {
             'api_key'     => '',
             'use_private' => false,
             'bucket_id'   => '',
+            'timeout'     => 30,
+            'ssl_verify'  => true,
         ));
     }
 
@@ -100,10 +102,14 @@ class BSImgBed_Uploader {
             $headers['X-API-Key'] = trim($s['api_key']);
         }
 
+        $timeout = isset($s['timeout']) ? max(5, min(120, (int) $s['timeout'])) : 30;
+        $ssl_verify = !isset($s['ssl_verify']) || $s['ssl_verify'];
+
         $response = wp_remote_post($endpoint, array(
-            'timeout' => 30,
-            'headers' => $headers,
-            'body'    => $body,
+            'timeout'   => $timeout,
+            'sslverify' => $ssl_verify,
+            'headers'   => $headers,
+            'body'      => $body,
         ));
 
         if (is_wp_error($response)) {
@@ -112,11 +118,15 @@ class BSImgBed_Uploader {
 
         $code = wp_remote_retrieve_response_code($response);
         $body_raw = wp_remote_retrieve_body($response);
-        $data = json_decode($body_raw, true);
+        $data = is_string($body_raw) ? json_decode($body_raw, true) : null;
 
-        if ($code !== 200 || empty($data['success']) || empty($data['data']['url'])) {
-            $message = isset($data['message']) ? $data['message'] : __('图床返回错误', 'bsimgforwp');
+        if ($code !== 200) {
+            $message = (is_array($data) && !empty($data['message'])) ? $data['message'] : __('图床返回错误', 'bsimgforwp');
             return new WP_Error('bsimgbed_upload', $message . ' (HTTP ' . $code . ')');
+        }
+        if (!is_array($data) || empty($data['success']) || empty($data['data']['url'])) {
+            $message = (is_array($data) && !empty($data['message'])) ? $data['message'] : __('图床返回数据无效', 'bsimgforwp');
+            return new WP_Error('bsimgbed_upload', $message);
         }
 
         $path = $data['data']['url'];

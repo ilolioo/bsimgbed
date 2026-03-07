@@ -69,6 +69,8 @@ class BSImgBed_Settings {
             'api_key'     => isset($input['api_key']) && $input['api_key'] !== '' ? sanitize_text_field($input['api_key']) : (isset($current['api_key']) ? $current['api_key'] : ''),
             'use_private' => !empty($input['use_private']),
             'bucket_id'   => isset($input['bucket_id']) ? sanitize_text_field(trim($input['bucket_id'])) : '',
+            'timeout'     => isset($input['timeout']) ? max(5, min(120, (int) $input['timeout'])) : 30,
+            'ssl_verify'  => !empty($input['ssl_verify']),
         );
         $out['base_url'] = rtrim($out['base_url'], '/');
         return $out;
@@ -141,6 +143,9 @@ class BSImgBed_Settings {
         $api_key = isset($opts['api_key']) ? $opts['api_key'] : '';
         $use_private = !empty($opts['use_private']);
         $bucket_id = isset($opts['bucket_id']) ? $opts['bucket_id'] : '';
+        $timeout = isset($opts['timeout']) ? (int) $opts['timeout'] : 30;
+        $timeout = max(5, min(120, $timeout));
+        $ssl_verify = !isset($opts['ssl_verify']) || $opts['ssl_verify'];
         $test_url = wp_nonce_url(
             add_query_arg('action', 'bsimgforwp_test', admin_url('admin.php')),
             'bsimgforwp_test'
@@ -219,6 +224,35 @@ class BSImgBed_Settings {
                                            type="text" value="<?php echo esc_attr($bucket_id); ?>"
                                            class="regular-text" placeholder="default"/>
                                     <p class="description"><?php esc_html_e('可选。图床多储存桶时填写，留空使用图床默认储存桶。', 'bsimgforwp'); ?></p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bsimgforwp-card">
+                    <div class="bsimgforwp-card-header"><?php esc_html_e('高级选项', 'bsimgforwp'); ?></div>
+                    <div class="bsimgforwp-card-body">
+                        <table class="form-table">
+                            <tr>
+                                <th scope="row">
+                                    <label for="bsimgforwp_timeout"><?php esc_html_e('请求超时（秒）', 'bsimgforwp'); ?></label>
+                                </th>
+                                <td>
+                                    <input name="<?php echo esc_attr(self::OPTION_KEY); ?>[timeout]" id="bsimgforwp_timeout"
+                                           type="number" value="<?php echo esc_attr($timeout); ?>"
+                                           min="5" max="120" step="1" class="small-text"/>
+                                    <p class="description"><?php esc_html_e('上传请求超时时间，5–120 秒，默认 30 秒。网络较慢时可适当增大。', 'bsimgforwp'); ?></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><?php esc_html_e('SSL 证书验证', 'bsimgforwp'); ?></th>
+                                <td>
+                                    <label>
+                                        <input type="checkbox" name="<?php echo esc_attr(self::OPTION_KEY); ?>[ssl_verify]" value="1" <?php checked($ssl_verify); ?> />
+                                        <?php esc_html_e('验证图床 HTTPS 证书（推荐开启）', 'bsimgforwp'); ?>
+                                    </label>
+                                    <p class="description"><?php esc_html_e('图床使用自签名证书时可取消勾选，仅在内网或测试环境建议关闭。', 'bsimgforwp'); ?></p>
                                 </td>
                             </tr>
                         </table>
