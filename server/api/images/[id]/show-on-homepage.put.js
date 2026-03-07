@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       data: { showOnHomepage: !!showOnHomepage },
-      message: showOnHomepage ? '已设为首页展示' : '已设为仅自己可见'
+      message: showOnHomepage ? '已设为对所有人可见' : '已设为仅自己可见'
     }
   } catch (error) {
     if (error.statusCode) {

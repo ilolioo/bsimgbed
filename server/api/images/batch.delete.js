@@ -16,12 +16,13 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // 普通用户可删除自己上传的图片，管理员可删除任意图片
     const isAdmin = user.role === 'admin'
     let deletedCount = 0
     for (const id of ids) {
       const image = await db.images.findOne({ _id: id })
       if (!image || image.isDeleted) continue
-      const isOwner = image.userId === user.userId
+      const isOwner = image.userId && image.userId === user.userId
       if (!isOwner && !isAdmin) continue
       await db.images.update(
         { _id: id },

@@ -22,7 +22,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const isOwner = image.userId === user.userId
+    // 普通用户可删除自己上传的图片，管理员可删除任意图片
+    const isOwner = image.userId && image.userId === user.userId
     const isAdmin = user.role === 'admin'
     if (!isOwner && !isAdmin) {
       throw createError({

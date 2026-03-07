@@ -9,6 +9,18 @@ export default defineEventHandler(async (event) => {
 
     const body = await readBody(event)
     const isAdmin = user.role === 'admin'
+
+    // 普通用户只能拥有一个 ApiKey
+    if (!isAdmin) {
+      const existingCount = await db.apikeys.count({ userId: user.userId })
+      if (existingCount >= 1) {
+        throw createError({
+          statusCode: 400,
+          message: '普通用户只能拥有一个 ApiKey，请使用或删除现有密钥后再创建'
+        })
+      }
+    }
+
     // 普通用户：名称固定为用户名；管理员：使用请求体中的名称
     let nameToUse
     if (isAdmin) {

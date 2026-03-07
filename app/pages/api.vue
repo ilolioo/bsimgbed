@@ -615,9 +615,16 @@
       <div class="card p-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">ApiKey 管理</h2>
-          <button @click="showAddKeyModal = true" class="btn-primary text-sm">
+          <button
+            v-if="authStore.isAdmin || apiKeys.length < 1"
+            @click="showAddKeyModal = true"
+            class="btn-primary text-sm"
+          >
             添加 ApiKey
           </button>
+          <p v-else class="text-sm text-gray-500 dark:text-gray-400">
+            普通用户仅可拥有一个 ApiKey
+          </p>
         </div>
 
         <div class="space-y-3">

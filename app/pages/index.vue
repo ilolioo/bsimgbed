@@ -175,8 +175,8 @@
           <!-- 分隔线 -->
           <div v-if="authStore.isAuthenticated" class="border-t border-gray-200 dark:border-gray-700"></div>
 
-          <!-- 设置为背景图/Logo（仅登录用户可见） -->
-          <div v-if="authStore.isAuthenticated" class="py-1">
+          <!-- 设置为背景图/Logo（仅管理员可见） -->
+          <div v-if="authStore.isAdmin" class="py-1">
             <button
               @click="handleSetAsBackgroundFromMenu"
               class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
@@ -193,7 +193,7 @@
             </button>
           </div>
 
-          <!-- 首页展示状态（仅本人图片或管理员可见） -->
+          <!-- 展示范围：登录用户可对自己上传的图片设为仅自己可见或对所有人可见，管理员默认可见所有 -->
           <div
             v-if="authStore.isAuthenticated && canToggleShowOnHomepage(contextMenuImage)"
             class="border-t border-gray-200 dark:border-gray-700 py-1"
@@ -203,7 +203,7 @@
               class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
               <Icon name="heroicons:eye" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
-              {{ contextMenuImage?.showOnHomepage !== false ? '设为仅自己可见' : '设为首页展示' }}
+              {{ contextMenuImage?.showOnHomepage !== false ? '设为仅自己可见' : '设为对所有人可见' }}
             </button>
           </div>
 
@@ -520,7 +520,7 @@ async function handleToggleShowOnHomepageFromMenu() {
       body: { showOnHomepage: next }
     })
     if (res?.success) {
-      toastStore.success(res.message || (next ? '已设为首页展示' : '已设为仅自己可见'))
+      toastStore.success(res.message || (next ? '已设为对所有人可见' : '已设为仅自己可见'))
       await imagesStore.fetchImages(true)
     } else {
       toastStore.error(res?.message || '操作失败')
