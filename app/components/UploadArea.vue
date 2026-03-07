@@ -511,7 +511,14 @@ async function uploadSingleFile(file) {
   const data = await response.json()
 
   if (response.ok && data.success) {
-    return { success: true, filename: file.name }
+    const payload = data.data || {}
+    return {
+      success: true,
+      filename: file.name,
+      url: payload.url,
+      uploadedAt: payload.uploadedAt,
+      id: payload.id
+    }
   } else {
     return { success: false, filename: file.name, error: data.message || '上传失败' }
   }
@@ -561,6 +568,16 @@ async function uploadFiles(files) {
         const result = await uploadSingleFile(file)
         if (result.success) {
           successCount++
+          // 游客未勾选「上传后展示」时写入本地，1 天内在首页可见
+          if (!authStore.isAuthenticated && !showGuestUploadOnHomepage.value && result.url) {
+            const { append } = useGuestPrivateUploads()
+            append({
+              url: result.url,
+              uploadedAt: result.uploadedAt || new Date().toISOString(),
+              filename: file.name,
+              id: result.id
+            })
+          }
         } else {
           failCount++
           toastStore.error(`${result.filename}: ${result.error}`)

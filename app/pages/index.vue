@@ -47,9 +47,9 @@
         <Loading size="lg" />
       </div>
 
-      <!-- 空状态 -->
+      <!-- 空状态：无 API 列表且无本机 1 天内未展示上传 -->
       <div
-        v-else-if="imagesStore.images.length === 0"
+        v-else-if="displayList.length === 0"
         class="text-center py-16"
       >
         <Icon name="heroicons:photo" class="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
@@ -245,6 +245,36 @@ const imagesStore = useImagesStore()
 const settingsStore = useSettingsStore()
 const toastStore = useToastStore()
 
+// 游客未勾选「上传后展示」的图片：存本地，1 天内在首页可见，1 天后仅管理员可见
+const { list: guestPrivateList, load: loadGuestPrivateUploads } = useGuestPrivateUploads()
+
+// 将本地未展示记录转为与 API 一致的图片结构，供卡片与查看器使用
+function guestItemToImage(item) {
+  const ext = item.url?.split('.').pop() || 'webp'
+  return {
+    id: 'local-' + (item.url || '').replace(/\//g, '_'),
+    url: item.url,
+    uuid: item.url?.replace(/^\/i\/|\.\w+$/g, '') || '',
+    filename: item.filename || item.url?.split('/').pop() || 'image',
+    originalName: item.filename || 'image',
+    format: ext,
+    size: 0,
+    width: 0,
+    height: 0,
+    uploadedAt: item.uploadedAt
+  }
+}
+
+// 展示列表：管理员仅 API；游客 = 本机 1 天内未展示 + API 公开列表，按时间倒序
+const displayList = computed(() => {
+  if (authStore.isAuthenticated) return imagesStore.images
+  const local = guestPrivateList.value.map(guestItemToImage)
+  const api = imagesStore.images
+  const merged = [...local, ...api]
+  merged.sort((a, b) => new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0))
+  return merged
+})
+
 // 响应式列数
 const columnCount = ref(2)
 
@@ -266,8 +296,7 @@ function updateColumnCount() {
 const imageColumns = computed(() => {
   const columns = Array.from({ length: columnCount.value }, () => [])
 
-  imagesStore.images.forEach((image, index) => {
-    // 按顺序轮流分配到各列，这样新图片只会追加到列末尾
+  displayList.value.forEach((image, index) => {
     const columnIndex = index % columnCount.value
     columns[columnIndex].push(image)
   })
@@ -609,6 +638,9 @@ onMounted(async () => {
 
   // 获取图片列表（authStore.init() 已在插件中调用）
   await imagesStore.fetchImages(true)
+
+  // 游客：从本地读取 1 天内「未展示」的上传，用于首页合并展示
+  loadGuestPrivateUploads()
 
   // 设置无限滚动
   setupIntersectionObserver()
