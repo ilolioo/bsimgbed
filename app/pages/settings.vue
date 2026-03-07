@@ -297,7 +297,7 @@
           <div class="space-y-3">
             <div
               v-for="b in storageBuckets"
-              :key="b.id"
+              :key="getBucketKey(b)"
               class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-shadow hover:shadow-sm"
               :class="storageDefaultId === b.id ? 'ring-1 ring-primary-500/50 bg-primary-50/30 dark:bg-primary-900/10' : 'bg-gray-50/50 dark:bg-gray-800/30'"
             >
@@ -332,9 +332,9 @@
                     <Icon name="heroicons:star" class="w-4 h-4" />
                     设为默认
                   </button>
-                  <button type="button" class="btn-secondary text-sm inline-flex items-center gap-1" @click="toggleEditBucket(b.id)">
-                    <Icon :name="editingBucketId === b.id ? 'heroicons:chevron-up' : 'heroicons:pencil-square'" class="w-4 h-4" />
-                    {{ editingBucketId === b.id ? '收起' : '编辑' }}
+                  <button type="button" class="btn-secondary text-sm inline-flex items-center gap-1" @click="toggleEditBucket(getBucketKey(b))">
+                    <Icon :name="editingBucketId === getBucketKey(b) ? 'heroicons:chevron-up' : 'heroicons:pencil-square'" class="w-4 h-4" />
+                    {{ editingBucketId === getBucketKey(b) ? '收起' : '编辑' }}
                   </button>
                   <button v-if="storageBuckets.length > 1" type="button" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="删除" @click="removeBucket(b.id)">
                     <Icon name="heroicons:trash" class="w-4 h-4" />
@@ -343,9 +343,9 @@
               </div>
 
               <!-- 编辑表单（可折叠） -->
-              <div v-if="editingBucketId === b.id" class="px-4 pb-4 pt-0">
+              <div v-if="editingBucketId === getBucketKey(b)" class="px-4 pb-4 pt-0">
                 <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800/50 p-4 space-y-4">
-                  <!-- 储存桶 ID：仅新建时可编辑 -->
+                  <!-- 储存桶 ID：新建或桶内无图片时可编辑 -->
                   <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">储存桶 ID</label>
                     <input
@@ -353,11 +353,11 @@
                       type="text"
                       class="input w-full font-mono"
                       placeholder="如 backup、images，留空则自动生成"
-                      :disabled="!String(b.id).startsWith('bs-')"
+                      :disabled="!canEditBucketId(b)"
                       maxlength="64"
                     />
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {{ String(b.id).startsWith('bs-') ? '仅新建时可设置，保存后不可修改；建议使用英文、数字、连字符' : '保存后不可修改' }}
+                      {{ canEditBucketId(b) ? '新建或桶内无图片时可设置，保存后若有图片则不可修改；建议使用英文、数字、连字符' : '桶内已有图片，不可修改' }}
                     </p>
                   </div>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -556,9 +556,22 @@ function formatSize(bytes) {
   return n + ' B'
 }
 
+// 列表项与展开状态用稳定 key，避免编辑「储存桶 ID」时 key 变化导致收起
+function getBucketKey(b) {
+  return b._editKey ?? b.id
+}
+
+// 新建桶或旧桶无图片时可修改储存桶 ID
+function canEditBucketId(b) {
+  if (b._editKey) return true
+  return (b.usedSize ?? 0) === 0
+}
+
 function addBucket() {
   const id = 'bs-' + Date.now()
+  const _editKey = 'new-' + Date.now()
   storageBuckets.value.push({
+    _editKey,
     id,
     name: '新储存桶',
     driver: 'local',
@@ -569,17 +582,18 @@ function addBucket() {
     webdav: { baseUrl: '', username: '', password: '', hasPassword: false },
     telegram: { token: '', chatId: '', apiBaseUrl: '', hasToken: false }
   })
-  editingBucketId.value = id
+  editingBucketId.value = _editKey
 }
 
 function removeBucket(id) {
+  const bucket = storageBuckets.value.find(b => b.id === id)
+  if (bucket && getBucketKey(bucket) === editingBucketId.value) editingBucketId.value = null
   storageBuckets.value = storageBuckets.value.filter(b => b.id !== id)
   if (storageDefaultId.value === id) storageDefaultId.value = storageBuckets.value[0]?.id || 'default'
-  if (editingBucketId.value === id) editingBucketId.value = null
 }
 
-function toggleEditBucket(id) {
-  editingBucketId.value = editingBucketId.value === id ? null : id
+function toggleEditBucket(key) {
+  editingBucketId.value = editingBucketId.value === key ? null : key
 }
 
 // 账户设置
