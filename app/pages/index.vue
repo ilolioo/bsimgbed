@@ -147,7 +147,7 @@
         >
           <!-- 复制链接子菜单 -->
           <div class="py-1">
-            <div class="px-3 py-1.5 text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">
+            <div class="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
               {{ copyMenuTitle }}
             </div>
             <button
@@ -156,7 +156,7 @@
               @click="handleCopyFromMenu(item.type)"
               class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:clipboard-document" class="w-4 h-4 text-gray-400" />
+              <Icon name="heroicons:clipboard-document" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
               {{ item.label }}
             </button>
           </div>
@@ -170,14 +170,14 @@
               @click="handleSetAsBackgroundFromMenu"
               class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:photo" class="w-4 h-4 text-gray-400" />
+              <Icon name="heroicons:photo" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
               设为全局背景
             </button>
             <button
               @click="handleSetAsLogoFromMenu"
               class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:sparkles" class="w-4 h-4 text-gray-400" />
+              <Icon name="heroicons:sparkles" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
               设为网站Logo
             </button>
           </div>
@@ -191,7 +191,7 @@
               @click="handleDeleteFromMenu"
               class="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
             >
-              <Icon name="heroicons:trash" class="w-4 h-4" />
+              <Icon name="heroicons:trash" class="w-4 h-4 text-red-600 dark:text-red-400" />
               删除图片
             </button>
           </div>

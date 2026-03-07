@@ -29,7 +29,7 @@
       <!-- 通知类型开关 -->
       <div class="card p-6" v-if="config.enabled">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          <Icon name="heroicons:bell" class="w-5 h-5 inline-block mr-2 text-primary-500" />
+          <Icon name="heroicons:bell" class="w-5 h-5 inline-block mr-2 text-primary-500 dark:text-primary-400" />
           通知类型
         </h2>
         <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
@@ -99,7 +99,7 @@
       <!-- 通知方式 -->
       <div class="card p-6" v-if="config.enabled">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          <Icon name="heroicons:paper-airplane" class="w-5 h-5 inline-block mr-2 text-primary-500" />
+          <Icon name="heroicons:paper-airplane" class="w-5 h-5 inline-block mr-2 text-primary-500 dark:text-primary-400" />
           通知方式
         </h2>
 
@@ -124,7 +124,7 @@
       <!-- Webhook 配置 -->
       <div class="card p-6" v-if="config.enabled && config.method === 'webhook'">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          <Icon name="heroicons:link" class="w-5 h-5 inline-block mr-2 text-primary-500" />
+          <Icon name="heroicons:link" class="w-5 h-5 inline-block mr-2 text-primary-500 dark:text-primary-400" />
           Webhook 配置
         </h2>
 
@@ -132,7 +132,7 @@
           <!-- Webhook URL -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Webhook URL <span class="text-red-500">*</span>
+              Webhook URL <span class="text-red-500 dark:text-red-400">*</span>
             </label>
             <input
               v-model="config.webhook.url"
@@ -183,7 +183,7 @@
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
               JSON 格式的自定义请求头，如认证信息等
             </p>
-            <p v-if="headersError" class="text-xs text-red-500 mt-1">{{ headersError }}</p>
+            <p v-if="headersError" class="text-xs text-red-500 dark:text-red-400 mt-1">{{ headersError }}</p>
           </div>
 
           <!-- 请求体模板 -->
@@ -227,7 +227,7 @@
       <!-- Telegram 配置 -->
       <div class="card p-6" v-if="config.enabled && config.method === 'telegram'">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          <Icon name="heroicons:chat-bubble-left-right" class="w-5 h-5 inline-block mr-2 text-primary-500" />
+          <Icon name="heroicons:chat-bubble-left-right" class="w-5 h-5 inline-block mr-2 text-primary-500 dark:text-primary-400" />
           Telegram 配置
         </h2>
 
@@ -235,7 +235,7 @@
           <!-- Bot Token -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Bot Token <span class="text-red-500">*</span>
+              Bot Token <span class="text-red-500 dark:text-red-400">*</span>
             </label>
             <input
               v-model="config.telegram.token"
@@ -244,14 +244,14 @@
               placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
             />
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              从 <a href="https://t.me/BotFather" target="_blank" class="text-primary-500 hover:underline">@BotFather</a> 获取的 Bot Token
+              从 <a href="https://t.me/BotFather" target="_blank" class="text-primary-500 dark:text-primary-400 hover:underline">@BotFather</a> 获取的 Bot Token
             </p>
           </div>
 
           <!-- Chat ID -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Chat ID <span class="text-red-500">*</span>
+              Chat ID <span class="text-red-500 dark:text-red-400">*</span>
             </label>
             <input
               v-model="config.telegram.chatId"
@@ -260,7 +260,7 @@
               placeholder="123456789"
             />
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              接收通知的用户或群组 Chat ID，可通过 <a href="https://t.me/userinfobot" target="_blank" class="text-primary-500 hover:underline">@userinfobot</a> 获取【注意: 需要先给bot发送一条消息】
+              接收通知的用户或群组 Chat ID，可通过 <a href="https://t.me/userinfobot" target="_blank" class="text-primary-500 dark:text-primary-400 hover:underline">@userinfobot</a> 获取【注意: 需要先给bot发送一条消息】
             </p>
           </div>
 
@@ -285,7 +285,7 @@
       <!-- Email 配置 -->
       <div class="card p-6" v-if="config.enabled && config.method === 'email'">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          <Icon name="heroicons:envelope" class="w-5 h-5 inline-block mr-2 text-primary-500" />
+          <Icon name="heroicons:envelope" class="w-5 h-5 inline-block mr-2 text-primary-500 dark:text-primary-400" />
           Email 配置
         </h2>
 
@@ -293,7 +293,7 @@
           <!-- 邮件服务商 -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              邮件服务商 <span class="text-red-500">*</span>
+              邮件服务商 <span class="text-red-500 dark:text-red-400">*</span>
             </label>
             <input
               v-model="config.email.service"
@@ -302,14 +302,14 @@
               placeholder="例如: QQ、126、163、Gmail"
             />
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              支持列表: <a href="https://github.com/nodemailer/nodemailer/blob/master/lib/well-known/services.json" target="_blank" class="text-primary-500 hover:underline">点击查询</a>
+              支持列表: <a href="https://github.com/nodemailer/nodemailer/blob/master/lib/well-known/services.json" target="_blank" class="text-primary-500 dark:text-primary-400 hover:underline">点击查询</a>
             </p>
           </div>
 
           <!-- 发件人邮箱 -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              发件人邮箱 <span class="text-red-500">*</span>
+              发件人邮箱 <span class="text-red-500 dark:text-red-400">*</span>
             </label>
             <input
               v-model="config.email.user"
@@ -325,7 +325,7 @@
           <!-- 邮箱授权码 -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              邮箱授权码/密码 <span class="text-red-500">*</span>
+              邮箱授权码/密码 <span class="text-red-500 dark:text-red-400">*</span>
             </label>
             <input
               v-model="config.email.pass"
@@ -375,7 +375,7 @@
       <!-- Server酱 配置 -->
       <div class="card p-6" v-if="config.enabled && config.method === 'serverchan'">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          <Icon name="heroicons:megaphone" class="w-5 h-5 inline-block mr-2 text-primary-500" />
+          <Icon name="heroicons:megaphone" class="w-5 h-5 inline-block mr-2 text-primary-500 dark:text-primary-400" />
           Server酱 配置
         </h2>
 
@@ -383,7 +383,7 @@
           <!-- SendKey -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              SendKey <span class="text-red-500">*</span>
+              SendKey <span class="text-red-500 dark:text-red-400">*</span>
             </label>
             <input
               v-model="config.serverchan.sendKey"
@@ -392,7 +392,7 @@
               placeholder="SCTxxxxxxxxxxxxxxxxxxxxx"
             />
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              从 <a href="https://sct.ftqq.com/r/9338" target="_blank" class="text-primary-500 hover:underline">Server酱官网</a> 获取的 SendKey
+              从 <a href="https://sct.ftqq.com/r/9338" target="_blank" class="text-primary-500 dark:text-primary-400 hover:underline">Server酱官网</a> 获取的 SendKey
             </p>
           </div>
 

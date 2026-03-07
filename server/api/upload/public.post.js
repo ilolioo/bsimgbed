@@ -1,7 +1,7 @@
 import db from '../../utils/db.js'
 import { getImageMetadata, saveUploadedFile } from '../../utils/image.js'
 import { parseFormData, processImageWithConfig } from '../../utils/upload.js'
-import { getBucketsConfig, getTimestampStorageFilename } from '../../utils/storage.js'
+import { getBucketsConfig } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
 import {
   checkPublicRateLimit,
@@ -59,8 +59,8 @@ export default defineEventHandler(async (event) => {
       acquirePublicConcurrency(clientIP)
     }
 
-    // 解析表单数据（含可选 bucketId）
-    const { file, bucketId: requestedBucketId } = await parseFormData(event)
+    // 解析表单数据（含可选 bucketId、showOnHomepage）
+    const { file, bucketId: requestedBucketId, showOnHomepage } = await parseFormData(event)
 
     if (!file) {
       releasePublicConcurrency(clientIP)
@@ -113,14 +113,14 @@ export default defineEventHandler(async (event) => {
     // 获取图片元数据
     const metadata = await getImageMetadata(processedBuffer)
 
-    // 以时间戳命名存储文件（格式：yyyyMMddHHmmss.ext）
-    const filename = await getTimestampStorageFilename(bucketIdToUse, finalFormat)
+    // 保存文件到所选储存桶
+    const filename = `${imageUuid}.${finalFormat}`
     const bucketId = await saveUploadedFile(processedBuffer, filename, bucketIdToUse)
 
     // 判断是否启用内容安全检测
     const contentSafetyEnabled = config.contentSafety?.enabled || false
 
-    // 保存到数据库
+    // 保存到数据库（showOnHomepage：游客选择是否在主页展示，默认 true）
     const imageDoc = {
       _id: uuidv4(),
       uuid: imageUuid,
@@ -135,6 +135,7 @@ export default defineEventHandler(async (event) => {
       isDeleted: false,
       uploadedBy: '访客',
       uploadedByType: 'public',
+      showOnHomepage: showOnHomepage !== false,  // 游客上传是否在主页展示，缺省为 true
       ip: clientIP,
       uploadedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

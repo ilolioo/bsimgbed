@@ -84,17 +84,31 @@
       <!-- 储存桶选择：放在上传框底部栏内，点击不触发选择文件 -->
       <div
         v-if="configLoaded && bucketChoices.length > 0"
-        class="upload-box-options border-t border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-800/30 px-4 py-3 flex items-center justify-center gap-2"
+        class="upload-box-options border-t border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-800/30 px-4 py-3 flex flex-wrap items-center justify-center gap-3"
         @click.stop
       >
-        <span class="text-xs text-gray-500 dark:text-gray-400">上传到</span>
-        <select
-          v-model="selectedBucketId"
-          class="text-xs sm:text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[120px]"
-          @click.stop
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-gray-500 dark:text-gray-400">上传到</span>
+          <select
+            v-model="selectedBucketId"
+            class="text-xs sm:text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[120px]"
+            @click.stop
+          >
+            <option v-for="opt in bucketChoices" :key="opt.id" :value="opt.id">{{ opt.name }}</option>
+          </select>
+        </div>
+        <!-- 游客上传是否展示在主页（仅未登录时显示） -->
+        <label
+          v-if="!authStore.isAuthenticated"
+          class="inline-flex items-center gap-2 cursor-pointer select-none"
         >
-          <option v-for="opt in bucketChoices" :key="opt.id" :value="opt.id">{{ opt.name }}</option>
-        </select>
+          <input
+            v-model="showGuestUploadOnHomepage"
+            type="checkbox"
+            class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
+          />
+          <span class="text-xs text-gray-600 dark:text-gray-400">游客上传的图片展示在主页</span>
+        </label>
       </div>
 
       <!-- 隐藏的文件输入（支持多选） -->
@@ -168,22 +182,22 @@
                 <Icon
                   v-if="item.status === 'pending'"
                   name="heroicons:clock"
-                  class="w-4 h-4 text-gray-400"
+                  class="w-4 h-4 text-gray-400 dark:text-gray-500"
                 />
                 <Icon
                   v-else-if="item.status === 'downloading'"
                   name="heroicons:arrow-down-tray"
-                  class="w-4 h-4 text-blue-500 animate-bounce"
+                  class="w-4 h-4 text-blue-500 dark:text-blue-400 animate-bounce"
                 />
                 <Icon
                   v-else-if="item.status === 'success'"
                   name="heroicons:check-circle"
-                  class="w-4 h-4 text-green-500"
+                  class="w-4 h-4 text-green-500 dark:text-green-400"
                 />
                 <Icon
                   v-else-if="item.status === 'error'"
                   name="heroicons:x-circle"
-                  class="w-4 h-4 text-red-500"
+                  class="w-4 h-4 text-red-500 dark:text-red-400"
                 />
               </div>
 
@@ -192,13 +206,13 @@
                 <p class="truncate text-gray-700 dark:text-gray-300" :title="item.url">
                   {{ item.url }}
                 </p>
-                <p v-if="item.error" class="text-xs text-red-500 truncate" :title="item.error">
+                <p v-if="item.error" class="text-xs text-red-500 dark:text-red-400 truncate" :title="item.error">
                   {{ item.error }}
                 </p>
               </div>
 
               <!-- 序号 -->
-              <span class="flex-shrink-0 text-xs text-gray-400">
+              <span class="flex-shrink-0 text-xs text-gray-400 dark:text-gray-500">
                 #{{ index + 1 }}
               </span>
             </div>
@@ -274,6 +288,8 @@ const publicApiEnabled = ref(null)
 const defaultApiKey = ref('')
 // 储存桶选项（游客仅能选允许的桶，管理员可选全部）
 const bucketChoices = ref([])
+// 游客上传的图片是否展示在主页（仅游客可见此选项，默认 true）
+const showGuestUploadOnHomepage = ref(true)
 const selectedBucketId = ref('')
 
 // 计算是否禁用上传（未登录且公共上传已禁用）
@@ -471,6 +487,10 @@ async function uploadSingleFile(file) {
   const formData = new FormData()
   if (selectedBucketId.value) {
     formData.append('bucketId', selectedBucketId.value)
+  }
+  // 游客上传时传递是否展示在主页（管理员上传不传，服务端不依赖该字段）
+  if (!authStore.isAuthenticated) {
+    formData.append('showOnHomepage', showGuestUploadOnHomepage.value ? 'true' : 'false')
   }
   formData.append('file', file)
 

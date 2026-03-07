@@ -38,8 +38,13 @@ export default defineEventHandler(async (event) => {
       // 配置开启时展示所有非违规图片
       queryCondition = { isDeleted: false, isNsfw: { $ne: true } }
     } else {
-      // 配置关闭且未登录时只展示公开的非违规图片
-      queryCondition = { isDeleted: false, uploadedByType: 'public', isNsfw: { $ne: true } }
+      // 配置关闭且未登录时只展示公开的非违规图片，且仅展示勾选“展示在主页”的游客上传（showOnHomepage 缺省视为 true）
+      queryCondition = {
+        isDeleted: false,
+        uploadedByType: 'public',
+        isNsfw: { $ne: true },
+        $or: [{ showOnHomepage: true }, { showOnHomepage: { $exists: false } }]
+      }
     }
 
     // 获取总数与当前页数据（数据库层排序分页，避免全量加载）

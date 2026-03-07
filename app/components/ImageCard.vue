@@ -76,7 +76,7 @@
         class="absolute inset-0 bg-gray-200 dark:bg-gray-700 flex flex-col items-center justify-center gap-2"
       >
         <Icon name="heroicons:photo" class="w-12 h-12 text-gray-400 dark:text-gray-500" />
-        <span class="text-xs text-gray-400">加载失败</span>
+        <span class="text-xs text-gray-400 dark:text-gray-500">加载失败</span>
       </div>
     </div>
 

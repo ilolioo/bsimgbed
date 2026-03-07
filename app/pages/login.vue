@@ -35,7 +35,7 @@
             </label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Icon name="heroicons:user" class="w-5 h-5 text-gray-400" />
+                <Icon name="heroicons:user" class="w-5 h-5 text-gray-400 dark:text-gray-500" />
               </div>
               <input
                 id="username"
@@ -57,7 +57,7 @@
             </label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Icon name="heroicons:lock-closed" class="w-5 h-5 text-gray-400" />
+                <Icon name="heroicons:lock-closed" class="w-5 h-5 text-gray-400 dark:text-gray-500" />
               </div>
               <input
                 id="password"
@@ -77,12 +77,12 @@
                 <Icon
                   v-if="showPassword"
                   name="heroicons:eye-slash"
-                  class="w-5 h-5 text-gray-400 hover:text-gray-600"
+                  class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
                 />
                 <Icon
                   v-else
                   name="heroicons:eye"
-                  class="w-5 h-5 text-gray-400 hover:text-gray-600"
+                  class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
                 />
               </button>
             </div>
