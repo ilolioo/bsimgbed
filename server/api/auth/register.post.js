@@ -4,14 +4,14 @@ import crypto from 'crypto'
 import { v4 as uuidv4 } from 'uuid'
 import { getEmailConfig, sendVerificationEmail } from '../../utils/notification.js'
 
-/** 为新用户创建默认 API Key（首个 Key 即为该用户的默认 Key），用户可自行删除或刷新 */
+/** 为新用户自动创建一个 ApiKey（非默认），用户可在「我的」中设为默认或删除、刷新 */
 function createDefaultApiKeyForUser(userId, username) {
   const apiKey = `sk-${uuidv4().replace(/-/g, '')}`
   const newKey = {
     _id: uuidv4(),
     key: apiKey,
     name: username || '默认',
-    isDefault: true,
+    isDefault: false,
     enabled: true,
     userId,
     createdAt: new Date().toISOString(),
