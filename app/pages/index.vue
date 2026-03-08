@@ -19,7 +19,7 @@
         @click="toggleOnlyMine"
       >
         <Icon name="heroicons:user-circle" class="w-5 h-5" />
-        {{ imagesStore.onlyMine ? '显示全部图片' : '仅查看此账户上传的图片' }}
+        {{ imagesStore.onlyMine ? '显示全部图片' : '仅查看我上传的图片' }}
       </button>
     </div>
 
@@ -677,10 +677,16 @@ watch(
   }
 )
 
-// 监听认证状态变化，重新获取图片
+// 监听认证状态变化，按角色设置默认「仅看我的」并重新获取图片
 watch(
   () => authStore.isAuthenticated,
   () => {
+    if (authStore.isAuthenticated) {
+      // 普通用户默认仅看本账户，管理员默认看全部
+      imagesStore.setOnlyMine(!authStore.isAdmin)
+    } else {
+      imagesStore.setOnlyMine(false)
+    }
     imagesStore.fetchImages(true)
   }
 )
@@ -701,6 +707,11 @@ onMounted(async () => {
 
   // 监听点击事件关闭右键菜单
   document.addEventListener('click', handleClickOutside)
+
+  // 登录用户：普通用户默认仅看本账户，管理员默认看全部
+  if (authStore.isAuthenticated) {
+    imagesStore.setOnlyMine(!authStore.isAdmin)
+  }
 
   // 获取图片列表（authStore.init() 已在插件中调用）
   await imagesStore.fetchImages(true)
