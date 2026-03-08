@@ -67,18 +67,6 @@
               <span class="hidden sm:inline">容量</span>
             </NuxtLink>
 
-            <!-- API（仅管理员可访问，入口在设置-API管理） -->
-            <NuxtLink
-              v-if="authStore.isAdmin"
-              :to="{ path: '/settings', query: { tab: 'api' } }"
-              class="nav-link nav-link-icon sm:nav-link-text"
-              :class="{ 'nav-link-active': route.path === '/settings' && route.query.tab === 'api' }"
-              title="API"
-            >
-              <Icon name="heroicons:code-bracket" class="w-5 h-5 flex-shrink-0 text-current" />
-              <span class="hidden sm:inline">API</span>
-            </NuxtLink>
-
             <!-- 设置（仅管理员） -->
             <NuxtLink
               v-if="authStore.isAdmin"

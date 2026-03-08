@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
-    <!-- 标签页 -->
-    <div class="flex bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-lg mb-6 overflow-hidden">
+    <!-- 标签页（仅在没有 panel 时显示，即独立使用时） -->
+    <div v-if="!panel" class="flex bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-lg mb-6 overflow-hidden">
       <button
         v-for="tab in tabs"
         :key="tab.id"
@@ -16,7 +16,7 @@
     </div>
 
     <!-- 公共配置 -->
-    <div v-show="activeTab === 'public'" class="space-y-6">
+    <div v-show="showPublic" class="space-y-6">
       <div class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">公共 API 配置 <span class="text-sm font-normal text-gray-500 dark:text-gray-400">- 访客上传使用</span></h2>
 
@@ -482,7 +482,7 @@
     </div>
 
     <!-- 私有 API 配置 -->
-    <div v-show="activeTab === 'private'" class="space-y-6">
+    <div v-show="showPrivate" class="space-y-6">
       <!-- 私有 API 系统配置（仅管理员可见） -->
       <div v-if="authStore.isAdmin" class="card p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">私有 API 配置 <span class="text-sm font-normal text-gray-500 dark:text-gray-400">- 登录后使用</span></h2>
@@ -668,7 +668,7 @@
     </div>
 
     <!-- API 文档 -->
-    <div v-show="activeTab === 'docs'" class="space-y-4">
+    <div v-show="showDocs" class="space-y-4">
       <!-- 概述 -->
       <div class="card p-5">
         <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-2">概述</h2>
@@ -1002,9 +1002,18 @@ import { useSettingsStore } from '~/stores/settings'
 import { useToastStore } from '~/stores/toast'
 import { copyToClipboard } from '../utils/clipboard'
 
+/** 从系统设置嵌入时只显示指定面板：'public' | 'private' | 'docs'；不传则显示内部标签页 */
+const props = defineProps({
+  panel: { type: String, default: '' }
+})
+
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const toastStore = useToastStore()
+
+const showPublic = computed(() => !props.panel || props.panel === 'public')
+const showPrivate = computed(() => !props.panel || props.panel === 'private')
+const showDocs = computed(() => !props.panel || props.panel === 'docs')
 
 // 标签页：管理员显示全部，普通用户仅显示私有配置与 API 文档
 const tabs = computed(() => {

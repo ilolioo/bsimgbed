@@ -548,9 +548,19 @@
       </div>
     </div>
 
-    <!-- API 管理 -->
-    <div v-show="activeTab === 'api'" class="space-y-6">
-      <ApiManagement />
+    <!-- 公共配置 -->
+    <div v-show="activeTab === 'api-public'" class="space-y-6">
+      <ApiManagement panel="public" />
+    </div>
+
+    <!-- 私有配置 -->
+    <div v-show="activeTab === 'api-private'" class="space-y-6">
+      <ApiManagement panel="private" />
+    </div>
+
+    <!-- API 文档 -->
+    <div v-show="activeTab === 'api-docs'" class="space-y-6">
+      <ApiManagement panel="docs" />
     </div>
 
     <!-- 用户管理 -->
@@ -756,7 +766,9 @@ const tabs = [
   { id: 'storage', label: '存储配置' },
   { id: 'notification', label: '通知设置' },
   { id: 'email', label: '邮箱设置' },
-  { id: 'api', label: 'API管理' },
+  { id: 'api-public', label: '公共配置' },
+  { id: 'api-private', label: '私有配置' },
+  { id: 'api-docs', label: 'API文档' },
   { id: 'users', label: '用户管理' }
 ]
 // 用户管理（仅管理员）
@@ -768,12 +780,14 @@ const editingUser = ref(null)
 const editForm = reactive({ username: '', email: '', role: 'user', disabled: false, newPassword: '' })
 const savingEditUser = ref(false)
 const route = useRoute()
-const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : route.query.tab === 'email' ? 'email' : route.query.tab === 'api' ? 'api' : 'app')
+const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : route.query.tab === 'email' ? 'email' : route.query.tab === 'api-public' ? 'api-public' : route.query.tab === 'api-private' ? 'api-private' : route.query.tab === 'api-docs' ? 'api-docs' : 'app')
 watch(() => route.query.tab, (tab) => {
   if (tab === 'notification') activeTab.value = 'notification'
   else if (tab === 'users') activeTab.value = 'users'
   else if (tab === 'email') activeTab.value = 'email'
-  else if (tab === 'api') activeTab.value = 'api'
+  else if (tab === 'api-public') activeTab.value = 'api-public'
+  else if (tab === 'api-private') activeTab.value = 'api-private'
+  else if (tab === 'api-docs') activeTab.value = 'api-docs'
 })
 
 // 邮箱设置（独立于通知）
