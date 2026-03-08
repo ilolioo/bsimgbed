@@ -184,6 +184,11 @@ export const useImagesStore = defineStore('images', {
       this.selectedIds = []
     },
 
+    // 设置选中的 ID 列表（用于“全选”仅选中可删除的图片）
+    setSelection(ids) {
+      this.selectedIds = Array.isArray(ids) ? [...ids] : []
+    },
+
     // 全选/取消全选
     toggleSelectAll() {
       if (this.selectedIds.length === this.images.length) {

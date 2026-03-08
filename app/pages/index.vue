@@ -15,10 +15,10 @@
     >
       <div class="flex items-center gap-4">
         <button
-          @click="imagesStore.toggleSelectAll"
+          @click="handleToggleSelectAll"
           class="btn-secondary text-sm"
         >
-          {{ imagesStore.isAllSelected ? '取消全选' : '全选' }}
+          {{ isAllDeletableSelected ? '取消全选' : '全选' }}
         </button>
         <span class="text-sm text-gray-600 dark:text-gray-400">
           已选择 {{ imagesStore.selectedIds.length }} 张图片
@@ -72,7 +72,7 @@
             <ImageCard
               :image="image"
               :selected="imagesStore.selectedIds.includes(image.id)"
-              :selectable="authStore.isAuthenticated"
+              :selectable="authStore.isAuthenticated && canDeleteImage(image)"
               @click="openViewer(image)"
               @select="imagesStore.toggleSelect(image.id)"
               @delete="confirmDelete(image)"
@@ -210,8 +210,8 @@
           <!-- 分隔线 -->
           <div v-if="authStore.isAuthenticated" class="border-t border-gray-200 dark:border-gray-700"></div>
 
-          <!-- 删除选项（仅登录用户可见） -->
-          <div v-if="authStore.isAuthenticated" class="py-1">
+          <!-- 删除选项（仅本人上传的图片或管理员可见） -->
+          <div v-if="authStore.isAuthenticated && canDeleteImage(contextMenuImage)" class="py-1">
             <button
               @click="handleDeleteFromMenu"
               class="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
@@ -320,6 +320,32 @@ const copyOptions = [
   { type: 'markdown', label: 'Markdown' },
   { type: 'bbcode', label: 'BBCode' }
 ]
+
+// 当前用户可删除的图片 ID 列表（用于批量操作；普通用户仅本人上传）
+const deletableImageIds = computed(() =>
+  imagesStore.images.filter(img => canDeleteImage(img)).map(img => img.id)
+)
+// 是否已全选“可删除”的图片（管理员=全选全部，普通用户=全选本人上传）
+const isAllDeletableSelected = computed(() => {
+  if (authStore.isAdmin) {
+    return imagesStore.images.length > 0 && imagesStore.selectedIds.length === imagesStore.images.length
+  }
+  const ids = deletableImageIds.value
+  return ids.length > 0 && ids.every(id => imagesStore.selectedIds.includes(id))
+})
+
+// 全选/取消全选（普通用户仅会选中本人上传的图片）
+function handleToggleSelectAll() {
+  if (authStore.isAdmin) {
+    imagesStore.toggleSelectAll()
+  } else {
+    if (isAllDeletableSelected.value) {
+      imagesStore.clearSelection()
+    } else {
+      imagesStore.setSelection(deletableImageIds.value)
+    }
+  }
+}
 
 // 计算复制链接的标题
 const copyMenuTitle = computed(() => {
@@ -495,6 +521,13 @@ function handleDeleteFromMenu() {
 
 // 是否可切换该图片的首页展示状态（仅本人上传或管理员）
 function canToggleShowOnHomepage(image) {
+  if (!image || !authStore.isAuthenticated) return false
+  if (authStore.isAdmin) return true
+  return image.userId && image.userId === authStore.user?.id
+}
+
+// 是否可删除该图片（仅本人上传或管理员；普通用户无权删除游客或他人上传的公开图片）
+function canDeleteImage(image) {
   if (!image || !authStore.isAuthenticated) return false
   if (authStore.isAdmin) return true
   return image.userId && image.userId === authStore.user?.id
