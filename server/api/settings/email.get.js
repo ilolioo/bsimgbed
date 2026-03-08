@@ -15,7 +15,14 @@ export default defineEventHandler(async (event) => {
         user: config.user || '',
         pass: '', // 不返回密码
         hasPassword: !!(config.pass && config.pass.length > 0),
-        to: config.to || ''
+        to: config.to || '',
+        subjectPrefix: config.subjectPrefix ?? '[bsimgbed]',
+        verificationSubject: config.verificationSubject ?? '请验证你的邮箱',
+        verificationBody: config.verificationBody ?? '',
+        testSubject: config.testSubject ?? '测试通知',
+        testBody: config.testBody ?? '',
+        notificationSubjectTemplate: config.notificationSubjectTemplate ?? '{{title}}',
+        notificationBodyTemplate: config.notificationBodyTemplate ?? ''
       }
     }
   } catch (error) {

@@ -12,7 +12,14 @@ export default defineEventHandler(async (event) => {
       service: body.service,
       user: body.user,
       pass: body.pass,
-      to: body.to
+      to: body.to,
+      subjectPrefix: body.subjectPrefix,
+      verificationSubject: body.verificationSubject,
+      verificationBody: body.verificationBody,
+      testSubject: body.testSubject,
+      testBody: body.testBody,
+      notificationSubjectTemplate: body.notificationSubjectTemplate,
+      notificationBodyTemplate: body.notificationBodyTemplate
     }
     const result = await saveEmailConfig(config)
     if (!result.success) {

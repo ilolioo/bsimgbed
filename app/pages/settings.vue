@@ -529,6 +529,50 @@
             </div>
           </div>
 
+          <!-- 自定义邮件内容 -->
+          <div class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+            <h3 class="font-medium text-gray-900 dark:text-white flex items-center gap-2">
+              <Icon name="heroicons:pencil-square" class="w-4 h-4 text-primary-500 dark:text-primary-400" />
+              自定义邮件内容
+            </h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              以下为可选配置，留空则使用系统默认。支持占位符的字段会在说明中标注。
+            </p>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">邮件主题前缀</label>
+              <input v-model="emailSettings.subjectPrefix" type="text" class="input w-full" placeholder="[bsimgbed]" />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">所有邮件主题前都会加此前缀，如 [bsimgbed]</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">验证邮件主题</label>
+                <input v-model="emailSettings.verificationSubject" type="text" class="input w-full" placeholder="请验证你的邮箱" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">测试邮件主题</label>
+                <input v-model="emailSettings.testSubject" type="text" class="input w-full" placeholder="测试通知" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">验证邮件正文（HTML）</label>
+              <textarea v-model="emailSettings.verificationBody" rows="4" class="input w-full font-mono text-sm" placeholder="留空使用默认。占位符：{{username}} {{verifyUrl}}" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">测试邮件正文（HTML）</label>
+              <textarea v-model="emailSettings.testBody" rows="3" class="input w-full font-mono text-sm" placeholder="留空使用默认" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">通知类邮件主题模板</label>
+              <input v-model="emailSettings.notificationSubjectTemplate" type="text" class="input w-full" placeholder="{{title}}" />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">占位符：{{title}}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">通知类邮件正文模板（HTML）</label>
+              <textarea v-model="emailSettings.notificationBodyTemplate" rows="5" class="input w-full font-mono text-sm" placeholder="留空使用默认。占位符：{{title}} {{message}} {{dataTable}}" />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">占位符：{{title}} {{message}} {{dataTable}} {{imageHtml}}（标题、正文、详细信息表格、图片块）</p>
+            </div>
+          </div>
+
           <div class="flex flex-wrap items-center gap-3 pt-2">
             <button type="button" class="btn-primary" :disabled="savingEmail" @click="saveEmailSettings">
               <Loading v-if="savingEmail" size="sm" class="mr-1" />
@@ -870,7 +914,14 @@ const emailSettings = reactive({
   user: '',
   pass: '',
   hasPassword: false,
-  to: ''
+  to: '',
+  subjectPrefix: '[bsimgbed]',
+  verificationSubject: '请验证你的邮箱',
+  verificationBody: '',
+  testSubject: '测试通知',
+  testBody: '',
+  notificationSubjectTemplate: '{{title}}',
+  notificationBodyTemplate: ''
 })
 const savingEmail = ref(false)
 const testingEmail = ref(false)
@@ -1085,6 +1136,13 @@ async function fetchEmailConfig() {
       emailSettings.pass = ''
       emailSettings.hasPassword = !!res.data.hasPassword
       emailSettings.to = res.data.to || ''
+      emailSettings.subjectPrefix = res.data.subjectPrefix ?? '[bsimgbed]'
+      emailSettings.verificationSubject = res.data.verificationSubject ?? '请验证你的邮箱'
+      emailSettings.verificationBody = res.data.verificationBody ?? ''
+      emailSettings.testSubject = res.data.testSubject ?? '测试通知'
+      emailSettings.testBody = res.data.testBody ?? ''
+      emailSettings.notificationSubjectTemplate = res.data.notificationSubjectTemplate ?? '{{title}}'
+      emailSettings.notificationBodyTemplate = res.data.notificationBodyTemplate ?? ''
     }
   } catch (_) {}
 }
@@ -1096,7 +1154,14 @@ async function saveEmailSettings() {
       registrationEmailVerification: emailSettings.registrationEmailVerification,
       service: emailSettings.service,
       user: emailSettings.user,
-      to: emailSettings.to
+      to: emailSettings.to,
+      subjectPrefix: emailSettings.subjectPrefix,
+      verificationSubject: emailSettings.verificationSubject,
+      verificationBody: emailSettings.verificationBody,
+      testSubject: emailSettings.testSubject,
+      testBody: emailSettings.testBody,
+      notificationSubjectTemplate: emailSettings.notificationSubjectTemplate,
+      notificationBodyTemplate: emailSettings.notificationBodyTemplate
     }
     if (emailSettings.pass) body.pass = emailSettings.pass
     const res = await $fetch('/api/settings/email', {

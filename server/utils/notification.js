@@ -35,7 +35,15 @@ export function getDefaultEmailConfig() {
     service: '',
     user: '',
     pass: '',
-    to: ''
+    to: '',
+    // 自定义邮件内容（留空则使用内置默认）
+    subjectPrefix: '[bsimgbed]',
+    verificationSubject: '请验证你的邮箱',
+    verificationBody: '', // HTML，占位符 {{username}} {{verifyUrl}}
+    testSubject: '测试通知',
+    testBody: '', // 留空用默认
+    notificationSubjectTemplate: '{{title}}', // 占位符 {{title}}
+    notificationBodyTemplate: '' // HTML，占位符 {{title}} {{message}} {{dataTable}}，留空用默认
   }
 }
 
@@ -46,19 +54,28 @@ export async function getEmailConfig() {
   try {
     const doc = await db.settings.findOne({ key: 'emailConfig' })
     if (doc?.value && (doc.value.service !== undefined || doc.value.user !== undefined)) {
+      const def = getDefaultEmailConfig()
       return {
-        ...getDefaultEmailConfig(),
+        ...def,
         ...doc.value,
         registrationEmailVerification: doc.value.registrationEmailVerification !== undefined
           ? !!doc.value.registrationEmailVerification
-          : getDefaultEmailConfig().registrationEmailVerification
+          : def.registrationEmailVerification,
+        subjectPrefix: doc.value.subjectPrefix !== undefined ? String(doc.value.subjectPrefix) : def.subjectPrefix,
+        verificationSubject: doc.value.verificationSubject !== undefined ? String(doc.value.verificationSubject) : def.verificationSubject,
+        verificationBody: doc.value.verificationBody !== undefined ? String(doc.value.verificationBody) : def.verificationBody,
+        testSubject: doc.value.testSubject !== undefined ? String(doc.value.testSubject) : def.testSubject,
+        testBody: doc.value.testBody !== undefined ? String(doc.value.testBody) : def.testBody,
+        notificationSubjectTemplate: doc.value.notificationSubjectTemplate !== undefined ? String(doc.value.notificationSubjectTemplate) : def.notificationSubjectTemplate,
+        notificationBodyTemplate: doc.value.notificationBodyTemplate !== undefined ? String(doc.value.notificationBodyTemplate) : def.notificationBodyTemplate
       }
     }
     const notifDoc = await db.settings.findOne({ key: 'notificationConfig' })
     const v = notifDoc?.value
     if (v) {
+      const def = getDefaultEmailConfig()
       return {
-        ...getDefaultEmailConfig(),
+        ...def,
         registrationEmailVerification: !!v.registrationEmailVerification,
         service: v.email?.service || '',
         user: v.email?.user || '',
@@ -79,12 +96,20 @@ export async function getEmailConfig() {
 export async function saveEmailConfig(config) {
   try {
     const current = await getEmailConfig()
+    const def = getDefaultEmailConfig()
     const next = {
       registrationEmailVerification: config.registrationEmailVerification !== undefined ? !!config.registrationEmailVerification : current.registrationEmailVerification,
       service: (config.service !== undefined ? config.service : current.service) || '',
       user: (config.user !== undefined ? config.user : current.user) || '',
       pass: (config.pass !== undefined && config.pass !== '') ? config.pass : current.pass,
-      to: (config.to !== undefined ? config.to : current.to) || ''
+      to: (config.to !== undefined ? config.to : current.to) || '',
+      subjectPrefix: config.subjectPrefix !== undefined ? String(config.subjectPrefix).trim() || def.subjectPrefix : current.subjectPrefix,
+      verificationSubject: config.verificationSubject !== undefined ? String(config.verificationSubject).trim() || def.verificationSubject : current.verificationSubject,
+      verificationBody: config.verificationBody !== undefined ? String(config.verificationBody) : current.verificationBody,
+      testSubject: config.testSubject !== undefined ? String(config.testSubject).trim() || def.testSubject : current.testSubject,
+      testBody: config.testBody !== undefined ? String(config.testBody) : current.testBody,
+      notificationSubjectTemplate: config.notificationSubjectTemplate !== undefined ? String(config.notificationSubjectTemplate).trim() || def.notificationSubjectTemplate : current.notificationSubjectTemplate,
+      notificationBodyTemplate: config.notificationBodyTemplate !== undefined ? String(config.notificationBodyTemplate) : current.notificationBodyTemplate
     }
     await db.settings.update(
       { key: 'emailConfig' },
@@ -577,12 +602,35 @@ async function sendEmailNotification(config, payload) {
     // 收件人地址，默认发送给自己
     const toAddress = email.to || email.user
 
+    const prefix = (email.subjectPrefix != null && String(email.subjectPrefix).trim()) ? String(email.subjectPrefix).trim() : '[bsimgbed]'
+    const subjTpl = (email.notificationSubjectTemplate != null && String(email.notificationSubjectTemplate).trim()) ? String(email.notificationSubjectTemplate).trim() : '{{title}}'
+    const subject = `${prefix} ${subjTpl.replace(/\{\{title\}\}/g, payload.title)}`
+
+    let finalHtml = htmlContent
+    const bodyTpl = email.notificationBodyTemplate != null ? String(email.notificationBodyTemplate).trim() : ''
+    if (bodyTpl) {
+      const dataTable = payload.data && Object.keys(payload.data).length > 0
+        ? '<div style="margin-top:20px;"><h3>详细信息</h3>' + Object.entries(payload.data)
+          .filter(([k]) => k !== 'url' && k !== 'imageUrl')
+          .map(([k, v]) => `<div class="info-item"><span class="info-label">${escapeHtml(k)}:</span><span class="info-value">${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : String(v))}</span></div>`).join('') + '</div>'
+        : ''
+      const imageUrl = payload.data?.url || payload.data?.imageUrl
+      const imageHtml = isValidImageUrl(imageUrl)
+        ? `<div style="margin-top: 20px; text-align: center;"><img src="${escapeHtml(imageUrl)}" alt="上传的图片" style="max-width: 100%; max-height: 400px; border-radius: 8px;" /><p style="margin-top: 10px; font-size: 12px; color: #666;"><a href="${escapeHtml(imageUrl)}" target="_blank" style="color: #007bff;">点击查看原图</a></p></div>`
+        : ''
+      finalHtml = bodyTpl
+        .replace(/\{\{title\}\}/g, escapeHtml(payload.title))
+        .replace(/\{\{message\}\}/g, escapeHtml(payload.message))
+        .replace(/\{\{dataTable\}\}/g, dataTable)
+        .replace(/\{\{imageHtml\}\}/g, imageHtml)
+    }
+
     // 发送邮件
     await transporter.sendMail({
       from: email.user,
       to: toAddress,
-      subject: `[bsimgbed] ${payload.title}`,
-      html: generateEmailTemplate(htmlContent)
+      subject,
+      html: generateEmailTemplate(finalHtml)
     })
 
     console.log('[Notification] 邮件通知发送成功:', payload.title)
@@ -867,7 +915,18 @@ export async function sendVerificationEmail(toEmail, username, verifyUrl) {
     service: emailConfig.service,
     auth: { user: emailConfig.user, pass: emailConfig.pass }
   })
-  const htmlContent = `
+  const prefix = (emailConfig.subjectPrefix != null && String(emailConfig.subjectPrefix).trim()) ? String(emailConfig.subjectPrefix).trim() : '[bsimgbed]'
+  const subj = (emailConfig.verificationSubject != null && String(emailConfig.verificationSubject).trim()) ? String(emailConfig.verificationSubject).trim() : '请验证你的邮箱'
+  const subject = `${prefix} ${subj}`
+
+  let htmlContent
+  const bodyTpl = emailConfig.verificationBody != null ? String(emailConfig.verificationBody).trim() : ''
+  if (bodyTpl) {
+    htmlContent = bodyTpl
+      .replace(/\{\{username\}\}/g, escapeHtml(username))
+      .replace(/\{\{verifyUrl\}\}/g, escapeHtml(verifyUrl))
+  } else {
+    htmlContent = `
     <div class="header">
       <h1>邮箱验证</h1>
     </div>
@@ -878,10 +937,11 @@ export async function sendVerificationEmail(toEmail, username, verifyUrl) {
       <p style="color: #666; font-size: 14px;">如非本人操作，请忽略此邮件。</p>
     </div>
   `
+  }
   await transporter.sendMail({
     from: emailConfig.user,
     to: toEmail,
-    subject: '[bsimgbed] 请验证你的邮箱',
+    subject,
     html: generateEmailTemplate(htmlContent)
   })
 }
@@ -909,7 +969,12 @@ export async function testEmail(emailConfig) {
     // 收件人地址，默认发送给自己
     const toAddress = emailConfig.to || emailConfig.user
 
-    const htmlContent = `
+    const prefix = (emailConfig.subjectPrefix != null && String(emailConfig.subjectPrefix).trim()) ? String(emailConfig.subjectPrefix).trim() : '[bsimgbed]'
+    const subj = (emailConfig.testSubject != null && String(emailConfig.testSubject).trim()) ? String(emailConfig.testSubject).trim() : '测试通知'
+    const subject = `${prefix} ${subj}`
+
+    const bodyTpl = emailConfig.testBody != null ? String(emailConfig.testBody).trim() : ''
+    const htmlContent = bodyTpl || `
       <div class="header">
         <h1>测试通知</h1>
       </div>
@@ -925,7 +990,7 @@ export async function testEmail(emailConfig) {
     await transporter.sendMail({
       from: emailConfig.user,
       to: toAddress,
-      subject: '[bsimgbed] 测试通知',
+      subject,
       html: generateEmailTemplate(htmlContent)
     })
 
