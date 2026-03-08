@@ -35,14 +35,14 @@ _✨ 简单易用的个人图床系统，基于 Nuxt.js 构建 ✨_
 - **回收站**：软删除机制，支持清空回收站释放空间
 
 ### 🔐 权限控制
-- **公共/私有上传**：支持访客上传和登录后私有上传两种模式
-- **API Key 管理**：支持创建多个 API Key，方便第三方工具调用
+- **公共/私有上传**：支持访客上传和登录后私有上传两种模式；可为每个用户单独配置可上传文件大小
+- **API Key 管理**：在「我的」中创建、自定义名称、设为默认、刷新或删除；普通用户最多 2 个 Key
 - **IP 黑名单**：支持手动或自动拉黑恶意 IP
 
 ### 🛡️ 内容安全
 - **NSFW 检测**：支持多种鉴黄服务（nsfwdet.com 公益、elysiatools.com 公益、自建 nsfw_detector 开源）
-- **自动处理**：违规图片自动软删除，可选自动将上传者 IP 加入黑名单
-- **违规管理**：统计页可查看内容安全统计与违规图片，支持管理员手动取消违规标记
+- **自动处理**：违规图片会被标记为违规，可选自动将上传者 IP 加入黑名单
+- **违规管理**：统计页可查看内容安全统计与违规图片，支持管理员查看、取消违规标记或删除
 
 ### 📊 数据统计
 - **存储统计**：实时统计活跃图片数、存储空间占用
@@ -133,16 +133,16 @@ volumes:
 
 ## API 文档
 
-完整 API 说明与示例请登录后台，进入 **API 管理 → API文档** 查看。以下为常用接口摘要：
+完整 API 说明与示例请登录后台，进入 **系统设置 → API文档** 查看。以下为常用接口摘要：
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/api/upload/public` | 公共上传（multipart/form-data，无需认证；需在后台开启公共上传） |
-| POST | `/api/upload/private` | 私有上传（请求头 `X-API-Key`；支持 multipart/form-data 或 JSON+Base64；可选表单/ body 参数 `bucketId`） |
+| POST | `/api/upload/public` | 公共上传（multipart/form-data，无需认证；需在后台开启公共上传；单张大小受公共配置限制） |
+| POST | `/api/upload/private` | 私有上传（请求头 `X-API-Key`；支持 multipart/form-data 或 JSON+Base64；可选 `bucketId`；单张大小受用户单独设置或私有配置限制） |
 | POST | `/api/upload/url` | URL 上传（需 `X-API-Key`，请求体 `{"url": "图片地址"}`，可选 `bucketId`、`returnBase64`、`showOnHomepage`） |
 | POST | `/api/upload/urls` | 批量 URL 上传（需 `X-API-Key`，请求体 `{"urls": ["url1", "url2", ...]}`, 可选 `bucketId`、`showOnHomepage`） |
 
-**认证说明**：私有上传、URL 上传、批量 URL 均需在请求头携带 `X-API-Key`（或在浏览器内使用登录后的 Cookie）。API Key 可在登录后 **API 管理 → 私有配置** 中创建与管理。
+**认证说明**：私有上传、URL 上传、批量 URL 均需在请求头携带 `X-API-Key`（或在浏览器内使用登录后的 Cookie）。API Key 在顶栏 **「我的」** 中创建、编辑名称、设为默认、刷新或删除；普通用户最多 2 个 Key。管理员可在 **用户管理** 编辑用户时查看与管理该用户的 ApiKey。
 
 上传成功后返回示例：
 

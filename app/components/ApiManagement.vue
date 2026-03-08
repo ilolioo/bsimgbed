@@ -624,8 +624,9 @@
       <div class="card p-5">
         <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-2">概述</h2>
         <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside">
-          <li><strong>公共上传</strong>：无需认证，需管理员在「系统设置 → 公共配置」中开启；支持 multipart/form-data。若在公共配置中开启了<strong>内容安全</strong>，上传的图片将进入审核队列，检测到违规时会被标记为违规。</li>
-          <li><strong>私有上传 / URL 上传 / 批量 URL</strong>：需在请求头携带 <code class="text-purple-600 dark:text-purple-400">X-API-Key</code>，或使用登录后的 Cookie。API Key 在顶栏「我的」中创建与管理；管理员还可在「用户管理」编辑用户时查看与管理该用户的 ApiKey。</li>
+          <li><strong>公共上传</strong>：无需认证，需管理员在「系统设置 → 公共配置」中开启；支持 multipart/form-data；单张大小受公共配置「最大文件大小」限制。若在公共配置中开启了<strong>内容安全</strong>，上传的图片将进入审核队列，检测到违规时会被标记为违规。</li>
+          <li><strong>私有上传 / URL 上传 / 批量 URL</strong>：需在请求头携带 <code class="text-purple-600 dark:text-purple-400">X-API-Key</code>，或使用登录后的 Cookie。单张/单文件大小限制：若管理员在「用户管理」中为该用户单独设置了「可上传文件大小」则使用该值，否则使用「私有配置」中的最大文件大小。</li>
+          <li><strong>API Key</strong>：在顶栏「我的」中创建、编辑名称、设为默认、刷新或删除；普通用户最多 2 个 Key，可自定义名称。管理员还可在「用户管理」编辑用户时查看与管理该用户的 ApiKey。</li>
           <li>上传成功后返回的 <code class="text-gray-700 dark:text-gray-300">data.url</code> 为相对路径，完整访问地址为：<code class="text-gray-700 dark:text-gray-300">{{ baseUrl }}/i/&#123;uuid&#125;.&#123;格式&#125;</code>，例如 <code class="text-gray-700 dark:text-gray-300">{{ baseUrl }}/i/xxx.webp</code>。</li>
         </ul>
       </div>
@@ -638,7 +639,7 @@
           </div>
           <div>
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">上传 API</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">支持公共/私有上传、URL 拉取、批量 URL；未指定储存桶时使用系统默认储存桶</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">支持公共/私有上传、URL 拉取、批量 URL；未指定储存桶时使用默认储存桶。文件大小：公共受公共配置限制，私有受用户单独设置或私有配置限制。</p>
           </div>
         </div>
 
@@ -697,6 +698,7 @@
                 <code class="text-sm text-gray-700 dark:text-gray-300">file: 图片文件（必填）</code><br/>
                 <code class="text-sm text-gray-700 dark:text-gray-300">bucketId: 储存桶 ID（可选，不传则使用默认储存桶）</code>
               </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">文件大小：公共上传受「公共配置」限制；私有上传受「用户管理」该用户单独设置或「私有配置」限制。</p>
             </div>
             <div class="border-t border-gray-200 dark:border-gray-700 pt-2">
               <span class="text-xs font-medium text-purple-600 dark:text-purple-400">方式二：JSON + Base64（仅私有 API）</span>
@@ -852,12 +854,13 @@ fetch('{{ baseUrl }}/api/upload/urls', {
           </div>
           <div>
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">认证与 API Key</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">私有接口需在请求头携带 <code class="text-purple-600 dark:text-purple-400">X-API-Key: your-key</code>；Key 在顶栏「我的」中管理</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">私有接口需在请求头携带 <code class="text-purple-600 dark:text-purple-400">X-API-Key: your-key</code>。Key 在顶栏「我的」中管理；普通用户最多 2 个，可自定义名称、设默认、刷新或删除。</p>
           </div>
         </div>
         <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
           <div><span class="font-medium text-gray-700 dark:text-gray-300">GET</span> <code class="font-mono">{{ baseUrl }}/api/apikeys</code> — 列出当前用户的 API Key（需登录）</div>
-          <div><span class="font-medium text-gray-700 dark:text-gray-300">POST</span> <code class="font-mono">{{ baseUrl }}/api/apikeys</code> — 创建新 Key，请求体 <code>{"name": "备注名"}</code>（需登录）</div>
+          <div><span class="font-medium text-gray-700 dark:text-gray-300">POST</span> <code class="font-mono">{{ baseUrl }}/api/apikeys</code> — 创建新 Key，请求体 <code>{"name": "备注名"}</code>（可选，需登录）</div>
+          <div><span class="font-medium text-gray-700 dark:text-gray-300">PUT</span> <code class="font-mono">{{ baseUrl }}/api/apikeys/:id</code> — 更新 Key：<code>{"name": "新名称"}</code> 或 <code>{"isDefault": true}</code> 设为默认（需登录）</div>
           <div><span class="font-medium text-gray-700 dark:text-gray-300">DELETE</span> <code class="font-mono">{{ baseUrl }}/api/apikeys/:id</code> — 删除指定 Key（需登录）</div>
         </div>
       </div>

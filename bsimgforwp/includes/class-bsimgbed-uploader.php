@@ -80,6 +80,14 @@ class BSImgBed_Uploader {
         $boundary = wp_generate_password(24, false);
         $file_content = file_get_contents($file_path);
         $upload_name = $filename ?: basename($file_path);
+        $safe_filename = str_replace(array('"', '\\', "\r", "\n"), '', basename($upload_name));
+        if ($safe_filename === '') {
+            $safe_filename = 'image';
+            $ext = pathinfo($file_path, PATHINFO_EXTENSION);
+            if ($ext) {
+                $safe_filename .= '.' . $ext;
+            }
+        }
         $mime = wp_check_filetype($file_path, null)['type'] ?: 'application/octet-stream';
 
         $body = '';
@@ -94,7 +102,7 @@ class BSImgBed_Uploader {
             $body .= "0\r\n";
         }
         $body .= "--{$boundary}\r\n";
-        $body .= "Content-Disposition: form-data; name=\"file\"; filename=\"" . basename($upload_name) . "\"\r\n";
+        $body .= "Content-Disposition: form-data; name=\"file\"; filename=\"" . $safe_filename . "\"\r\n";
         $body .= "Content-Type: {$mime}\r\n\r\n";
         $body .= $file_content . "\r\n";
         $body .= "--{$boundary}--\r\n";
@@ -129,12 +137,19 @@ class BSImgBed_Uploader {
             $message = (is_array($data) && !empty($data['message'])) ? $data['message'] : __('图床返回错误', 'bsimgforwp');
             return new WP_Error('bsimgbed_upload', $message . ' (HTTP ' . $code . ')');
         }
-        if (!is_array($data) || empty($data['success']) || empty($data['data']['url'])) {
+        if (!is_array($data) || empty($data['success']) || empty($data['data'])) {
             $message = (is_array($data) && !empty($data['message'])) ? $data['message'] : __('图床返回数据无效', 'bsimgforwp');
             return new WP_Error('bsimgbed_upload', $message);
         }
 
-        $path = $data['data']['url'];
+        $resp = $data['data'];
+        $path = isset($resp['url']) ? $resp['url'] : '';
+        if ($path === '' && !empty($resp['uuid']) && !empty($resp['format'])) {
+            $path = '/i/' . $resp['uuid'] . '.' . $resp['format'];
+        }
+        if ($path === '') {
+            return new WP_Error('bsimgbed_upload', __('图床返回数据无效', 'bsimgforwp'));
+        }
         if (strpos($path, 'http') === 0) {
             $image_url = $path;
         } else {
@@ -143,11 +158,11 @@ class BSImgBed_Uploader {
 
         return array(
             'url'      => $image_url,
-            'id'       => isset($data['data']['id']) ? $data['data']['id'] : '',
-            'uuid'     => isset($data['data']['uuid']) ? $data['data']['uuid'] : '',
-            'format'   => isset($data['data']['format']) ? $data['data']['format'] : '',
-            'width'    => isset($data['data']['width']) ? (int) $data['data']['width'] : 0,
-            'height'   => isset($data['data']['height']) ? (int) $data['data']['height'] : 0,
+            'id'       => isset($resp['id']) ? $resp['id'] : '',
+            'uuid'     => isset($resp['uuid']) ? $resp['uuid'] : '',
+            'format'   => isset($resp['format']) ? $resp['format'] : '',
+            'width'    => isset($resp['width']) ? (int) $resp['width'] : 0,
+            'height'   => isset($resp['height']) ? (int) $resp['height'] : 0,
         );
     }
 
