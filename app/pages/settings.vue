@@ -736,13 +736,13 @@
                   <button
                     type="button"
                     class="btn-secondary text-sm"
-                    :disabled="addingUserKey || (editUserApiKeys.length >= 1 && editingUser?.role === 'user')"
+                    :disabled="addingUserKey || (editUserApiKeys.length >= 2 && editingUser?.role === 'user')"
                     @click="addEditUserApiKey"
                   >
                     {{ addingUserKey ? '添加中...' : '添加' }}
                   </button>
                 </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">普通用户仅可拥有一个 ApiKey</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">普通用户最多可拥有两个 ApiKey</p>
                 <div v-if="loadingEditUserApiKeys" class="text-sm text-gray-500 py-2">加载中...</div>
                 <div v-else-if="editUserApiKeys.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-2">暂无 ApiKey</div>
                 <div v-else class="space-y-2">
@@ -768,9 +768,14 @@
                       <button v-if="k.isDefault" type="button" class="btn-secondary text-xs py-1" :disabled="regeneratingEditKeyId === k.id" @click="regenerateEditUserKey(k)">
                         {{ regeneratingEditKeyId === k.id ? '刷新中' : '刷新' }}
                       </button>
-                      <button v-if="!k.isDefault" type="button" class="text-red-600 dark:text-red-400 text-xs hover:underline" :disabled="deletingEditKeyId === k.id" @click="deleteEditUserKey(k)">
-                        {{ deletingEditKeyId === k.id ? '删除中' : '删除' }}
-                      </button>
+                      <template v-if="!k.isDefault">
+                        <button type="button" class="btn-secondary text-xs py-1" :disabled="settingDefaultEditKeyId === k.id" @click="setEditUserKeyDefault(k)">
+                          {{ settingDefaultEditKeyId === k.id ? '设置中' : '设为默认' }}
+                        </button>
+                        <button type="button" class="text-red-600 dark:text-red-400 text-xs hover:underline" :disabled="deletingEditKeyId === k.id" @click="deleteEditUserKey(k)">
+                          {{ deletingEditKeyId === k.id ? '删除中' : '删除' }}
+                        </button>
+                      </template>
                     </div>
                   </div>
                 </div>
@@ -834,6 +839,7 @@ const showEditKeyId = ref(null)
 const addingUserKey = ref(false)
 const regeneratingEditKeyId = ref(null)
 const deletingEditKeyId = ref(null)
+const settingDefaultEditKeyId = ref(null)
 const route = useRoute()
 const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : route.query.tab === 'email' ? 'email' : route.query.tab === 'api-public' ? 'api-public' : route.query.tab === 'api-private' ? 'api-private' : route.query.tab === 'api-docs' ? 'api-docs' : 'app')
 watch(() => route.query.tab, (tab) => {
@@ -1211,6 +1217,29 @@ async function regenerateEditUserKey(k) {
   }
 }
 
+async function setEditUserKeyDefault(k) {
+  settingDefaultEditKeyId.value = k.id
+  try {
+    const res = await $fetch(`/api/apikeys/${k.id}`, {
+      method: 'PUT',
+      body: { isDefault: true },
+      headers: authStore.authHeader
+    })
+    if (res?.success && res.data) {
+      editUserApiKeys.value.forEach(key => {
+        key.isDefault = key.id === k.id
+      })
+      toastStore.success('已设为默认')
+    } else {
+      toastStore.error(res?.message || '设置失败')
+    }
+  } catch (e) {
+    toastStore.error(e?.data?.message || '设置失败')
+  } finally {
+    settingDefaultEditKeyId.value = null
+  }
+}
+
 async function deleteEditUserKey(k) {
   deletingEditKeyId.value = k.id
   try {
@@ -1219,7 +1248,7 @@ async function deleteEditUserKey(k) {
       headers: authStore.authHeader
     })
     if (res?.success) {
-      editUserApiKeys.value = editUserApiKeys.value.filter(x => x.id !== k.id)
+      if (editingUser.value?.id) await fetchEditUserApiKeys(editingUser.value.id)
       toastStore.success('已删除')
     } else {
       toastStore.error(res?.message || '删除失败')

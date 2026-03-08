@@ -200,7 +200,7 @@
             </button>
           </div>
           <p class="text-xs text-gray-400 dark:text-gray-500 mt-3">
-            违规图片会被自动软删除，可在下方列表中查看和管理
+            违规图片会被标记为违规，可在下方列表中查看、取消标记或删除
           </p>
         </div>
 

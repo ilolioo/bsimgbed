@@ -32,20 +32,34 @@ export default defineEventHandler(async (event) => {
 
     // 获取请求体
     const body = await readBody(event)
-    const { name, enabled, regenerate } = body
+    const { name, enabled, regenerate, isDefault } = body
 
     // 构建更新对象
     const updateData = {
       updatedAt: new Date().toISOString()
     }
 
-    // 仅管理员可修改名称
-    if (user.role === 'admin' && name !== undefined) {
-      updateData.name = String(name).trim()
+    // 管理员或 Key 所属用户可修改名称
+    if (name !== undefined && (user.role === 'admin' || apiKey.userId === user.userId)) {
+      const trimmed = String(name).trim()
+      updateData.name = trimmed || (user.role === 'admin' ? 'ApiKey' : apiKey.name)
     }
 
     if (enabled !== undefined) {
       updateData.enabled = enabled
+    }
+
+    // 设为默认：仅该用户可操作自己的 Key，管理员可操作任意 Key；同一用户只能有一个默认
+    if (isDefault === true && (user.role === 'admin' || apiKey.userId === user.userId)) {
+      const userId = apiKey.userId
+      await db.apikeys.update(
+        { userId, _id: { $ne: id } },
+        { $set: { isDefault: false, updatedAt: new Date().toISOString() } },
+        { multi: true }
+      )
+      updateData.isDefault = true
+    } else if (isDefault === false) {
+      updateData.isDefault = false
     }
 
     // 如果需要重新生成 Key

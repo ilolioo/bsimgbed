@@ -10,39 +10,27 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     const isAdmin = user.role === 'admin'
 
-    // 普通用户只能拥有一个 ApiKey
-    if (!isAdmin) {
-      const existingCount = await db.apikeys.count({ userId: user.userId })
-      if (existingCount >= 1) {
-        throw createError({
-          statusCode: 400,
-          message: '普通用户只能拥有一个 ApiKey，请使用或删除现有密钥后再创建'
-        })
-      }
+    const existingCount = await db.apikeys.count({ userId: user.userId })
+    // 普通用户最多拥有两个 ApiKey
+    if (!isAdmin && existingCount >= 2) {
+      throw createError({
+        statusCode: 400,
+        message: '普通用户最多可拥有两个 ApiKey，请使用或删除现有密钥后再创建'
+      })
     }
 
-    // 普通用户：名称固定为用户名；管理员：使用请求体中的名称
-    let nameToUse
-    if (isAdmin) {
-      const { name } = body
-      if (!name || !String(name).trim()) {
-        throw createError({
-          statusCode: 400,
-          message: '请输入 ApiKey 名称'
-        })
-      }
-      nameToUse = String(name).trim()
-    } else {
-      nameToUse = user.username || '用户'
-    }
+    // 所有用户均可自定义名称，可选；未传或为空时使用用户名
+    const rawName = body?.name != null ? String(body.name).trim() : ''
+    const nameToUse = rawName || user.username || '用户'
 
     const apiKey = `sk-${uuidv4().replace(/-/g, '')}`
 
+    // 若当前用户尚无 Key，则新建的为默认 Key；否则为非默认
     const newKey = {
       _id: uuidv4(),
       key: apiKey,
       name: nameToUse,
-      isDefault: false,
+      isDefault: existingCount === 0,
       enabled: true,
       userId: user.userId,
       createdAt: new Date().toISOString(),

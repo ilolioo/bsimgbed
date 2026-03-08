@@ -235,14 +235,24 @@
                 <button
                   type="button"
                   class="btn-secondary text-sm"
-                  :disabled="addingKey || (myApiKeys.length >= 1 && !authStore.isAdmin)"
+                  :disabled="addingKey || (myApiKeys.length >= 2 && !authStore.isAdmin)"
                   @click="addMyApiKey"
                 >
                   {{ addingKey ? '添加中...' : '添加' }}
                 </button>
               </div>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">用于私有上传等接口认证，仅您本人可见</p>
-              <div v-if="myApiKeys.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-2">暂无 ApiKey，点击添加创建</div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">用于私有上传等接口认证，仅您本人可见；可自定义名称</p>
+              <!-- 添加时填写名称 -->
+              <div v-if="myApiKeys.length < 2 || authStore.isAdmin" class="mb-3">
+                <input
+                  v-model="newApiKeyName"
+                  type="text"
+                  class="input w-full text-sm"
+                  placeholder="新密钥名称（可选，留空则使用用户名）"
+                  maxlength="64"
+                />
+              </div>
+              <div v-if="myApiKeys.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-2">暂无 ApiKey，填写名称后点击添加创建</div>
               <div v-else class="space-y-2">
                 <div
                   v-for="k in myApiKeys"
@@ -250,7 +260,23 @@
                   class="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded text-sm"
                 >
                   <div class="min-w-0 flex-1">
-                    <span class="font-medium text-gray-900 dark:text-white">{{ k.name }}</span>
+                    <template v-if="editingKeyId === k.id">
+                      <input
+                        ref="editKeyInputRef"
+                        v-model="editingKeyName"
+                        type="text"
+                        class="input text-sm py-1 w-32"
+                        maxlength="64"
+                        @keydown.enter="saveMyKeyName(k)"
+                        @keydown.esc="editingKeyId = null"
+                      />
+                    </template>
+                    <template v-else>
+                      <span class="font-medium text-gray-900 dark:text-white">{{ k.name }}</span>
+                      <button type="button" class="ml-1 p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="编辑名称" @click="startEditKeyName(k)">
+                        <Icon name="heroicons:pencil-square" class="w-3.5 h-3.5" />
+                      </button>
+                    </template>
                     <span v-if="k.isDefault" class="ml-1 text-xs text-primary-600 dark:text-primary-400">默认</span>
                     <div class="flex items-center gap-1 mt-0.5">
                       <code class="text-xs font-mono truncate text-gray-600 dark:text-gray-400">{{ showKeyId === k.id ? k.key : (k.key ? k.key.slice(0, 4) + '****' + k.key.slice(-4) : '') }}</code>
@@ -266,9 +292,14 @@
                     <button v-if="k.isDefault" type="button" class="btn-secondary text-xs py-1" :disabled="regeneratingId === k.id" @click="regenerateMyKey(k)">
                       {{ regeneratingId === k.id ? '刷新中' : '刷新' }}
                     </button>
-                    <button v-if="!k.isDefault" type="button" class="text-red-600 dark:text-red-400 text-xs hover:underline" :disabled="deletingId === k.id" @click="deleteMyKey(k)">
-                      {{ deletingId === k.id ? '删除中' : '删除' }}
-                    </button>
+                    <template v-if="!k.isDefault">
+                      <button type="button" class="btn-secondary text-xs py-1" :disabled="settingDefaultId === k.id" @click="setMyKeyDefault(k)">
+                        {{ settingDefaultId === k.id ? '设置中' : '设为默认' }}
+                      </button>
+                      <button type="button" class="text-red-600 dark:text-red-400 text-xs hover:underline" :disabled="deletingId === k.id" @click="deleteMyKey(k)">
+                        {{ deletingId === k.id ? '删除中' : '删除' }}
+                      </button>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -287,7 +318,7 @@
 </template>
 
 <script setup>
-import { watch } from 'vue'
+import { watch, nextTick } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { useSettingsStore } from '~/stores/settings'
 import { useToastStore } from '~/stores/toast'
@@ -384,6 +415,11 @@ const showKeyId = ref(null)
 const addingKey = ref(false)
 const regeneratingId = ref(null)
 const deletingId = ref(null)
+const settingDefaultId = ref(null)
+const newApiKeyName = ref('')
+const editingKeyId = ref(null)
+const editingKeyName = ref('')
+const editKeyInputRef = ref(null)
 
 async function fetchMyApiKeys() {
   try {
@@ -424,7 +460,7 @@ async function openMyModal() {
 async function addMyApiKey() {
   addingKey.value = true
   try {
-    const name = authStore.user?.username || '我的密钥'
+    const name = newApiKeyName.value.trim() || authStore.user?.username || '我的密钥'
     const res = await $fetch('/api/apikeys', {
       method: 'POST',
       body: { name },
@@ -432,6 +468,7 @@ async function addMyApiKey() {
     })
     if (res?.success && res.data) {
       myApiKeys.value.push(res.data)
+      newApiKeyName.value = ''
       toastStore.success('ApiKey 已创建')
     } else {
       toastStore.error(res?.message || '创建失败')
@@ -441,6 +478,35 @@ async function addMyApiKey() {
   } finally {
     addingKey.value = false
   }
+}
+
+function startEditKeyName(k) {
+  editingKeyId.value = k.id
+  editingKeyName.value = k.name || ''
+  nextTick(() => { editKeyInputRef.value?.focus() })
+}
+
+async function saveMyKeyName(k) {
+  const name = editingKeyName.value.trim()
+  if (name === k.name) {
+    editingKeyId.value = null
+    return
+  }
+  try {
+    const res = await $fetch(`/api/apikeys/${k.id}`, {
+      method: 'PUT',
+      body: { name: name || k.name },
+      headers: authStore.authHeader
+    })
+    if (res?.success && res.data) {
+      const idx = myApiKeys.value.findIndex(x => x.id === k.id)
+      if (idx !== -1) myApiKeys.value[idx] = res.data
+      toastStore.success('名称已更新')
+    }
+  } catch (e) {
+    toastStore.error(e?.data?.message || '更新失败')
+  }
+  editingKeyId.value = null
 }
 
 function copyMyKey(key) {
@@ -469,6 +535,29 @@ async function regenerateMyKey(k) {
   }
 }
 
+async function setMyKeyDefault(k) {
+  settingDefaultId.value = k.id
+  try {
+    const res = await $fetch(`/api/apikeys/${k.id}`, {
+      method: 'PUT',
+      body: { isDefault: true },
+      headers: authStore.authHeader
+    })
+    if (res?.success && res.data) {
+      myApiKeys.value.forEach(key => {
+        key.isDefault = key.id === k.id
+      })
+      toastStore.success('已设为默认')
+    } else {
+      toastStore.error(res?.message || '设置失败')
+    }
+  } catch (e) {
+    toastStore.error(e?.data?.message || '设置失败')
+  } finally {
+    settingDefaultId.value = null
+  }
+}
+
 async function deleteMyKey(k) {
   deletingId.value = k.id
   try {
@@ -477,7 +566,8 @@ async function deleteMyKey(k) {
       headers: authStore.authHeader
     })
     if (res?.success) {
-      myApiKeys.value = myApiKeys.value.filter(x => x.id !== k.id)
+      const keysRes = await $fetch('/api/apikeys', { headers: authStore.authHeader })
+      if (keysRes?.success && Array.isArray(keysRes.data)) myApiKeys.value = keysRes.data
       toastStore.success('已删除')
     } else {
       toastStore.error(res?.message || '删除失败')

@@ -29,15 +29,19 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 检查是否为默认 Key（不能删除）
+    const userId = apiKey.userId
+    // 若删除的是该用户的默认 Key，且该用户还有其他 Key，则将其中一把设为默认
     if (apiKey.isDefault) {
-      throw createError({
-        statusCode: 400,
-        message: '默认 ApiKey 不能删除，只能更新'
-      })
+      const others = await db.apikeys.find({ userId, _id: { $ne: id } })
+      if (others.length > 0) {
+        const nextDefault = others.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))[0]
+        await db.apikeys.update(
+          { _id: nextDefault._id },
+          { $set: { isDefault: true, updatedAt: new Date().toISOString() } }
+        )
+      }
     }
 
-    // 删除 ApiKey
     await db.apikeys.remove({ _id: id })
 
     return {

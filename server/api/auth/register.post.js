@@ -4,6 +4,22 @@ import crypto from 'crypto'
 import { v4 as uuidv4 } from 'uuid'
 import { getEmailConfig, sendVerificationEmail } from '../../utils/notification.js'
 
+/** 为新用户创建默认 API Key（首个 Key 即为该用户的默认 Key），用户可自行删除或刷新 */
+function createDefaultApiKeyForUser(userId, username) {
+  const apiKey = `sk-${uuidv4().replace(/-/g, '')}`
+  const newKey = {
+    _id: uuidv4(),
+    key: apiKey,
+    name: username || '默认',
+    isDefault: true,
+    enabled: true,
+    userId,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+  return db.apikeys.insert(newKey).then(() => newKey)
+}
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME_MIN_LEN = 4
 const USERNAME_REGEX = /^[a-zA-Z0-9_]+$/  // 仅允许英文、数字、下划线
@@ -122,6 +138,19 @@ export default defineEventHandler(async (event) => {
 
     await db.users.insert(newUser)
 
+    // 新用户自动添加一个 API Key，用户可在「我的」中删除或刷新
+    let defaultKey = null
+    try {
+      defaultKey = await createDefaultApiKeyForUser(newUser._id, newUser.username)
+    } catch (err) {
+      console.error('[Auth] 为新用户创建默认 ApiKey 失败:', err)
+      await db.users.remove({ _id: newUser._id })
+      throw createError({
+        statusCode: 500,
+        message: '注册失败，请稍后重试'
+      })
+    }
+
     if (emailVerification) {
       let baseUrl = appSettings.siteUrl || ''
       if (!baseUrl) {
@@ -136,6 +165,7 @@ export default defineEventHandler(async (event) => {
       } catch (err) {
         console.error('[Auth] 发送验证邮件失败:', err)
         await db.users.remove({ _id: newUser._id })
+        if (defaultKey?._id) await db.apikeys.remove({ _id: defaultKey._id })
         throw createError({
           statusCode: 500,
           message: err.message || '发送验证邮件失败，请稍后重试'

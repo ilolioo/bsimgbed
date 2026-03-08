@@ -281,8 +281,35 @@
                 class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
               />
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                当检测结果超过此阈值时，图片将被标记为违规并自动软删除
+                当检测结果超过此阈值时，图片将被标记为违规
               </p>
+            </div>
+          </div>
+
+          <!-- elysiatools 配置（可选覆盖） -->
+          <div v-if="publicConfig.contentSafety.provider === 'elysiatools'" class="space-y-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div class="flex items-center gap-2 mb-2">
+              <Icon name="heroicons:globe-alt" class="w-4 h-4 text-green-500 dark:text-green-400" />
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Elysia Tools 可选配置</span>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400">留空则使用默认地址；若服务地址变更可在此覆盖。</p>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">上传地址（可选）</label>
+              <input
+                type="text"
+                v-model="publicConfig.contentSafety.providers.elysiatools.uploadUrl"
+                class="input w-full"
+                placeholder="https://elysiatools.com/upload/nsfw-image-detector"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">检测 API 地址（可选）</label>
+              <input
+                type="text"
+                v-model="publicConfig.contentSafety.providers.elysiatools.apiUrl"
+                class="input w-full"
+                placeholder="https://elysiatools.com/zh/api/tools/nsfw-image-detector"
+              />
             </div>
           </div>
 
@@ -597,8 +624,8 @@
       <div class="card p-5">
         <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-2">概述</h2>
         <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside">
-          <li><strong>公共上传</strong>：无需认证，需管理员在「公共配置」中开启；支持 multipart/form-data。</li>
-          <li><strong>私有上传 / URL 上传 / 批量 URL</strong>：需在请求头携带 <code class="text-purple-600 dark:text-purple-400">X-API-Key</code>，或使用登录后的 Cookie。API Key 可在顶栏「我的」中创建与管理；管理员还可在「用户管理」中查看与管理各用户的 ApiKey。</li>
+          <li><strong>公共上传</strong>：无需认证，需管理员在「系统设置 → 公共配置」中开启；支持 multipart/form-data。若在公共配置中开启了<strong>内容安全</strong>，上传的图片将进入审核队列，检测到违规时会被标记为违规。</li>
+          <li><strong>私有上传 / URL 上传 / 批量 URL</strong>：需在请求头携带 <code class="text-purple-600 dark:text-purple-400">X-API-Key</code>，或使用登录后的 Cookie。API Key 在顶栏「我的」中创建与管理；管理员还可在「用户管理」编辑用户时查看与管理该用户的 ApiKey。</li>
           <li>上传成功后返回的 <code class="text-gray-700 dark:text-gray-300">data.url</code> 为相对路径，完整访问地址为：<code class="text-gray-700 dark:text-gray-300">{{ baseUrl }}/i/&#123;uuid&#125;.&#123;格式&#125;</code>，例如 <code class="text-gray-700 dark:text-gray-300">{{ baseUrl }}/i/xxx.webp</code>。</li>
         </ul>
       </div>
@@ -817,6 +844,24 @@ fetch('{{ baseUrl }}/api/upload/urls', {
         </div>
       </div>
 
+      <!-- 认证与 API Key -->
+      <div class="card p-5">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+            <Icon name="heroicons:key" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          </div>
+          <div>
+            <h2 class="text-base font-semibold text-gray-900 dark:text-white">认证与 API Key</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400">私有接口需在请求头携带 <code class="text-purple-600 dark:text-purple-400">X-API-Key: your-key</code>；Key 在顶栏「我的」中管理</p>
+          </div>
+        </div>
+        <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+          <div><span class="font-medium text-gray-700 dark:text-gray-300">GET</span> <code class="font-mono">{{ baseUrl }}/api/apikeys</code> — 列出当前用户的 API Key（需登录）</div>
+          <div><span class="font-medium text-gray-700 dark:text-gray-300">POST</span> <code class="font-mono">{{ baseUrl }}/api/apikeys</code> — 创建新 Key，请求体 <code>{"name": "备注名"}</code>（需登录）</div>
+          <div><span class="font-medium text-gray-700 dark:text-gray-300">DELETE</span> <code class="font-mono">{{ baseUrl }}/api/apikeys/:id</code> — 删除指定 Key（需登录）</div>
+        </div>
+      </div>
+
       <!-- 响应格式与图片访问 -->
       <div class="card p-5">
         <div class="flex items-center gap-3 mb-3">
@@ -931,6 +976,7 @@ const defaultContentSafetyConfig = {
     },
     elysiatools: {
       name: 'Elysia Tools',
+      uploadUrl: 'https://elysiatools.com/upload/nsfw-image-detector',
       apiUrl: 'https://elysiatools.com/zh/api/tools/nsfw-image-detector'
     },
     'nsfw_detector': {
@@ -1227,6 +1273,9 @@ onMounted(async () => {
         }
       } else if (publicConfig.contentSafety.providers['nsfw_detector'].threshold === undefined) {
         publicConfig.contentSafety.providers['nsfw_detector'].threshold = 0.8
+      }
+      if (publicConfig.contentSafety.providers.elysiatools && !publicConfig.contentSafety.providers.elysiatools.uploadUrl) {
+        publicConfig.contentSafety.providers.elysiatools.uploadUrl = defaultContentSafetyConfig.providers.elysiatools.uploadUrl
       }
     }
     Object.assign(privateConfig, settingsStore.privateApiConfig)

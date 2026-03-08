@@ -40,12 +40,19 @@ export default defineEventHandler(async (event) => {
         }
       }
 
-      // 合并用户配置
+      // 合并用户配置：每个 provider 与默认值合并，避免前端未传字段（如 elysiatools.uploadUrl）被清空
+      const defaultProviders = getDefaultContentSafetyConfig().providers
+      const mergedProviders = {}
+      for (const [key, defaultP] of Object.entries(defaultProviders)) {
+        const userP = contentSafety.providers?.[key] || {}
+        mergedProviders[key] = { ...defaultP, ...userP }
+      }
+
       contentSafetyConfig = {
         enabled: contentSafety.enabled || false,
         provider: contentSafety.provider || contentSafetyConfig.provider,
         autoBlacklistIp: contentSafety.autoBlacklistIp || false,
-        providers: contentSafety.providers || contentSafetyConfig.providers
+        providers: mergedProviders
       }
     }
 

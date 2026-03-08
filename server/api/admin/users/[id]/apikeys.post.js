@@ -19,6 +19,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: '用户不存在' })
   }
 
+  const existingCount = await db.apikeys.count({ userId: id })
+  // 普通用户最多拥有两个 ApiKey
+  if (user.role === 'user' && existingCount >= 2) {
+    throw createError({
+      statusCode: 400,
+      message: '普通用户最多可拥有两个 ApiKey，请先删除现有密钥后再添加'
+    })
+  }
+
   const body = await readBody(event) || {}
   const name = body.name ? String(body.name).trim() : (user.username || '用户')
 
@@ -27,7 +36,7 @@ export default defineEventHandler(async (event) => {
     _id: uuidv4(),
     key: apiKey,
     name,
-    isDefault: false,
+    isDefault: existingCount === 0,
     enabled: true,
     userId: id,
     createdAt: new Date().toISOString(),

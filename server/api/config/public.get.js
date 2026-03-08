@@ -30,19 +30,17 @@ export default defineEventHandler(async (event) => {
     if (!configData.contentSafety) {
       configData.contentSafety = getDefaultContentSafetyConfig()
     } else {
-      // 确保每个 provider 的配置完整（包括默认 apiKey）
+      // 确保每个 provider 存在且字段完整（补全缺失的 provider 与默认 apiKey/uploadUrl）
       const defaultProviders = getDefaultContentSafetyConfig().providers
+      if (!configData.contentSafety.providers) configData.contentSafety.providers = {}
       for (const [key, defaultProvider] of Object.entries(defaultProviders)) {
-        if (configData.contentSafety.providers?.[key]) {
-          if (!configData.contentSafety.providers[key].apiKey && defaultProvider.apiKey) {
-            configData.contentSafety.providers[key].apiKey = defaultProvider.apiKey
-          }
-          if (!configData.contentSafety.providers[key].name) {
-            configData.contentSafety.providers[key].name = defaultProvider.name
-          }
-          if (defaultProvider.uploadUrl && !configData.contentSafety.providers[key].uploadUrl) {
-            configData.contentSafety.providers[key].uploadUrl = defaultProvider.uploadUrl
-          }
+        const existing = configData.contentSafety.providers[key]
+        if (!existing) {
+          configData.contentSafety.providers[key] = { ...defaultProvider }
+        } else {
+          if (!existing.apiKey && defaultProvider.apiKey) existing.apiKey = defaultProvider.apiKey
+          if (!existing.name && defaultProvider.name) existing.name = defaultProvider.name
+          if (defaultProvider.uploadUrl && !existing.uploadUrl) existing.uploadUrl = defaultProvider.uploadUrl
         }
       }
     }
