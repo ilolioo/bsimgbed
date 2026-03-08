@@ -66,6 +66,10 @@ export default defineEventHandler(async (event) => {
     // 获取私有 API 配置
     const configDoc = await db.settings.findOne({ key: 'privateApiConfig' })
     const config = configDoc?.value || {}
+    const defaultMaxFileSize = config.maxFileSize || 100 * 1024 * 1024
+    // 用户单独配置了可上传文件大小时优先使用，否则用私有 API 配置
+    const uploadUser = keyDoc.userId ? await db.users.findOne({ _id: keyDoc.userId }) : null
+    const maxFileSize = (uploadUser?.maxFileSize != null && uploadUser.maxFileSize > 0) ? uploadUser.maxFileSize : defaultMaxFileSize
 
     let file = null
 
@@ -115,8 +119,7 @@ export default defineEventHandler(async (event) => {
     // 私有 API 支持所有格式，只检查是否为图片
     const fileExt = file.originalFilename?.split('.').pop()?.toLowerCase() || ''
 
-    // 检查文件大小
-    const maxFileSize = config.maxFileSize || 100 * 1024 * 1024
+    // 检查文件大小（已按用户配置或私有 API 配置计算 maxFileSize）
     if (file.size > maxFileSize) {
       throw createError({
         statusCode: 400,

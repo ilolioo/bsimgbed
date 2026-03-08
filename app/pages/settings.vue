@@ -728,6 +728,18 @@
                   placeholder="留空保持原密码"
                 />
               </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">可上传文件大小（MB）</label>
+                <input
+                  v-model.number="editForm.maxFileSizeMB"
+                  type="number"
+                  min="0"
+                  step="1"
+                  class="input w-full"
+                  placeholder="留空使用私有 API 默认"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">仅对该用户生效；留空则使用「私有配置」中的最大文件大小</p>
+              </div>
 
               <!-- 该用户的 API Key（仅管理员可见） -->
               <div v-if="authStore.isAdmin" class="border-t border-gray-200 dark:border-gray-700 pt-4">
@@ -831,7 +843,7 @@ const showCreateUserModal = ref(false)
 const newUserForm = reactive({ username: '', password: '', email: '' })
 const creatingUser = ref(false)
 const editingUser = ref(null)
-const editForm = reactive({ username: '', email: '', role: 'user', disabled: false, newPassword: '' })
+const editForm = reactive({ username: '', email: '', role: 'user', disabled: false, newPassword: '', maxFileSizeMB: '' })
 const savingEditUser = ref(false)
 const editUserApiKeys = ref([])
 const loadingEditUserApiKeys = ref(false)
@@ -1151,6 +1163,7 @@ function openEditUser(u) {
   editForm.role = u.role || 'user'
   editForm.disabled = !!u.disabled
   editForm.newPassword = ''
+  editForm.maxFileSizeMB = u.maxFileSize != null ? Math.round(u.maxFileSize / 1024 / 1024) : ''
   editUserApiKeys.value = []
   showEditKeyId.value = null
   if (authStore.isAdmin && u?.id) fetchEditUserApiKeys(u.id)
@@ -1284,13 +1297,22 @@ async function saveEditUser() {
     toastStore.error('邮箱格式不正确')
     return
   }
+  const rawMaxMB = editForm.maxFileSizeMB
+  if (rawMaxMB !== '' && rawMaxMB != null) {
+    const num = Number(rawMaxMB)
+    if (!Number.isFinite(num) || num < 0) {
+      toastStore.error('可上传文件大小须为非负数字（MB）')
+      return
+    }
+  }
   savingEditUser.value = true
   try {
     const body = {
       username: editForm.username.trim(),
       email: emailStr || undefined,
       role: editForm.role,
-      disabled: editForm.disabled
+      disabled: editForm.disabled,
+      maxFileSize: (rawMaxMB === '' || rawMaxMB == null) ? null : Math.floor(Number(rawMaxMB) * 1024 * 1024)
     }
     if (editForm.newPassword) body.newPassword = editForm.newPassword
     const res = await $fetch(`/api/admin/users/${editingUser.value.id}`, {

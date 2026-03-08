@@ -13,6 +13,7 @@ export default defineEventHandler(async (event) => {
       email: u.email || '',
       role: u.role || 'user',
       disabled: u.disabled === true,
+      maxFileSize: u.maxFileSize != null ? u.maxFileSize : null,
       createdAt: u.createdAt
     }))
 

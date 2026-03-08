@@ -29,6 +29,7 @@ export default defineEventHandler(async (event) => {
     const isSelf = target._id === currentUser.userId
 
     const updates = {}
+    const unsetFields = {}
     updates.updatedAt = new Date().toISOString()
 
     if (body.username !== undefined) {
@@ -122,7 +123,23 @@ export default defineEventHandler(async (event) => {
       updates.passwordChanged = true
     }
 
-    if (Object.keys(updates).length <= 1) {
+    // 可上传文件大小（字节）；不传或 null 表示使用私有 API 默认
+    if (body.maxFileSize !== undefined) {
+      if (body.maxFileSize === null || body.maxFileSize === '') {
+        unsetFields.maxFileSize = 1
+      } else {
+        const bytes = Number(body.maxFileSize)
+        if (!Number.isFinite(bytes) || bytes < 0) {
+          throw createError({
+            statusCode: 400,
+            message: '可上传文件大小必须为非负数字（字节）'
+          })
+        }
+        updates.maxFileSize = Math.floor(bytes)
+      }
+    }
+
+    if (Object.keys(updates).length <= 1 && Object.keys(unsetFields).length === 0) {
       return {
         success: true,
         message: '无变更',
@@ -130,14 +147,17 @@ export default defineEventHandler(async (event) => {
           id: target._id,
           username: updates.username ?? target.username,
           role: updates.role ?? target.role ?? 'user',
-          disabled: updates.disabled !== undefined ? updates.disabled : (target.disabled === true)
+          disabled: updates.disabled !== undefined ? updates.disabled : (target.disabled === true),
+          maxFileSize: target.maxFileSize != null ? target.maxFileSize : null
         }
       }
     }
 
+    const updateDoc = { $set: updates }
+    if (Object.keys(unsetFields).length > 0) updateDoc.$unset = unsetFields
     await db.users.update(
       { _id: id },
-      { $set: updates }
+      updateDoc
     )
 
     const updated = await db.users.findOne({ _id: id })
@@ -146,6 +166,7 @@ export default defineEventHandler(async (event) => {
       username: updated.username,
       role: updated.role || 'user',
       disabled: updated.disabled === true,
+      maxFileSize: updated.maxFileSize != null ? updated.maxFileSize : null,
       createdAt: updated.createdAt
     }
     if (isSelf && updates.username) {

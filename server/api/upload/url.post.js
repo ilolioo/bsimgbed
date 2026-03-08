@@ -64,6 +64,9 @@ export default defineEventHandler(async (event) => {
     // 获取私有 API 配置
     const configDoc = await db.settings.findOne({ key: 'privateApiConfig' })
     const config = configDoc?.value || {}
+    const defaultMaxFileSize = config.maxFileSize || 100 * 1024 * 1024
+    const uploadUserDoc = uploadUserId ? await db.users.findOne({ _id: uploadUserId }) : null
+    const maxFileSize = (uploadUserDoc?.maxFileSize != null && uploadUserDoc.maxFileSize > 0) ? uploadUserDoc.maxFileSize : defaultMaxFileSize
 
     // 解析上传目标储存桶（登录/API Key 可使用全部桶）
     const { defaultId, buckets } = await getBucketsConfig()
@@ -150,8 +153,7 @@ export default defineEventHandler(async (event) => {
         const arrayBuffer = await response.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
 
-        // 检查文件大小
-        const maxFileSize = config.maxFileSize || 100 * 1024 * 1024
+        // 检查文件大小（已按用户配置或私有 API 配置计算）
         if (buffer.length > maxFileSize) {
           throw createError({
             statusCode: 400,

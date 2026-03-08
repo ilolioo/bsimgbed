@@ -184,11 +184,15 @@ export default defineEventHandler(async (event) => {
     }
 
     // 获取私有 API 配置与内容安全配置（内容安全与公共 API 共用，按储存桶审核）
-    const [configDoc, publicConfigDoc] = await Promise.all([
+    const [configDoc, publicConfigDoc, uploadUserDoc] = await Promise.all([
       db.settings.findOne({ key: 'privateApiConfig' }),
-      db.settings.findOne({ key: 'publicApiConfig' })
+      db.settings.findOne({ key: 'publicApiConfig' }),
+      user?.userId ? db.users.findOne({ _id: user.userId }) : Promise.resolve(null)
     ])
     const config = configDoc?.value || {}
+    const defaultMaxFileSize = config.maxFileSize || 100 * 1024 * 1024
+    const effectiveMaxFileSize = (uploadUserDoc?.maxFileSize != null && uploadUserDoc.maxFileSize > 0) ? uploadUserDoc.maxFileSize : defaultMaxFileSize
+    const effectiveConfig = { ...config, maxFileSize: effectiveMaxFileSize }
     const contentSafetyEnabled = publicConfigDoc?.value?.contentSafety?.enabled || false
 
     // 解析上传目标储存桶
@@ -239,7 +243,7 @@ export default defineEventHandler(async (event) => {
       })
 
       try {
-        const result = await downloadAndSaveImage(url, config, user, clientIP, bucketIdToUse, requestedShowOnHomepage !== false, contentSafetyEnabled)
+        const result = await downloadAndSaveImage(url, effectiveConfig, user, clientIP, bucketIdToUse, requestedShowOnHomepage !== false, contentSafetyEnabled)
         successCount++
         results.push({
           url,
