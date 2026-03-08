@@ -589,82 +589,6 @@
           </div>
         </form>
       </div>
-
-      <!-- ApiKey 管理 -->
-      <div class="card p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">ApiKey 管理</h2>
-          <button
-            v-if="authStore.isAdmin || apiKeys.length < 1"
-            @click="showAddKeyModal = true"
-            class="btn-primary text-sm"
-          >
-            添加 ApiKey
-          </button>
-          <p v-else class="text-sm text-gray-500 dark:text-gray-400">
-            普通用户仅可拥有一个 ApiKey
-          </p>
-        </div>
-
-        <div class="space-y-3">
-          <div
-            v-for="key in apiKeys"
-            :key="key.id"
-            class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
-          >
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="font-medium text-gray-900 dark:text-white">{{ key.name }}</span>
-                <span
-                  v-if="key.isDefault"
-                  class="px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded"
-                >
-                  默认
-                </span>
-              </div>
-              <div class="flex items-center gap-2 mt-1">
-                <code class="text-sm text-gray-500 dark:text-gray-400 font-mono truncate">
-                  {{ showKeyId === key.id ? key.key : maskKey(key.key) }}
-                </code>
-                <button
-                  @click="toggleShowKey(key.id)"
-                  class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                >
-                  <Icon v-if="showKeyId === key.id" name="heroicons:eye-slash" class="w-4 h-4" />
-                  <Icon v-else name="heroicons:eye" class="w-4 h-4" />
-                </button>
-                <button
-                  @click="copyApiKey(key.key)"
-                  class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                  title="复制"
-                >
-                  <Icon name="heroicons:clipboard-document" class="w-4 h-4 icon-theme" />
-                </button>
-              </div>
-              <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                创建于 {{ formatDate(key.createdAt) }}
-              </div>
-            </div>
-            <div class="flex items-center gap-2 ml-4">
-              <button
-                v-if="key.isDefault"
-                @click="regenerateKey(key)"
-                class="btn-secondary text-sm"
-                title="重新生成"
-              >
-                刷新
-              </button>
-              <button
-                v-if="!key.isDefault"
-                @click="confirmDeleteKey(key)"
-                class="btn-danger text-sm"
-              >
-                删除
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- API 文档 -->
@@ -674,7 +598,7 @@
         <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-2">概述</h2>
         <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside">
           <li><strong>公共上传</strong>：无需认证，需管理员在「公共配置」中开启；支持 multipart/form-data。</li>
-          <li><strong>私有上传 / URL 上传 / 批量 URL</strong>：需在请求头携带 <code class="text-purple-600 dark:text-purple-400">X-API-Key</code>，或使用登录后的 Cookie。API Key 可在本页「私有配置」中创建与管理。</li>
+          <li><strong>私有上传 / URL 上传 / 批量 URL</strong>：需在请求头携带 <code class="text-purple-600 dark:text-purple-400">X-API-Key</code>，或使用登录后的 Cookie。API Key 可在顶栏「我的」中创建与管理；管理员还可在「用户管理」中查看与管理各用户的 ApiKey。</li>
           <li>上传成功后返回的 <code class="text-gray-700 dark:text-gray-300">data.url</code> 为相对路径，完整访问地址为：<code class="text-gray-700 dark:text-gray-300">{{ baseUrl }}/i/&#123;uuid&#125;.&#123;格式&#125;</code>，例如 <code class="text-gray-700 dark:text-gray-300">{{ baseUrl }}/i/xxx.webp</code>。</li>
         </ul>
       </div>
@@ -935,63 +859,6 @@ fetch('{{ baseUrl }}/api/upload/urls', {
       </div>
     </div>
 
-    <!-- 添加 ApiKey 弹窗 -->
-    <Modal
-      :visible="showAddKeyModal"
-      title="添加 ApiKey"
-      @close="showAddKeyModal = false"
-      @confirm="addApiKey"
-    >
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          名称
-        </label>
-        <input
-          v-if="authStore.isAdmin"
-          v-model="newKeyName"
-          type="text"
-          class="input"
-          placeholder="请输入 ApiKey 名称"
-        />
-        <div v-else class="input bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed">
-          {{ authStore.user?.username || '—' }}
-        </div>
-        <p v-if="!authStore.isAdmin" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          普通用户密钥名称固定为用户名，仅管理员可修改
-        </p>
-      </div>
-    </Modal>
-
-    <!-- 删除 ApiKey 确认弹窗 -->
-    <Modal
-      :visible="showDeleteKeyModal"
-      title="确认删除"
-      confirm-text="删除"
-      confirm-type="danger"
-      @close="showDeleteKeyModal = false"
-      @confirm="deleteApiKey"
-    >
-      <p class="text-gray-600 dark:text-gray-400">
-        确定要删除 ApiKey "{{ keyToDelete?.name }}" 吗？此操作不可恢复。
-      </p>
-    </Modal>
-
-    <!-- 刷新 ApiKey 确认弹窗 -->
-    <Modal
-      :visible="showRegenerateKeyModal"
-      title="确认刷新"
-      confirm-text="刷新"
-      confirm-type="danger"
-      @close="showRegenerateKeyModal = false"
-      @confirm="doRegenerateKey"
-    >
-      <p class="text-gray-600 dark:text-gray-400">
-        确定要刷新 "{{ keyToRegenerate?.name }}" 吗？
-      </p>
-      <p class="text-red-500 dark:text-red-400 mt-2 font-medium">
-        ⚠️ 刷新后原来的 Key 将立即失效
-      </p>
-    </Modal>
   </div>
 </template>
 
@@ -1041,13 +908,6 @@ const baseUrl = computed(() => {
 
 // 状态
 const saving = ref(false)
-const showKeyId = ref(null)
-const showAddKeyModal = ref(false)
-const showDeleteKeyModal = ref(false)
-const showRegenerateKeyModal = ref(false)
-const newKeyName = ref('')
-const keyToDelete = ref(null)
-const keyToRegenerate = ref(null)
 
 // IP 黑名单相关
 const blacklist = ref([])
@@ -1105,9 +965,6 @@ const privateConfig = reactive({
   convertToPng: false
 })
 
-// ApiKey 列表
-const apiKeys = computed(() => settingsStore.apiKeys)
-
 // 文件大小转换（MB）
 const publicConfigMaxSizeMB = computed({
   get: () => Math.round(publicConfig.maxFileSize / (1024 * 1024)),
@@ -1129,26 +986,6 @@ function formatDate(dateStr) {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit'
-  })
-}
-
-// 遮蔽 ApiKey
-function maskKey(key) {
-  if (!key || key.length < 8) return key
-  return key.slice(0, 4) + '****' + key.slice(-4)
-}
-
-// 切换显示 ApiKey
-function toggleShowKey(id) {
-  showKeyId.value = showKeyId.value === id ? null : id
-}
-
-// 复制 ApiKey
-function copyApiKey(key) {
-  copyToClipboard(key).then(() => {
-    toastStore.success('ApiKey 已复制到剪贴板')
-  }).catch(() => {
-    toastStore.error('复制失败')
   })
 }
 
@@ -1286,66 +1123,6 @@ async function savePrivateConfig() {
   }
 }
 
-// 添加 ApiKey（管理员可填名称，普通用户名称固定为用户名）
-async function addApiKey() {
-  const name = authStore.isAdmin ? newKeyName.value.trim() : (authStore.user?.username || '')
-  if (!name) {
-    toastStore.error('请输入 ApiKey 名称')
-    return
-  }
-
-  const result = await settingsStore.createApiKey(name)
-  if (result.success) {
-    toastStore.success('ApiKey 已创建')
-    showAddKeyModal.value = false
-    newKeyName.value = ''
-  } else {
-    toastStore.error(result.message || '创建失败')
-  }
-}
-
-// 确认重新生成 ApiKey
-function regenerateKey(key) {
-  keyToRegenerate.value = key
-  showRegenerateKeyModal.value = true
-}
-
-// 执行重新生成 ApiKey
-async function doRegenerateKey() {
-  if (!keyToRegenerate.value) return
-
-  const result = await settingsStore.updateApiKey(keyToRegenerate.value.id, { regenerate: true })
-  if (result.success) {
-    toastStore.success('ApiKey 已更新，旧 Key 已失效')
-  } else {
-    toastStore.error(result.message || '更新失败')
-  }
-
-  showRegenerateKeyModal.value = false
-  keyToRegenerate.value = null
-}
-
-// 确认删除 ApiKey
-function confirmDeleteKey(key) {
-  keyToDelete.value = key
-  showDeleteKeyModal.value = true
-}
-
-// 删除 ApiKey
-async function deleteApiKey() {
-  if (!keyToDelete.value) return
-
-  const result = await settingsStore.deleteApiKey(keyToDelete.value.id)
-  if (result.success) {
-    toastStore.success('ApiKey 已删除')
-  } else {
-    toastStore.error(result.message || '删除失败')
-  }
-
-  showDeleteKeyModal.value = false
-  keyToDelete.value = null
-}
-
 // 获取黑名单列表
 async function fetchBlacklist(page = 1) {
   loadingBlacklist.value = true
@@ -1425,8 +1202,6 @@ async function removeFromBlacklist(item) {
 
 // 初始化
 onMounted(async () => {
-  await settingsStore.fetchApiKeys()
-
   if (authStore.isAdmin) {
     await Promise.all([
       settingsStore.fetchPublicApiConfig(),

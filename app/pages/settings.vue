@@ -681,7 +681,7 @@
           class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           @click.self="editingUser = null"
         >
-          <div class="card p-6 w-full max-w-md">
+          <div class="card p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">编辑用户</h3>
             <form @submit.prevent="saveEditUser" class="space-y-4">
               <div>
@@ -728,6 +728,54 @@
                   placeholder="留空保持原密码"
                 />
               </div>
+
+              <!-- 该用户的 API Key（仅管理员可见） -->
+              <div v-if="authStore.isAdmin" class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">该用户的 API Key</label>
+                  <button
+                    type="button"
+                    class="btn-secondary text-sm"
+                    :disabled="addingUserKey || (editUserApiKeys.length >= 1 && editingUser?.role === 'user')"
+                    @click="addEditUserApiKey"
+                  >
+                    {{ addingUserKey ? '添加中...' : '添加' }}
+                  </button>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">普通用户仅可拥有一个 ApiKey</p>
+                <div v-if="loadingEditUserApiKeys" class="text-sm text-gray-500 py-2">加载中...</div>
+                <div v-else-if="editUserApiKeys.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-2">暂无 ApiKey</div>
+                <div v-else class="space-y-2">
+                  <div
+                    v-for="k in editUserApiKeys"
+                    :key="k.id"
+                    class="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded text-sm"
+                  >
+                    <div class="min-w-0 flex-1">
+                      <span class="font-medium text-gray-900 dark:text-white">{{ k.name }}</span>
+                      <span v-if="k.isDefault" class="ml-1 text-xs text-primary-600 dark:text-primary-400">默认</span>
+                      <div class="flex items-center gap-1 mt-0.5">
+                        <code class="text-xs font-mono truncate text-gray-600 dark:text-gray-400">{{ showEditKeyId === k.id ? k.key : (k.key ? k.key.slice(0, 4) + '****' + k.key.slice(-4) : '') }}</code>
+                        <button type="button" class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" @click="showEditKeyId = showEditKeyId === k.id ? null : k.id">
+                          <Icon :name="showEditKeyId === k.id ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-3.5 h-3.5" />
+                        </button>
+                        <button type="button" class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" @click="copyEditUserKey(k.key)">
+                          <Icon name="heroicons:clipboard-document" class="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                      <button v-if="k.isDefault" type="button" class="btn-secondary text-xs py-1" :disabled="regeneratingEditKeyId === k.id" @click="regenerateEditUserKey(k)">
+                        {{ regeneratingEditKeyId === k.id ? '刷新中' : '刷新' }}
+                      </button>
+                      <button v-if="!k.isDefault" type="button" class="text-red-600 dark:text-red-400 text-xs hover:underline" :disabled="deletingEditKeyId === k.id" @click="deleteEditUserKey(k)">
+                        {{ deletingEditKeyId === k.id ? '删除中' : '删除' }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="flex gap-2 pt-2">
                 <button type="submit" class="btn-primary" :disabled="savingEditUser">
                   {{ savingEditUser ? '保存中...' : '保存' }}
@@ -750,6 +798,7 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { useSettingsStore } from '~/stores/settings'
 import { useToastStore } from '~/stores/toast'
+import { copyToClipboard } from '~/utils/clipboard'
 
 definePageMeta({
   middleware: ['auth', 'admin']
@@ -779,6 +828,12 @@ const creatingUser = ref(false)
 const editingUser = ref(null)
 const editForm = reactive({ username: '', email: '', role: 'user', disabled: false, newPassword: '' })
 const savingEditUser = ref(false)
+const editUserApiKeys = ref([])
+const loadingEditUserApiKeys = ref(false)
+const showEditKeyId = ref(null)
+const addingUserKey = ref(false)
+const regeneratingEditKeyId = ref(null)
+const deletingEditKeyId = ref(null)
 const route = useRoute()
 const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : route.query.tab === 'email' ? 'email' : route.query.tab === 'api-public' ? 'api-public' : route.query.tab === 'api-private' ? 'api-private' : route.query.tab === 'api-docs' ? 'api-docs' : 'app')
 watch(() => route.query.tab, (tab) => {
@@ -1090,6 +1145,90 @@ function openEditUser(u) {
   editForm.role = u.role || 'user'
   editForm.disabled = !!u.disabled
   editForm.newPassword = ''
+  editUserApiKeys.value = []
+  showEditKeyId.value = null
+  if (authStore.isAdmin && u?.id) fetchEditUserApiKeys(u.id)
+}
+
+async function fetchEditUserApiKeys(userId) {
+  loadingEditUserApiKeys.value = true
+  try {
+    const res = await $fetch(`/api/admin/users/${userId}/apikeys`, { headers: authStore.authHeader })
+    if (res?.success && Array.isArray(res.data)) editUserApiKeys.value = res.data
+  } catch (_) {
+    editUserApiKeys.value = []
+  } finally {
+    loadingEditUserApiKeys.value = false
+  }
+}
+
+async function addEditUserApiKey() {
+  if (!editingUser.value?.id) return
+  addingUserKey.value = true
+  try {
+    const name = editForm.username || editingUser.value.username || '密钥'
+    const res = await $fetch(`/api/admin/users/${editingUser.value.id}/apikeys`, {
+      method: 'POST',
+      body: { name },
+      headers: authStore.authHeader
+    })
+    if (res?.success && res.data) {
+      editUserApiKeys.value.push(res.data)
+      toastStore.success('ApiKey 已创建')
+    } else {
+      toastStore.error(res?.message || '创建失败')
+    }
+  } catch (e) {
+    toastStore.error(e?.data?.message || '创建失败')
+  } finally {
+    addingUserKey.value = false
+  }
+}
+
+function copyEditUserKey(key) {
+  copyToClipboard(key).then(() => toastStore.success('已复制')).catch(() => toastStore.error('复制失败'))
+}
+
+async function regenerateEditUserKey(k) {
+  regeneratingEditKeyId.value = k.id
+  try {
+    const res = await $fetch(`/api/apikeys/${k.id}`, {
+      method: 'PUT',
+      body: { regenerate: true },
+      headers: authStore.authHeader
+    })
+    if (res?.success && res.data) {
+      const idx = editUserApiKeys.value.findIndex(x => x.id === k.id)
+      if (idx !== -1) editUserApiKeys.value[idx] = res.data
+      toastStore.success('ApiKey 已刷新')
+    } else {
+      toastStore.error(res?.message || '刷新失败')
+    }
+  } catch (e) {
+    toastStore.error(e?.data?.message || '刷新失败')
+  } finally {
+    regeneratingEditKeyId.value = null
+  }
+}
+
+async function deleteEditUserKey(k) {
+  deletingEditKeyId.value = k.id
+  try {
+    const res = await $fetch(`/api/apikeys/${k.id}`, {
+      method: 'DELETE',
+      headers: authStore.authHeader
+    })
+    if (res?.success) {
+      editUserApiKeys.value = editUserApiKeys.value.filter(x => x.id !== k.id)
+      toastStore.success('已删除')
+    } else {
+      toastStore.error(res?.message || '删除失败')
+    }
+  } catch (e) {
+    toastStore.error(e?.data?.message || '删除失败')
+  } finally {
+    deletingEditKeyId.value = null
+  }
 }
 
 async function saveEditUser() {

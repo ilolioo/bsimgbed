@@ -30,19 +30,30 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const adminUser = await db.users.findOne({ role: 'admin', _id: { $ne: id } })
-    const reassignId = adminUser ? adminUser._id : null
+    const now = new Date().toISOString()
+    const deletedBy = currentUser.username || '管理员'
 
-    if (reassignId) {
-      await db.images.update({ userId: id }, { $set: { userId: reassignId } }, { multi: true })
-      await db.apikeys.update({ userId: id }, { $set: { userId: reassignId } }, { multi: true })
-    }
+    // 删除该用户的所有 ApiKey
+    await db.apikeys.remove({ userId: id }, { multi: true })
+
+    // 将该用户上传的图片软删除（移入回收站）
+    await db.images.update(
+      { userId: id, isDeleted: { $ne: true } },
+      {
+        $set: {
+          isDeleted: true,
+          deletedAt: now,
+          deletedBy
+        }
+      },
+      { multi: true }
+    )
 
     await db.users.remove({ _id: id })
 
     return {
       success: true,
-      message: '用户已删除'
+      message: '用户已删除，其 ApiKey 与上传的图片已一并处理'
     }
   } catch (error) {
     if (error.statusCode) throw error

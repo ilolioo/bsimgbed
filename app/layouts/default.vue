@@ -227,6 +227,52 @@
                 取消
               </button>
             </div>
+
+            <!-- API Key 管理（仅显示自己的） -->
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">API Key</h3>
+                <button
+                  type="button"
+                  class="btn-secondary text-sm"
+                  :disabled="addingKey || (myApiKeys.length >= 1 && !authStore.isAdmin)"
+                  @click="addMyApiKey"
+                >
+                  {{ addingKey ? '添加中...' : '添加' }}
+                </button>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">用于私有上传等接口认证，仅您本人可见</p>
+              <div v-if="myApiKeys.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-2">暂无 ApiKey，点击添加创建</div>
+              <div v-else class="space-y-2">
+                <div
+                  v-for="k in myApiKeys"
+                  :key="k.id"
+                  class="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded text-sm"
+                >
+                  <div class="min-w-0 flex-1">
+                    <span class="font-medium text-gray-900 dark:text-white">{{ k.name }}</span>
+                    <span v-if="k.isDefault" class="ml-1 text-xs text-primary-600 dark:text-primary-400">默认</span>
+                    <div class="flex items-center gap-1 mt-0.5">
+                      <code class="text-xs font-mono truncate text-gray-600 dark:text-gray-400">{{ showKeyId === k.id ? k.key : (k.key ? k.key.slice(0, 4) + '****' + k.key.slice(-4) : '') }}</code>
+                      <button type="button" class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" @click="showKeyId = showKeyId === k.id ? null : k.id" title="显示/隐藏">
+                        <Icon :name="showKeyId === k.id ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-3.5 h-3.5" />
+                      </button>
+                      <button type="button" class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" @click="copyMyKey(k.key)" title="复制">
+                        <Icon name="heroicons:clipboard-document" class="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1 shrink-0">
+                    <button v-if="k.isDefault" type="button" class="btn-secondary text-xs py-1" :disabled="regeneratingId === k.id" @click="regenerateMyKey(k)">
+                      {{ regeneratingId === k.id ? '刷新中' : '刷新' }}
+                    </button>
+                    <button v-if="!k.isDefault" type="button" class="text-red-600 dark:text-red-400 text-xs hover:underline" :disabled="deletingId === k.id" @click="deleteMyKey(k)">
+                      {{ deletingId === k.id ? '删除中' : '删除' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </form>
           <div v-else class="py-8 flex justify-center">
             <Icon name="heroicons:arrow-path" class="w-8 h-8 animate-spin text-gray-400" />
@@ -245,6 +291,7 @@ import { watch } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { useSettingsStore } from '~/stores/settings'
 import { useToastStore } from '~/stores/toast'
+import { copyToClipboard } from '~/utils/clipboard'
 
 const route = useRoute()
 const router = useRouter()
@@ -332,6 +379,20 @@ const myForm = reactive({
   newPassword: '',
   confirmPassword: ''
 })
+const myApiKeys = ref([])
+const showKeyId = ref(null)
+const addingKey = ref(false)
+const regeneratingId = ref(null)
+const deletingId = ref(null)
+
+async function fetchMyApiKeys() {
+  try {
+    const res = await $fetch('/api/apikeys', { headers: authStore.authHeader })
+    if (res.success && Array.isArray(res.data)) myApiKeys.value = res.data
+  } catch (_) {
+    myApiKeys.value = []
+  }
+}
 
 async function openMyModal() {
   showMyModal.value = true
@@ -340,17 +401,91 @@ async function openMyModal() {
   myForm.email = ''
   myForm.newPassword = ''
   myForm.confirmPassword = ''
+  myApiKeys.value = []
+  showKeyId.value = null
   try {
-    const res = await $fetch('/api/auth/me', { headers: authStore.authHeader })
-    if (res.success && res.data) {
-      myForm.username = res.data.username || ''
-      myForm.email = res.data.email || ''
+    const [meRes, keysRes] = await Promise.all([
+      $fetch('/api/auth/me', { headers: authStore.authHeader }),
+      $fetch('/api/apikeys', { headers: authStore.authHeader })
+    ])
+    if (meRes?.success && meRes.data) {
+      myForm.username = meRes.data.username || ''
+      myForm.email = meRes.data.email || ''
     }
+    if (keysRes?.success && Array.isArray(keysRes.data)) myApiKeys.value = keysRes.data
   } catch (_) {
     toastStore.error('获取账户信息失败')
     showMyModal.value = false
   } finally {
     loadingMy.value = false
+  }
+}
+
+async function addMyApiKey() {
+  addingKey.value = true
+  try {
+    const name = authStore.user?.username || '我的密钥'
+    const res = await $fetch('/api/apikeys', {
+      method: 'POST',
+      body: { name },
+      headers: authStore.authHeader
+    })
+    if (res?.success && res.data) {
+      myApiKeys.value.push(res.data)
+      toastStore.success('ApiKey 已创建')
+    } else {
+      toastStore.error(res?.message || '创建失败')
+    }
+  } catch (e) {
+    toastStore.error(e?.data?.message || '创建失败')
+  } finally {
+    addingKey.value = false
+  }
+}
+
+function copyMyKey(key) {
+  copyToClipboard(key).then(() => toastStore.success('已复制')).catch(() => toastStore.error('复制失败'))
+}
+
+async function regenerateMyKey(k) {
+  regeneratingId.value = k.id
+  try {
+    const res = await $fetch(`/api/apikeys/${k.id}`, {
+      method: 'PUT',
+      body: { regenerate: true },
+      headers: authStore.authHeader
+    })
+    if (res?.success && res.data) {
+      const idx = myApiKeys.value.findIndex(x => x.id === k.id)
+      if (idx !== -1) myApiKeys.value[idx] = res.data
+      toastStore.success('ApiKey 已刷新')
+    } else {
+      toastStore.error(res?.message || '刷新失败')
+    }
+  } catch (e) {
+    toastStore.error(e?.data?.message || '刷新失败')
+  } finally {
+    regeneratingId.value = null
+  }
+}
+
+async function deleteMyKey(k) {
+  deletingId.value = k.id
+  try {
+    const res = await $fetch(`/api/apikeys/${k.id}`, {
+      method: 'DELETE',
+      headers: authStore.authHeader
+    })
+    if (res?.success) {
+      myApiKeys.value = myApiKeys.value.filter(x => x.id !== k.id)
+      toastStore.success('已删除')
+    } else {
+      toastStore.error(res?.message || '删除失败')
+    }
+  } catch (e) {
+    toastStore.error(e?.data?.message || '删除失败')
+  } finally {
+    deletingId.value = null
   }
 }
 

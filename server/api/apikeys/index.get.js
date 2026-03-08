@@ -6,8 +6,8 @@ export default defineEventHandler(async (event) => {
     await authMiddleware(event)
     const user = event.context.user
 
-    const query = user.role === 'admin' ? {} : { userId: user.userId }
-    const apiKeys = await db.apikeys.find(query)
+    // 仅返回当前用户自己的 ApiKey（包括管理员）
+    const apiKeys = await db.apikeys.find({ userId: user.userId })
 
     apiKeys.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
 
