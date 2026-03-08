@@ -2,16 +2,16 @@
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">系统设置</h1>
 
-    <!-- 标签页 -->
-    <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+    <!-- 标签页（与顶栏一致：半透明+毛玻璃+底边框，按钮用 nav-link 风格） -->
+    <div class="flex bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-lg mb-6 overflow-hidden">
       <button
         v-for="tab in tabs"
         :key="tab.id"
         @click="activeTab = tab.id"
-        class="px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors"
+        class="px-4 py-3 text-sm font-medium rounded-lg border-b-2 -mb-px transition-colors"
         :class="activeTab === tab.id
-          ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-          : 'border-transparent text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'"
+          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+          : 'border-transparent text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
       >
         {{ tab.label }}
       </button>
@@ -688,7 +688,7 @@
                   placeholder="留空表示不设置邮箱"
                 />
               </div>
-              <div>
+              <div v-if="editingUser.id !== authStore.user?.id && editingUser.username !== authStore.user?.username">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">角色</label>
                 <select v-model="editForm.role" class="input w-full">
                   <option value="user">普通用户</option>
@@ -727,59 +727,6 @@
       </div>
     </div>
 
-    <!-- 账户设置 -->
-    <div v-show="activeTab === 'account'" class="space-y-6">
-      <div class="card p-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">账户设置</h2>
-
-        <div class="space-y-6">
-          <!-- 修改用户名 -->
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">修改用户名</h3>
-            <form @submit.prevent="updateUsername" class="flex gap-3">
-              <input
-                v-model="newUsername"
-                type="text"
-                class="input flex-1"
-                placeholder="请输入新用户名（至少4位）"
-              />
-              <button type="submit" class="btn-secondary" :disabled="savingUsername">
-                {{ savingUsername ? '保存中...' : '修改' }}
-              </button>
-            </form>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">仅支持英文、数字、下划线，不能为纯数字</p>
-          </div>
-
-          <!-- 修改密码 -->
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">修改密码</h3>
-            <form @submit.prevent="updatePassword" class="space-y-3">
-              <input
-                v-model="passwordForm.oldPassword"
-                type="password"
-                class="input"
-                placeholder="请输入当前密码"
-              />
-              <input
-                v-model="passwordForm.newPassword"
-                type="password"
-                class="input"
-                placeholder="请输入新密码"
-              />
-              <input
-                v-model="passwordForm.confirmPassword"
-                type="password"
-                class="input"
-                placeholder="请再次输入新密码"
-              />
-              <button type="submit" class="btn-secondary" :disabled="savingPassword">
-                {{ savingPassword ? '保存中...' : '修改密码' }}
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -804,8 +751,7 @@ const tabs = [
   { id: 'storage', label: '存储配置' },
   { id: 'notification', label: '通知设置' },
   { id: 'email', label: '邮箱设置' },
-  { id: 'users', label: '用户管理' },
-  { id: 'account', label: '账户设置' }
+  { id: 'users', label: '用户管理' }
 ]
 // 用户管理（仅管理员）
 const userList = ref([])
@@ -913,16 +859,6 @@ function removeBucket(id) {
 function toggleEditBucket(key) {
   editingBucketId.value = editingBucketId.value === key ? null : key
 }
-
-// 账户设置
-const newUsername = ref('')
-const savingUsername = ref(false)
-const passwordForm = reactive({
-  oldPassword: '',
-  newPassword: '',
-  confirmPassword: ''
-})
-const savingPassword = ref(false)
 
 // 保存应用设置
 async function saveAppSettings() {
@@ -1111,99 +1047,6 @@ async function testEmailSettings() {
   }
 }
 
-// 修改用户名
-async function updateUsername() {
-  const name = newUsername.value.trim()
-  if (!name) {
-    toastStore.error('请输入新用户名')
-    return
-  }
-  if (name.length < 4) {
-    toastStore.error('用户名至少 4 位')
-    return
-  }
-  if (/^\d+$/.test(name)) {
-    toastStore.error('用户名不能为纯数字')
-    return
-  }
-  if (!/^[a-zA-Z0-9_]+$/.test(name)) {
-    toastStore.error('用户名仅支持英文、数字、下划线')
-    return
-  }
-
-  savingUsername.value = true
-
-  try {
-    const response = await $fetch('/api/admin/username', {
-      method: 'PUT',
-      body: { username: name },
-      headers: authStore.authHeader
-    })
-
-    if (response.success) {
-      authStore.updateUsername(name, response.data?.token)
-      toastStore.success('用户名已更新')
-      newUsername.value = ''
-    } else {
-      toastStore.error(response.message || '更新失败')
-    }
-  } catch (error) {
-    toastStore.error(error.data?.message || '更新失败')
-  } finally {
-    savingUsername.value = false
-  }
-}
-
-// 修改密码
-async function updatePassword() {
-  if (!passwordForm.oldPassword) {
-    toastStore.error('请输入当前密码')
-    return
-  }
-  if (!passwordForm.newPassword) {
-    toastStore.error('请输入新密码')
-    return
-  }
-  if (passwordForm.newPassword.length < 6) {
-    toastStore.error('新密码至少需要 6 位')
-    return
-  }
-  if (/^\d+$/.test(passwordForm.newPassword)) {
-    toastStore.error('密码不能为纯数字')
-    return
-  }
-  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-    toastStore.error('两次输入的密码不一致')
-    return
-  }
-
-  savingPassword.value = true
-
-  try {
-    const response = await $fetch('/api/admin/password', {
-      method: 'PUT',
-      body: {
-        oldPassword: passwordForm.oldPassword,
-        newPassword: passwordForm.newPassword
-      },
-      headers: authStore.authHeader
-    })
-
-    if (response.success) {
-      toastStore.success('密码已更新')
-      passwordForm.oldPassword = ''
-      passwordForm.newPassword = ''
-      passwordForm.confirmPassword = ''
-    } else {
-      toastStore.error(response.message || '更新失败')
-    }
-  } catch (error) {
-    toastStore.error(error.data?.message || '更新失败')
-  } finally {
-    savingPassword.value = false
-  }
-}
-
 async function fetchUserList() {
   if (!authStore.isAdmin) return
   try {
@@ -1267,6 +1110,9 @@ async function saveEditUser() {
       headers: authStore.authHeader
     })
     if (res.success) {
+      if (editingUser.value.id === authStore.user?.id && res.data?.token) {
+        authStore.updateUsername(editForm.username.trim(), res.data.token)
+      }
       toastStore.success('已更新')
       editingUser.value = null
       await fetchUserList()

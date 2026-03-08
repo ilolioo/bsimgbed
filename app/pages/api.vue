@@ -2,16 +2,16 @@
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">API 管理</h1>
 
-    <!-- 标签页 -->
-    <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+    <!-- 标签页（与顶栏一致：半透明+毛玻璃+底边框，按钮用 nav-link 风格） -->
+    <div class="flex bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-lg mb-6 overflow-hidden">
       <button
         v-for="tab in tabs"
         :key="tab.id"
         @click="activeTab = tab.id"
-        class="px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors"
+        class="px-4 py-3 text-sm font-medium rounded-lg border-b-2 -mb-px transition-colors"
         :class="activeTab === tab.id
-          ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-          : 'border-transparent text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'"
+          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+          : 'border-transparent text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
       >
         {{ tab.label }}
       </button>

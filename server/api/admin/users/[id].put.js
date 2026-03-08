@@ -1,5 +1,6 @@
 import db from '../../../utils/db.js'
 import { authMiddleware, requireAdmin } from '../../../utils/authMiddleware.js'
+import { generateToken } from '../../../utils/jwt.js'
 import bcrypt from 'bcryptjs'
 
 export default defineEventHandler(async (event) => {
@@ -140,16 +141,23 @@ export default defineEventHandler(async (event) => {
     )
 
     const updated = await db.users.findOne({ _id: id })
+    const data = {
+      id: updated._id,
+      username: updated.username,
+      role: updated.role || 'user',
+      disabled: updated.disabled === true,
+      createdAt: updated.createdAt
+    }
+    if (isSelf && updates.username) {
+      data.token = await generateToken({
+        userId: updated._id,
+        username: updated.username
+      })
+    }
     return {
       success: true,
       message: '用户已更新',
-      data: {
-        id: updated._id,
-        username: updated.username,
-        role: updated.role || 'user',
-        disabled: updated.disabled === true,
-        createdAt: updated.createdAt
-      }
+      data
     }
   } catch (error) {
     if (error.statusCode) throw error
