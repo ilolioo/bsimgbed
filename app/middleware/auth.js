@@ -1,7 +1,7 @@
 // 路由守卫中间件 - 保护需要登录的页面
 export default defineNuxtRouteMiddleware((to, from) => {
   // 需要登录的页面（含首次改密页）
-  const protectedRoutes = ['/api', '/settings', '/stats', '/notification', '/change-password']
+  const protectedRoutes = ['/settings', '/stats', '/notification', '/change-password']
 
   // 检查是否是受保护的路由
   const isProtectedRoute = protectedRoutes.some(route => to.path.startsWith(route))
