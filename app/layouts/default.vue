@@ -117,6 +117,18 @@
             <!-- 分隔线 -->
             <div class="w-px h-6 bg-gray-400 dark:bg-gray-600 flex-shrink-0"></div>
 
+            <!-- 我的（已登录时显示） -->
+            <button
+              v-if="authStore.isAuthenticated"
+              type="button"
+              @click="openMyModal"
+              class="nav-link nav-link-icon sm:nav-link-text"
+              title="我的"
+            >
+              <Icon name="heroicons:user-circle" class="w-5 h-5 flex-shrink-0 text-current" />
+              <span class="hidden sm:inline">我的</span>
+            </button>
+
             <!-- 登录/登出 -->
             <button
               v-if="authStore.isAuthenticated"
@@ -159,6 +171,81 @@
     <main class="flex-1 relative z-10">
       <slot />
     </main>
+
+    <!-- 我的 - 账户信息弹层 -->
+    <Teleport to="body">
+      <div
+        v-if="showMyModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+        @click.self="showMyModal = false"
+      >
+        <div class="card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">我的账户</h2>
+            <button
+              type="button"
+              class="p-1 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+              @click="showMyModal = false"
+              aria-label="关闭"
+            >
+              <Icon name="heroicons:x-mark" class="w-5 h-5" />
+            </button>
+          </div>
+          <form v-if="!loadingMy" @submit.prevent="saveMyProfile" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">用户名</label>
+              <input
+                :value="myForm.username"
+                type="text"
+                class="input w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                readonly
+                disabled
+              />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">用户名不可修改</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">邮箱</label>
+              <input
+                v-model="myForm.email"
+                type="email"
+                class="input w-full"
+                placeholder="选填，可用于登录"
+              />
+              <p v-if="settingsStore.appSettings?.registrationEmailVerification" class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">已开启邮箱验证，更改邮箱后需查收新邮件完成验证</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">新密码（不填则不修改）</label>
+              <input
+                v-model="myForm.newPassword"
+                type="password"
+                class="input w-full"
+                placeholder="留空保持原密码"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">确认新密码</label>
+              <input
+                v-model="myForm.confirmPassword"
+                type="password"
+                class="input w-full"
+                placeholder="与上面一致"
+              />
+            </div>
+            <div class="flex gap-2 pt-2">
+              <button type="submit" class="btn-primary" :disabled="savingMy">
+                {{ savingMy ? '保存中...' : '保存' }}
+              </button>
+              <button type="button" class="btn-secondary" @click="showMyModal = false">
+                取消
+              </button>
+            </div>
+          </form>
+          <div v-else class="py-8 flex justify-center">
+            <Icon name="heroicons:arrow-path" class="w-8 h-8 animate-spin text-gray-400" />
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- Toast 组件 -->
     <Toast />
@@ -245,6 +332,78 @@ async function handleLogout() {
   authStore.logout()
   toastStore.success('已退出登录')
   router.push('/')
+}
+
+// 我的 - 账户信息弹层
+const showMyModal = ref(false)
+const loadingMy = ref(false)
+const savingMy = ref(false)
+const myForm = reactive({
+  username: '',
+  email: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+async function openMyModal() {
+  showMyModal.value = true
+  loadingMy.value = true
+  myForm.username = ''
+  myForm.email = ''
+  myForm.newPassword = ''
+  myForm.confirmPassword = ''
+  try {
+    const res = await $fetch('/api/auth/me', { headers: authStore.authHeader })
+    if (res.success && res.data) {
+      myForm.username = res.data.username || ''
+      myForm.email = res.data.email || ''
+    }
+  } catch (_) {
+    toastStore.error('获取账户信息失败')
+    showMyModal.value = false
+  } finally {
+    loadingMy.value = false
+  }
+}
+
+async function saveMyProfile() {
+  if (myForm.newPassword && myForm.newPassword !== myForm.confirmPassword) {
+    toastStore.error('两次输入的密码不一致')
+    return
+  }
+  if (myForm.newPassword && myForm.newPassword.length < 6) {
+    toastStore.error('新密码至少 6 位')
+    return
+  }
+  if (myForm.newPassword && /^\d+$/.test(myForm.newPassword)) {
+    toastStore.error('密码不能为纯数字')
+    return
+  }
+  savingMy.value = true
+  try {
+    const body = { email: myForm.email }
+    if (myForm.newPassword) body.newPassword = myForm.newPassword
+    const res = await $fetch('/api/auth/me', {
+      method: 'PUT',
+      body,
+      headers: authStore.authHeader
+    })
+    if (res.success) {
+      toastStore.success(res.message || '已保存')
+      if (res.needVerify) {
+        toastStore.success('请查收新邮箱的验证邮件并点击链接完成验证')
+      }
+      myForm.newPassword = ''
+      myForm.confirmPassword = ''
+      showMyModal.value = false
+    } else {
+      toastStore.error(res.message || '保存失败')
+    }
+  } catch (e) {
+    toastStore.error(e.data?.message || '保存失败')
+  } finally {
+    savingMy.value = false
+  }
 }
 </script>
 
