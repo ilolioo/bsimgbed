@@ -6,11 +6,9 @@ export default defineEventHandler(async (event) => {
     await authMiddleware(event)
     requireAdmin(event)
 
-    // 获取请求体
     const body = await readBody(event)
-    const { enabled, method, types, webhook, registrationEmailVerification } = body
+    const { enabled, method, types, webhook, telegram, serverchan } = body
 
-    // 验证通知方式
     if (method && !Object.values(NOTIFICATION_METHODS).includes(method)) {
       throw createError({
         statusCode: 400,
@@ -18,16 +16,10 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 获取 telegram、email 和 serverchan 配置
-    const { telegram, email, serverchan } = body
-
-    // 获取当前配置以保留未提交的字段
     const current = await getNotificationConfig()
 
-    // 构建配置对象
     const config = {
       enabled: !!enabled,
-      registrationEmailVerification: registrationEmailVerification !== undefined ? !!registrationEmailVerification : !!current.registrationEmailVerification,
       method: method || NOTIFICATION_METHODS.WEBHOOK,
       types: {
         [NOTIFICATION_TYPES.LOGIN]: !!types?.login,
@@ -51,12 +43,7 @@ export default defineEventHandler(async (event) => {
         token: telegram?.token || '',
         chatId: telegram?.chatId || ''
       },
-      email: {
-        service: email?.service || '',
-        user: email?.user || '',
-        pass: email?.pass || '',
-        to: email?.to || ''
-      },
+      email: { service: '', user: '', pass: '', to: '' },
       serverchan: {
         sendKey: serverchan?.sendKey || ''
       }

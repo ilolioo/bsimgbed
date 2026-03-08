@@ -1,31 +1,5 @@
 <template>
   <div class="space-y-6">
-    <!-- 注册邮箱验证（与下方邮件配置配合使用） -->
-    <div class="card p-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Icon name="heroicons:envelope" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
-            注册邮箱验证
-          </h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            开启后，新用户注册需填写邮箱，点击验证邮件中的链接后才能登录；需在下方配置邮件发送方式
-          </p>
-        </div>
-        <button
-          type="button"
-          @click="config.registrationEmailVerification = !config.registrationEmailVerification"
-          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-          :class="config.registrationEmailVerification ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
-        >
-          <span
-            class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-            :class="config.registrationEmailVerification ? 'translate-x-6' : 'translate-x-1'"
-          />
-        </button>
-      </div>
-    </div>
-
     <!-- 通知总开关 -->
     <div class="card p-6">
       <div class="flex items-center justify-between">
@@ -206,41 +180,14 @@
       </div>
     </div>
 
-    <!-- Email 配置 -->
+    <!-- 选择 Email 时的提示 -->
     <div v-if="config.enabled && config.method === 'email'" class="card p-6">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-        <Icon name="heroicons:envelope" class="w-5 h-5 inline-block mr-2 text-primary-500 dark:text-primary-400" />
-        Email 配置
-      </h2>
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">邮件服务商 <span class="text-red-500 dark:text-red-400">*</span></label>
-          <input v-model="config.email.service" type="text" class="input" placeholder="例如: QQ、126、163、Gmail" />
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">支持列表: <a href="https://github.com/nodemailer/nodemailer/blob/master/lib/well-known/services.json" target="_blank" class="text-primary-500 dark:text-primary-400 hover:underline">点击查询</a></p>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">发件人邮箱 <span class="text-red-500 dark:text-red-400">*</span></label>
-          <input v-model="config.email.user" type="email" class="input" placeholder="your-email@example.com" />
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">用于发送通知的邮箱地址</p>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">邮箱授权码/密码 <span class="text-red-500 dark:text-red-400">*</span></label>
-          <input v-model="config.email.pass" type="password" class="input" placeholder="邮箱授权码或密码" />
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">大多数邮箱需要使用授权码而非登录密码，请在邮箱设置中获取</p>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">收件人邮箱</label>
-          <input v-model="config.email.to" type="email" class="input" placeholder="留空则发送给自己" />
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">接收通知的邮箱地址，留空则发送给发件人邮箱</p>
-        </div>
-        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <button type="button" @click="testEmail" class="btn-secondary" :disabled="testingEmail || !config.email.service || !config.email.user || !config.email.pass">
-            <Icon name="heroicons:paper-airplane" class="w-4 h-4 mr-2 icon-theme" />
-            {{ testingEmail ? '测试中...' : '发送测试通知' }}
-          </button>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">点击发送一条测试通知，验证邮件配置是否正确</p>
-        </div>
-      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+        <Icon name="heroicons:information-circle" class="w-5 h-5 text-primary-500 dark:text-primary-400 shrink-0" />
+        邮件发送使用统一邮箱配置，请前往
+        <NuxtLink to="/settings?tab=email" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">设置 → 邮箱设置</NuxtLink>
+        填写发件人、授权码等。
+      </p>
     </div>
 
     <!-- Server酱 配置 -->
@@ -284,7 +231,6 @@ const toastStore = useToastStore()
 
 const config = reactive({
   enabled: false,
-  registrationEmailVerification: false,
   method: 'telegram',
   types: { login: true, upload: true, nsfw: true },
   webhook: {
@@ -315,7 +261,6 @@ const templateVars = { type: '{{type}}', title: '{{title}}', message: '{{message
 const saving = ref(false)
 const testing = ref(false)
 const testingTelegram = ref(false)
-const testingEmail = ref(false)
 const testingServerChan = ref(false)
 
 async function fetchConfig() {
@@ -378,19 +323,6 @@ async function testTelegram() {
     toastStore.error(e.data?.message || '测试失败')
   } finally {
     testingTelegram.value = false
-  }
-}
-
-async function testEmail() {
-  testingEmail.value = true
-  try {
-    const res = await $fetch('/api/notification/test', { method: 'POST', body: { method: 'email', email: config.email }, headers: authStore.authHeader })
-    if (res.success) toastStore.success('测试通知发送成功')
-    else toastStore.error(res.message || '测试失败')
-  } catch (e) {
-    toastStore.error(e.data?.message || '测试失败')
-  } finally {
-    testingEmail.value = false
   }
 }
 

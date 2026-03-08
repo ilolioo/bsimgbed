@@ -1,12 +1,12 @@
 import db from '../../utils/db.js'
 import { generateToken } from '../../utils/jwt.js'
 import bcrypt from 'bcryptjs'
-import { getNotificationConfig, sendLoginNotification } from '../../utils/notification.js'
+import { getEmailConfig, getNotificationConfig, sendLoginNotification } from '../../utils/notification.js'
 
 export default defineEventHandler(async (event) => {
   try {
-    const notifConfig = await getNotificationConfig()
-    const emailVerificationRequired = !!notifConfig.registrationEmailVerification
+    const emailConfig = await getEmailConfig()
+    const emailVerificationRequired = !!emailConfig.registrationEmailVerification
 
     const body = await readBody(event)
     const { username, password } = body

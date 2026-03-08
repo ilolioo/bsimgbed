@@ -28,27 +28,91 @@ export const NOTIFICATION_METHODS = {
   // DINGTALK: 'dingtalk',
 }
 
-// 默认通知配置
+// 默认邮箱配置（独立于通知，用于注册验证与通知方式为邮件时）
+export function getDefaultEmailConfig() {
+  return {
+    registrationEmailVerification: false,
+    service: '',
+    user: '',
+    pass: '',
+    to: ''
+  }
+}
+
+/**
+ * 获取邮箱配置（独立存储；若未配置则从旧 notificationConfig 迁移读出）
+ */
+export async function getEmailConfig() {
+  try {
+    const doc = await db.settings.findOne({ key: 'emailConfig' })
+    if (doc?.value && (doc.value.service !== undefined || doc.value.user !== undefined)) {
+      return {
+        ...getDefaultEmailConfig(),
+        ...doc.value,
+        registrationEmailVerification: doc.value.registrationEmailVerification !== undefined
+          ? !!doc.value.registrationEmailVerification
+          : getDefaultEmailConfig().registrationEmailVerification
+      }
+    }
+    const notifDoc = await db.settings.findOne({ key: 'notificationConfig' })
+    const v = notifDoc?.value
+    if (v) {
+      return {
+        ...getDefaultEmailConfig(),
+        registrationEmailVerification: !!v.registrationEmailVerification,
+        service: v.email?.service || '',
+        user: v.email?.user || '',
+        pass: v.email?.pass || '',
+        to: v.email?.to || ''
+      }
+    }
+    return getDefaultEmailConfig()
+  } catch (error) {
+    console.error('[Notification] 获取邮箱配置失败:', error)
+    return getDefaultEmailConfig()
+  }
+}
+
+/**
+ * 保存邮箱配置
+ */
+export async function saveEmailConfig(config) {
+  try {
+    const current = await getEmailConfig()
+    const next = {
+      registrationEmailVerification: config.registrationEmailVerification !== undefined ? !!config.registrationEmailVerification : current.registrationEmailVerification,
+      service: (config.service !== undefined ? config.service : current.service) || '',
+      user: (config.user !== undefined ? config.user : current.user) || '',
+      pass: (config.pass !== undefined && config.pass !== '') ? config.pass : current.pass,
+      to: (config.to !== undefined ? config.to : current.to) || ''
+    }
+    await db.settings.update(
+      { key: 'emailConfig' },
+      { $set: { value: next, updatedAt: new Date().toISOString() } },
+      { upsert: true }
+    )
+    return { success: true }
+  } catch (error) {
+    console.error('[Notification] 保存邮箱配置失败:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// 默认通知配置（不再包含邮箱与注册验证，邮箱见 getEmailConfig）
 export function getDefaultNotificationConfig() {
   return {
     enabled: false,
-    /** 注册邮箱验证：开启后新用户需填写邮箱，验证邮件中的链接后才能登录（依赖下方邮件配置） */
-    registrationEmailVerification: false,
     method: NOTIFICATION_METHODS.TELEGRAM,
-    // 各类型通知开关（默认全部开启）
     types: {
       [NOTIFICATION_TYPES.LOGIN]: true,
       [NOTIFICATION_TYPES.UPLOAD]: true,
       [NOTIFICATION_TYPES.NSFW_DETECTED]: true,
     },
-    // Webhook 配置
     webhook: {
       url: '',
       method: 'POST',
       contentType: 'application/json',
-      headers: {},  // 自定义请求头，如 { "Authorization": "Bearer xxx" }
-      // 请求体模板，支持变量替换
-      // 可用变量: {{type}}, {{title}}, {{message}}, {{timestamp}}, {{data}}
+      headers: {},
       bodyTemplate: JSON.stringify({
         type: '{{type}}',
         title: '{{title}}',
@@ -57,21 +121,13 @@ export function getDefaultNotificationConfig() {
         data: '{{data}}'
       }, null, 2)
     },
-    // Telegram 配置
     telegram: {
-      token: '',    // Bot Token
-      chatId: ''    // Chat ID
+      token: '',
+      chatId: ''
     },
-    // Email 配置
-    email: {
-      service: '',  // 邮件服务商，如 'gmail', 'qq', '163' 等
-      user: '',     // 发件人邮箱
-      pass: '',     // 邮箱授权码/密码
-      to: ''        // 收件人邮箱（可选，默认发送给自己）
-    },
-    // Server酱 配置
+    email: { service: '', user: '', pass: '', to: '' },
     serverchan: {
-      sendKey: ''   // Server酱 SendKey
+      sendKey: ''
     }
   }
 }
@@ -83,34 +139,17 @@ export async function getNotificationConfig() {
   try {
     const configDoc = await db.settings.findOne({ key: 'notificationConfig' })
     if (configDoc?.value) {
-      // 合并默认配置，确保新增字段有默认值
       const defaultConfig = getDefaultNotificationConfig()
+      const v = configDoc.value
       return {
         ...defaultConfig,
-        ...configDoc.value,
-        registrationEmailVerification: configDoc.value.registrationEmailVerification !== undefined
-          ? !!configDoc.value.registrationEmailVerification
-          : defaultConfig.registrationEmailVerification,
-        types: {
-          ...defaultConfig.types,
-          ...configDoc.value.types
-        },
-        webhook: {
-          ...defaultConfig.webhook,
-          ...configDoc.value.webhook
-        },
-        telegram: {
-          ...defaultConfig.telegram,
-          ...configDoc.value.telegram
-        },
-        email: {
-          ...defaultConfig.email,
-          ...configDoc.value.email
-        },
-        serverchan: {
-          ...defaultConfig.serverchan,
-          ...configDoc.value.serverchan
-        }
+        enabled: v.enabled !== undefined ? !!v.enabled : defaultConfig.enabled,
+        method: v.method || defaultConfig.method,
+        types: { ...defaultConfig.types, ...v.types },
+        webhook: { ...defaultConfig.webhook, ...v.webhook },
+        telegram: { ...defaultConfig.telegram, ...v.telegram },
+        email: { ...defaultConfig.email },
+        serverchan: { ...defaultConfig.serverchan, ...v.serverchan }
       }
     }
     return getDefaultNotificationConfig()
@@ -470,20 +509,19 @@ function generateEmailTemplate(content) {
 }
 
 /**
- * 发送 Email 通知
+ * 发送 Email 通知（使用独立邮箱配置）
  */
 async function sendEmailNotification(config, payload) {
-  const { email } = config
+  const email = await getEmailConfig()
 
   if (!email.service || !email.user || !email.pass) {
-    console.warn('[Notification] Email 配置不完整')
-    return { success: false, error: 'Email 配置不完整（需要 service、user、pass）' }
+    console.warn('[Notification] Email 配置不完整，请在设置-邮箱设置中配置')
+    return { success: false, error: 'Email 配置不完整（需在邮箱设置中填写 service、user、pass）' }
   }
 
   try {
     console.log('[Notification] 邮件通知预发送:', payload.title)
 
-    // 创建邮件传输器
     const transporter = nodemailer.createTransport({
       service: email.service,
       auth: {
@@ -821,14 +859,13 @@ export async function testTelegram(telegramConfig) {
  * @param {string} verifyUrl - 验证链接
  */
 export async function sendVerificationEmail(toEmail, username, verifyUrl) {
-  const config = await getNotificationConfig()
-  const { email } = config
-  if (!email?.service || !email?.user || !email?.pass) {
-    throw new Error('邮件服务未配置，请联系管理员配置通知邮箱')
+  const emailConfig = await getEmailConfig()
+  if (!emailConfig.service || !emailConfig.user || !emailConfig.pass) {
+    throw new Error('邮件服务未配置，请在设置-邮箱设置中配置')
   }
   const transporter = nodemailer.createTransport({
-    service: email.service,
-    auth: { user: email.user, pass: email.pass }
+    service: emailConfig.service,
+    auth: { user: emailConfig.user, pass: emailConfig.pass }
   })
   const htmlContent = `
     <div class="header">
@@ -842,7 +879,7 @@ export async function sendVerificationEmail(toEmail, username, verifyUrl) {
     </div>
   `
   await transporter.sendMail({
-    from: email.user,
+    from: emailConfig.user,
     to: toEmail,
     subject: '[bsimgbed] 请验证你的邮箱',
     html: generateEmailTemplate(htmlContent)
@@ -946,6 +983,9 @@ export async function testServerChan(serverchanConfig) {
 export default {
   NOTIFICATION_TYPES,
   NOTIFICATION_METHODS,
+  getDefaultEmailConfig,
+  getEmailConfig,
+  saveEmailConfig,
   getDefaultNotificationConfig,
   getNotificationConfig,
   saveNotificationConfig,

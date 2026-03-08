@@ -2,7 +2,7 @@ import db from '../../utils/db.js'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { v4 as uuidv4 } from 'uuid'
-import { getNotificationConfig, sendVerificationEmail } from '../../utils/notification.js'
+import { getEmailConfig, sendVerificationEmail } from '../../utils/notification.js'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME_MIN_LEN = 4
@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
     const appDoc = await db.settings.findOne({ key: 'appSettings' })
     const appSettings = appDoc?.value || {}
     const registrationEnabled = appSettings.registrationEnabled !== false
-    const notifConfig = await getNotificationConfig()
-    const emailVerification = !!notifConfig.registrationEmailVerification
+    const emailConfig = await getEmailConfig()
+    const emailVerification = !!emailConfig.registrationEmailVerification
 
     const adminCount = await db.users.count({ role: 'admin' })
     const needSetup = adminCount === 0

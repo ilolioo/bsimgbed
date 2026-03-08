@@ -466,6 +466,88 @@
       <NotificationSettings />
     </div>
 
+    <!-- 邮箱设置 -->
+    <div v-show="activeTab === 'email'" class="space-y-6">
+      <div class="card p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <Icon name="heroicons:envelope" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
+          邮箱设置
+        </h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          用于注册邮箱验证与通知方式为「Email 邮件」时的发信；通知方式在「通知设置」中选择。
+        </p>
+
+        <div class="space-y-6">
+          <!-- 注册邮箱验证 -->
+          <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div>
+              <h3 class="font-medium text-gray-900 dark:text-white">注册邮箱验证</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                开启后，新用户注册需填写邮箱，点击验证邮件中的链接后才能登录
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="emailSettings.registrationEmailVerification = !emailSettings.registrationEmailVerification"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0"
+              :class="emailSettings.registrationEmailVerification ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                :class="emailSettings.registrationEmailVerification ? 'translate-x-6' : 'translate-x-1'"
+              />
+            </button>
+          </div>
+
+          <!-- 发信配置 -->
+          <div class="space-y-4">
+            <h3 class="font-medium text-gray-900 dark:text-white">发信配置</h3>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">邮件服务商 <span class="text-red-500">*</span></label>
+              <input v-model="emailSettings.service" type="text" class="input w-full" placeholder="例如: QQ、126、163、Gmail" />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <a href="https://github.com/nodemailer/nodemailer/blob/master/lib/well-known/services.json" target="_blank" rel="noopener" class="text-primary-600 dark:text-primary-400 hover:underline">支持列表</a>
+              </p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">发件人邮箱 <span class="text-red-500">*</span></label>
+              <input v-model="emailSettings.user" type="email" class="input w-full" placeholder="your-email@example.com" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">邮箱授权码/密码 <span class="text-red-500">*</span></label>
+              <input
+                v-model="emailSettings.pass"
+                type="password"
+                class="input w-full"
+                :placeholder="emailSettings.hasPassword ? '留空则不修改' : '授权码或密码'"
+              />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">多数邮箱需使用授权码，请在邮箱设置中获取</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">收件人邮箱（可选）</label>
+              <input v-model="emailSettings.to" type="email" class="input w-full" placeholder="通知收件人，留空则发给自己" />
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 pt-2">
+            <button type="button" class="btn-primary" :disabled="savingEmail" @click="saveEmailSettings">
+              <Loading v-if="savingEmail" size="sm" class="mr-1" />
+              {{ savingEmail ? '保存中...' : '保存' }}
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              :disabled="testingEmail || !emailSettings.service || !emailSettings.user || (!emailSettings.pass && !emailSettings.hasPassword)"
+              @click="testEmailSettings"
+            >
+              <Icon v-if="testingEmail" name="heroicons:arrow-path" class="w-4 h-4 mr-1 animate-spin" />
+              {{ testingEmail ? '测试中...' : '发送测试邮件' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 用户管理 -->
     <div v-show="activeTab === 'users'" class="space-y-6">
       <div class="card p-6">
@@ -721,6 +803,7 @@ const tabs = [
   { id: 'announcement', label: '公告设置' },
   { id: 'storage', label: '存储配置' },
   { id: 'notification', label: '通知设置' },
+  { id: 'email', label: '邮箱设置' },
   { id: 'users', label: '用户管理' },
   { id: 'account', label: '账户设置' }
 ]
@@ -733,11 +816,24 @@ const editingUser = ref(null)
 const editForm = reactive({ username: '', email: '', role: 'user', disabled: false, newPassword: '' })
 const savingEditUser = ref(false)
 const route = useRoute()
-const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : 'app')
+const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : route.query.tab === 'email' ? 'email' : 'app')
 watch(() => route.query.tab, (tab) => {
   if (tab === 'notification') activeTab.value = 'notification'
   else if (tab === 'users') activeTab.value = 'users'
+  else if (tab === 'email') activeTab.value = 'email'
 })
+
+// 邮箱设置（独立于通知）
+const emailSettings = reactive({
+  registrationEmailVerification: false,
+  service: '',
+  user: '',
+  pass: '',
+  hasPassword: false,
+  to: ''
+})
+const savingEmail = ref(false)
+const testingEmail = ref(false)
 
 // 应用设置
 const appSettings = reactive({
@@ -946,6 +1042,72 @@ async function saveStorageConfig() {
     toastStore.error(error.data?.message || '保存失败')
   } finally {
     savingStorage.value = false
+  }
+}
+
+async function fetchEmailConfig() {
+  try {
+    const res = await $fetch('/api/settings/email', { headers: authStore.authHeader })
+    if (res.success && res.data) {
+      emailSettings.registrationEmailVerification = !!res.data.registrationEmailVerification
+      emailSettings.service = res.data.service || ''
+      emailSettings.user = res.data.user || ''
+      emailSettings.pass = ''
+      emailSettings.hasPassword = !!res.data.hasPassword
+      emailSettings.to = res.data.to || ''
+    }
+  } catch (_) {}
+}
+
+async function saveEmailSettings() {
+  savingEmail.value = true
+  try {
+    const body = {
+      registrationEmailVerification: emailSettings.registrationEmailVerification,
+      service: emailSettings.service,
+      user: emailSettings.user,
+      to: emailSettings.to
+    }
+    if (emailSettings.pass) body.pass = emailSettings.pass
+    const res = await $fetch('/api/settings/email', {
+      method: 'PUT',
+      body,
+      headers: authStore.authHeader
+    })
+    if (res.success) {
+      toastStore.success(res.message || '邮箱设置已保存')
+      emailSettings.pass = ''
+      emailSettings.hasPassword = true
+    } else {
+      toastStore.error(res.message || '保存失败')
+    }
+  } catch (e) {
+    toastStore.error(e.data?.message || '保存失败')
+  } finally {
+    savingEmail.value = false
+  }
+}
+
+async function testEmailSettings() {
+  testingEmail.value = true
+  try {
+    const body = {
+      service: emailSettings.service,
+      user: emailSettings.user,
+      to: emailSettings.to
+    }
+    if (emailSettings.pass) body.pass = emailSettings.pass
+    const res = await $fetch('/api/settings/email/test', {
+      method: 'POST',
+      body,
+      headers: authStore.authHeader
+    })
+    if (res.success) toastStore.success(res.message || '测试邮件已发送')
+    else toastStore.error(res.message || '测试失败')
+  } catch (e) {
+    toastStore.error(e.data?.message || '测试失败')
+  } finally {
+    testingEmail.value = false
   }
 }
 
@@ -1205,6 +1367,7 @@ onMounted(async () => {
   await settingsStore.fetchAppSettings()
   await fetchStorageConfig()
   await fetchUserList()
+  await fetchEmailConfig()
 
   // 同步到本地状态
   appSettings.appName = settingsStore.appSettings.appName || 'bsimgbed'
