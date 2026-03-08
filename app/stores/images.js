@@ -6,6 +6,7 @@ export const useImagesStore = defineStore('images', {
     images: [],
     loading: false,
     uploading: false,
+    onlyMine: false, // 仅查看当前账户上传的图片（登录用户）
     pagination: {
       page: 1,
       limit: 20,
@@ -33,11 +34,15 @@ export const useImagesStore = defineStore('images', {
 
       try {
         const authStore = useAuthStore()
+        const params = {
+          page: this.pagination.page,
+          limit: this.pagination.limit
+        }
+        if (authStore.isAuthenticated && this.onlyMine) {
+          params.mine = '1'
+        }
         const response = await $fetch('/api/images', {
-          params: {
-            page: this.pagination.page,
-            limit: this.pagination.limit
-          },
+          params,
           headers: authStore.authHeader
         })
 
@@ -56,6 +61,12 @@ export const useImagesStore = defineStore('images', {
       } finally {
         this.loading = false
       }
+    },
+
+    // 切换「仅查看此账户上传的图片」
+    setOnlyMine(value) {
+      this.onlyMine = !!value
+      this.clearSelection()
     },
 
     // 加载更多

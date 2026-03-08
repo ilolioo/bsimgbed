@@ -10,11 +10,19 @@ export default defineEventHandler(async (event) => {
     const page = parseInt(query.page) || 1
     const limit = parseInt(query.limit) || 20
     const skip = (page - 1) * limit
+    const onlyMine = query.mine === '1' && user
 
     const isAdmin = user && user.role === 'admin'
 
     let queryCondition
-    if (isAdmin) {
+    if (onlyMine) {
+      // 仅查看当前账户上传的图片（登录用户）
+      queryCondition = {
+        isDeleted: false,
+        isNsfw: { $ne: true },
+        userId: user.userId
+      }
+    } else if (isAdmin) {
       queryCondition = { isDeleted: false, isNsfw: { $ne: true } }
     } else if (user) {
       // 普通用户：公开图 + 自己上传的图 + 其他用户设为「上传后展示」的图

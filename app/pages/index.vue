@@ -8,6 +8,27 @@
       <UploadArea />
     </section>
 
+    <!-- 仅查看我的图片（登录用户） -->
+    <div
+      v-if="authStore.isAuthenticated"
+      class="mb-4 flex items-center gap-2"
+    >
+      <button
+        type="button"
+        :class="imagesStore.onlyMine ? 'btn-primary' : 'btn-secondary'"
+        @click="toggleOnlyMine"
+      >
+        <Icon name="heroicons:user-circle" class="w-5 h-5" />
+        {{ imagesStore.onlyMine ? '显示全部图片' : '仅查看此账户上传的图片' }}
+      </button>
+      <span
+        v-if="imagesStore.onlyMine"
+        class="text-sm text-gray-500 dark:text-gray-400"
+      >
+        当前仅显示你上传的图片
+      </span>
+    </div>
+
     <!-- 批量操作栏 -->
     <div
       v-if="authStore.isAuthenticated && imagesStore.hasSelection"
@@ -669,6 +690,12 @@ watch(
     imagesStore.fetchImages(true)
   }
 )
+
+// 切换「仅查看此账户上传的图片」
+async function toggleOnlyMine() {
+  imagesStore.setOnlyMine(!imagesStore.onlyMine)
+  await imagesStore.fetchImages(true)
+}
 
 onMounted(async () => {
   // 初始化列数
