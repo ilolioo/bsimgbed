@@ -8,8 +8,9 @@ export default defineNuxtConfig({
   ssr: false, // 关闭服务端渲染，变成纯 SPA
 
   future: {
-    compatibilityVersion: 3
+    compatibilityVersion: 4
   },
+
   compatibilityDate: '2025-12-12',
 
   modules: [
@@ -72,13 +73,6 @@ export default defineNuxtConfig({
     public: {
       apiBase: '',
       appVersion
-    }
-  },
-
-  // 构建优化：提高 chunk 体积警告阈值（Nuxt 自带代码分割）
-  vite: {
-    build: {
-      chunkSizeWarningLimit: 400
     }
   }
 })

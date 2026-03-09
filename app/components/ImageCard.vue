@@ -58,7 +58,6 @@
         class="absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out group-hover:scale-105"
         :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
         loading="lazy"
-        decoding="async"
         @load="onImageLoad"
         @error="onImageError"
       />
@@ -77,7 +76,7 @@
         class="absolute inset-0 bg-gray-200 dark:bg-gray-700 flex flex-col items-center justify-center gap-2"
       >
         <Icon name="heroicons:photo" class="w-12 h-12 text-gray-400 dark:text-gray-500" />
-        <span class="text-xs text-gray-400 dark:text-gray-500">加载失败</span>
+        <span class="text-xs text-gray-400">加载失败</span>
       </div>
     </div>
 
