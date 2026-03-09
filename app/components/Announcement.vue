@@ -54,19 +54,19 @@
   <Transition name="announcement-banner">
     <div
       v-if="visible && displayType === 'banner'"
-      class="px-4 py-3 rounded-lg mb-4 bg-gray-200/80 dark:bg-gray-700/80 text-gray-900 dark:text-gray-100 border border-gray-300/50 dark:border-gray-600/50"
+      class="px-4 py-3 rounded-lg mb-4 bg-gray-200/80 dark:bg-gray-700/80 text-gray-900 dark:text-gray-300 border border-gray-300/50 dark:border-gray-600/50"
     >
       <div class="flex items-center justify-between gap-4">
         <div class="flex items-center gap-3 flex-1 min-w-0">
-          <Icon name="heroicons:megaphone" class="w-5 h-5 flex-shrink-0 text-gray-700 dark:text-gray-100 shrink-0" />
-          <div class="prose prose-sm prose-gray-900 dark:prose-invert max-w-none flex-1 min-w-0 truncate-content text-gray-900 dark:text-gray-100 announcement-banner-content" v-html="content"></div>
+          <Icon name="heroicons:megaphone" class="w-5 h-5 flex-shrink-0 text-gray-700 dark:text-gray-300 shrink-0" />
+          <div class="prose prose-sm prose-gray-900 dark:prose-invert max-w-none flex-1 min-w-0 truncate-content text-gray-900 dark:text-gray-300 announcement-banner-content" v-html="content"></div>
         </div>
         <button
           @click="close"
-          class="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-400/30 dark:hover:bg-gray-500/50 rounded-lg transition-colors text-gray-800 dark:text-gray-100"
+          class="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-400/30 dark:hover:bg-gray-500/50 rounded-lg transition-colors text-gray-800 dark:text-gray-300"
           title="关闭公告"
         >
-          <Icon name="heroicons:x-mark" class="w-5 h-5 text-gray-800 dark:text-gray-100 shrink-0" />
+          <Icon name="heroicons:x-mark" class="w-5 h-5 text-gray-800 dark:text-gray-300 shrink-0" />
         </button>
       </div>
     </div>
@@ -201,13 +201,13 @@ onMounted(() => {
   display: none;
 }
 
-/* 暗色模式下横幅内正文与链接更清晰 */
+/* 暗色模式下横幅内正文与链接（与电脑端一致） */
 .announcement-banner-content :deep(p),
 .announcement-banner-content :deep(span),
 .announcement-banner-content :deep(a) {
-  @apply text-gray-900 dark:text-gray-100;
+  @apply text-gray-900 dark:text-gray-300;
 }
 .announcement-banner-content :deep(a:hover) {
-  @apply text-primary-600 dark:text-primary-300;
+  @apply text-primary-600 dark:text-primary-400;
 }
 </style>
