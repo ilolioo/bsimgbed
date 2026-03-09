@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- 公告组件 - 顶部横幅形式显示在上传区域上方 -->
-    <Announcement />
+    <!-- 公告组件 - 懒加载，不阻塞首屏 -->
+    <LazyAnnouncement />
 
     <!-- 上传区域 -->
     <section class="mb-8">
@@ -114,8 +114,8 @@
       </div>
     </section>
 
-    <!-- 图片查看器 -->
-    <ImageViewer
+    <!-- 图片查看器 - 懒加载，仅在打开时加载 -->
+    <LazyImageViewer
       :visible="viewerVisible"
       :src="viewerImage?.url || ''"
       :alt="viewerImage?.filename || ''"
@@ -123,8 +123,8 @@
       @close="closeViewer"
     />
 
-    <!-- 删除确认弹窗 -->
-    <Modal
+    <!-- 删除确认弹窗 - 懒加载 -->
+    <LazyModal
       :visible="showDeleteModal"
       title="确认删除"
       confirm-text="删除"
@@ -137,8 +137,8 @@
       </p>
     </Modal>
 
-    <!-- 批量删除确认弹窗 -->
-    <Modal
+    <!-- 批量删除确认弹窗 - 懒加载 -->
+    <LazyModal
       :visible="showBatchDeleteModal"
       title="确认批量删除"
       confirm-text="删除"
@@ -713,8 +713,8 @@ onMounted(async () => {
     imagesStore.setOnlyMine(!authStore.isAdmin)
   }
 
-  // 获取图片列表（authStore.init() 已在插件中调用）
-  await imagesStore.fetchImages(true)
+  // 获取图片列表（不 await，避免阻塞首屏渲染；列表区域会显示 Loading）
+  imagesStore.fetchImages(true)
 
   // 设置无限滚动
   setupIntersectionObserver()

@@ -74,5 +74,23 @@ export default defineNuxtConfig({
       apiBase: '',
       appVersion
     }
+  },
+
+  // 构建优化：代码分割与压缩
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: (id) => {
+            if (id.includes('node_modules')) {
+              if (id.includes('pinia') || id.includes('vue')) return 'vue-vendor'
+              if (id.includes('@nuxt') || id.includes('nuxt')) return 'nuxt-vendor'
+              if (id.includes('@iconify')) return 'iconify'
+            }
+          }
+        }
+      },
+      chunkSizeWarningLimit: 400
+    }
   }
 })
