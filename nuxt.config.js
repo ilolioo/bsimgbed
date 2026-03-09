@@ -7,10 +7,6 @@ const appVersion = packageJson.version || '1.0.0'
 export default defineNuxtConfig({
   ssr: false, // 关闭服务端渲染，变成纯 SPA
 
-  future: {
-    compatibilityVersion: 4
-  },
-
   compatibilityDate: '2025-12-12',
 
   modules: [

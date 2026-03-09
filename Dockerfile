@@ -12,10 +12,10 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install
 
-# 复制源码并构建
+# 复制源码并构建（失败时打印完整日志便于排查）
 COPY . .
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN npm run build
+RUN npm run build > /tmp/build.log 2>&1; e=$?; cat /tmp/build.log; exit $e
 
 # 生产阶段
 FROM node:20-alpine AS production
