@@ -17,8 +17,12 @@ COPY . .
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build > /tmp/build.log 2>&1; e=$?; cat /tmp/build.log; exit $e
 
-# 生产阶段
-FROM node:20-alpine AS production
+# 生产阶段（与 builder 同用 Debian，否则 sharp 在 Alpine/musl 下无法加载）
+FROM node:20-slim AS production
+
+# sharp 运行时依赖（仅运行时库，非 -dev）
+RUN apt-get update && apt-get install -y --no-install-recommends libvips \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
