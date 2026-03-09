@@ -67,18 +67,6 @@
               <span class="hidden sm:inline">容量</span>
             </NuxtLink>
 
-            <!-- API -->
-            <NuxtLink
-              v-if="authStore.isAuthenticated"
-              to="/api"
-              class="nav-link nav-link-icon sm:nav-link-text"
-              :class="{ 'nav-link-active': route.path === '/api' }"
-              title="API"
-            >
-              <Icon name="heroicons:code-bracket" class="w-5 h-5 flex-shrink-0" />
-              <span class="hidden sm:inline">API</span>
-            </NuxtLink>
-
             <!-- 设置 -->
             <NuxtLink
               v-if="authStore.isAuthenticated"
