@@ -461,9 +461,9 @@
       </div>
     </div>
 
-    <!-- 通知设置（懒加载，切到该标签时再加载） -->
+    <!-- 通知设置 -->
     <div v-show="activeTab === 'notification'" class="space-y-6">
-      <LazyNotificationSettings />
+      <NotificationSettings />
     </div>
 
     <!-- 邮箱设置 -->
@@ -592,19 +592,19 @@
       </div>
     </div>
 
-    <!-- 公共配置（懒加载） -->
+    <!-- 公共配置 -->
     <div v-show="activeTab === 'api-public'" class="space-y-6">
-      <LazyApiManagement panel="public" />
+      <ApiManagement panel="public" />
     </div>
 
-    <!-- 私有配置（懒加载） -->
+    <!-- 私有配置 -->
     <div v-show="activeTab === 'api-private'" class="space-y-6">
-      <LazyApiManagement panel="private" />
+      <ApiManagement panel="private" />
     </div>
 
-    <!-- API 文档（懒加载） -->
+    <!-- API 文档 -->
     <div v-show="activeTab === 'api-docs'" class="space-y-6">
-      <LazyApiManagement panel="docs" />
+      <ApiManagement panel="docs" />
     </div>
 
     <!-- 用户管理 -->
