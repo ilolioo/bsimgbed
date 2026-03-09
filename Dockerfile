@@ -1,6 +1,11 @@
 # 构建阶段（使用 slim 镜像，Alpine 下 sharp 等原生模块易构建失败）
 FROM node:20-slim AS builder
 
+# sharp 等原生模块在 Linux 上可能需要的运行时库
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libvips-dev python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 # 安装 pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
@@ -16,9 +21,9 @@ RUN pnpm install --frozen-lockfile
 # 复制源代码
 COPY . .
 
-# 构建应用（提高 Node 内存上限，避免 OOM）
+# 构建应用（提高 Node 内存上限，避免 OOM；失败时输出完整日志）
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN pnpm build
+RUN pnpm build > /tmp/build.log 2>&1; r=$?; cat /tmp/build.log; exit $r
 
 # 生产阶段
 FROM node:20-alpine AS production
