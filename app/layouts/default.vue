@@ -237,7 +237,12 @@ async function handleLogout() {
 
 <style scoped>
 .nav-link {
-  @apply rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0;
+  @apply rounded-lg text-sm font-medium text-gray-600 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors flex items-center justify-center flex-shrink-0;
+}
+
+/* 暗色模式下顶栏图标与文字更清晰（继承到 Icon） */
+.nav-link :deep(svg) {
+  @apply text-current;
 }
 
 /* 移动端图标样式 */
@@ -253,7 +258,7 @@ async function handleLogout() {
 }
 
 .nav-link-active {
-  @apply bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400;
+  @apply bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300;
 }
 
 /* 隐藏滚动条但保持滚动功能 */
