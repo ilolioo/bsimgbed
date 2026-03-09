@@ -9,6 +9,8 @@
         :src="backgroundUrl"
         alt="背景"
         class="w-full h-full object-cover"
+        loading="lazy"
+        fetchpriority="low"
       />
       <div
         v-if="backgroundBlur > 0"

@@ -18,6 +18,44 @@ export default defineNuxtConfig({
     '@nuxt/icon'
   ],
 
+  // 仅打包实际使用的图标，减小客户端体积
+  icon: {
+    clientBundle: {
+      scan: true
+    }
+  },
+
+  // 构建与运行时优化
+  vite: {
+    build: {
+      cssCodeSplit: true,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('pinia') || id.includes('vue')) return 'vendor-vue'
+              if (id.includes('@iconify') || id.includes('@nuxt/icon')) return 'vendor-icon'
+            }
+          }
+        }
+      },
+      chunkSizeWarningLimit: 400
+    },
+    optimizeDeps: {
+      include: ['pinia', 'vue']
+    }
+  },
+
+  experimental: {
+    payloadExtraction: false,
+    // 预取：改为交互时预取，减少首屏并发请求
+    defaults: {
+      nuxtLink: {
+        prefetch: false
+      }
+    }
+  },
+
   css: [
     '~/assets/css/main.css'
   ],
