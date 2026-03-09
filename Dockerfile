@@ -1,5 +1,5 @@
-# 构建阶段
-FROM node:20-alpine AS builder
+# 构建阶段（使用 slim 镜像，Alpine 下 sharp 等原生模块易构建失败）
+FROM node:20-slim AS builder
 
 # 安装 pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -16,7 +16,8 @@ RUN pnpm install --frozen-lockfile
 # 复制源代码
 COPY . .
 
-# 构建应用
+# 构建应用（提高 Node 内存上限，避免 OOM）
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN pnpm build
 
 # 生产阶段
