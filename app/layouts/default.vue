@@ -225,20 +225,18 @@ useHead({
   title: appName
 })
 
-// 初始化
-onMounted(async () => {
-  // 先获取公共应用设置（无需登录，包含背景图片等）
-  await settingsStore.fetchPublicAppSettings()
-
-  // 验证 Token（authStore.init() 已在插件中调用）
-  if (authStore.token) {
-    await authStore.verify()
-  }
-
-  // 获取完整应用设置（如果已登录）
-  if (authStore.isAuthenticated) {
-    await settingsStore.fetchAppSettings()
-  }
+// 初始化（不 await，优先首屏渲染，数据返回后自动更新 UI）
+onMounted(() => {
+  settingsStore.fetchPublicAppSettings().then(() => {
+    // 验证 Token（authStore.init() 已在插件中调用）
+    if (authStore.token) {
+      return authStore.verify().then((ok) => {
+        if (ok && authStore.isAuthenticated) {
+          return settingsStore.fetchAppSettings()
+        }
+      })
+    }
+  })
 })
 
 // 登出处理
