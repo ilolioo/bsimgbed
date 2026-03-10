@@ -67,9 +67,9 @@
               <span class="hidden sm:inline">容量</span>
             </NuxtLink>
 
-            <!-- 设置 -->
+            <!-- 设置（仅管理员可见） -->
             <NuxtLink
-              v-if="authStore.isAuthenticated"
+              v-if="authStore.isAdmin"
               to="/settings"
               class="nav-link nav-link-icon sm:nav-link-text"
               :class="{ 'nav-link-active': route.path === '/settings' }"
@@ -79,9 +79,9 @@
               <span class="hidden sm:inline">设置</span>
             </NuxtLink>
 
-            <!-- 统计 -->
+            <!-- 统计（仅管理员可见） -->
             <NuxtLink
-              v-if="authStore.isAuthenticated"
+              v-if="authStore.isAdmin"
               to="/stats"
               class="nav-link nav-link-icon sm:nav-link-text"
               :class="{ 'nav-link-active': route.path === '/stats' }"
@@ -89,18 +89,6 @@
             >
               <Icon name="heroicons:chart-bar" class="w-5 h-5 flex-shrink-0" />
               <span class="hidden sm:inline">统计</span>
-            </NuxtLink>
-
-            <!-- 通知 -->
-            <NuxtLink
-              v-if="authStore.isAuthenticated"
-              to="/notification"
-              class="nav-link nav-link-icon sm:nav-link-text"
-              :class="{ 'nav-link-active': route.path === '/notification' }"
-              title="通知"
-            >
-              <Icon name="heroicons:bell" class="w-5 h-5 flex-shrink-0" />
-              <span class="hidden sm:inline">通知</span>
             </NuxtLink>
 
             <!-- 关于 -->
