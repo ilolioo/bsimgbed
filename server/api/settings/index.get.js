@@ -12,21 +12,35 @@ export default defineEventHandler(async (event) => {
     // 获取已删除图片数量
     const deletedCount = await db.images.count({ isDeleted: true })
 
-    const defaultBlock = { enabled: false, content: '', displayType: 'modal' }
-    const defaultAnnouncement = { guest: { ...defaultBlock }, user: { ...defaultBlock } }
+    const defaultItems = () => [{ id: '1', content: '' }]
+    const defaultBlock = () => ({ enabled: false, displayType: 'modal', items: defaultItems() })
+    const defaultAnnouncement = () => ({ guest: defaultBlock(), user: defaultBlock() })
+
+    function toItems(block) {
+      if (!block || typeof block !== 'object') return defaultItems()
+      if (Array.isArray(block.items) && block.items.length > 0) {
+        return block.items.map((it, i) => ({ id: (it && it.id) ? String(it.id) : `item-${i + 1}`, content: (it && it.content !== undefined) ? String(it.content) : '' }))
+      }
+      if (block.content !== undefined) return [{ id: '1', content: String(block.content) }]
+      return defaultItems()
+    }
 
     function normalizeAnnouncement(ann) {
-      if (!ann || typeof ann !== 'object') return defaultAnnouncement
-      if (ann.guest && ann.user) {
-        return {
-          guest: { ...defaultBlock, ...ann.guest },
-          user: { ...defaultBlock, ...ann.user }
-        }
-      }
-      const legacy = ann.enabled !== undefined ? ann : defaultBlock
+      if (!ann || typeof ann !== 'object') return defaultAnnouncement()
+      const hasGuestUser = ann.guest && ann.user
+      const guestSrc = hasGuestUser ? ann.guest : (ann.enabled !== undefined ? ann : null)
+      const userSrc = hasGuestUser ? ann.user : defaultBlock()
       return {
-        guest: { ...defaultBlock, ...(ann.guest || legacy) },
-        user: { ...defaultBlock, ...(ann.user || defaultBlock) }
+        guest: {
+          enabled: !!guestSrc && guestSrc.enabled !== false,
+          displayType: (guestSrc?.displayType === 'banner') ? 'banner' : 'modal',
+          items: toItems(guestSrc)
+        },
+        user: {
+          enabled: userSrc?.enabled !== false,
+          displayType: (userSrc?.displayType === 'banner') ? 'banner' : 'modal',
+          items: toItems(userSrc)
+        }
       }
     }
 
@@ -42,7 +56,7 @@ export default defineEventHandler(async (event) => {
           siteUrl: '',
           registrationEnabled: true,
           deletedImagesCount: deletedCount,
-          announcement: defaultAnnouncement
+          announcement: defaultAnnouncement()
         }
       }
     }

@@ -188,7 +188,7 @@
           <Icon name="heroicons:megaphone" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
           公告设置
         </h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">可为游客（未登录）与普通用户（已登录）分别设置公告，展示形式支持弹窗或顶部横幅。</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">可为游客（未登录）与普通用户（已登录）分别设置多条公告，展示形式支持弹窗或顶部横幅；多条公告将合并展示。</p>
 
         <form @submit.prevent="saveAnnouncementSettings" class="space-y-8">
           <!-- 游客公告 -->
@@ -216,9 +216,22 @@
                   <span class="text-sm text-gray-700 dark:text-gray-300">横幅</span>
                 </label>
               </div>
-              <textarea v-model="announcementSettings.guest.content" rows="4" class="input w-full font-mono text-sm" placeholder="请输入公告内容，支持 HTML"></textarea>
-              <div v-if="announcementSettings.guest.content" class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div v-html="announcementSettings.guest.content" class="prose prose-sm dark:prose-invert max-w-none"></div>
+              <div class="space-y-3">
+                <div v-for="(item, idx) in announcementSettings.guest.items" :key="item.id" class="flex gap-2 items-start">
+                  <div class="flex-1 min-w-0">
+                    <textarea v-model="item.content" rows="3" class="input w-full font-mono text-sm" :placeholder="'公告 ' + (idx + 1) + '，支持 HTML'"></textarea>
+                    <div v-if="item.content" class="mt-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div v-html="item.content" class="prose prose-sm dark:prose-invert max-w-none"></div>
+                    </div>
+                  </div>
+                  <button type="button" @click="removeAnnouncementItem('guest', idx)" class="btn-secondary p-2 shrink-0" title="删除本条" :disabled="announcementSettings.guest.items.length <= 1">
+                    <Icon name="heroicons:trash" class="w-4 h-4" />
+                  </button>
+                </div>
+                <button type="button" @click="addAnnouncementItem('guest')" class="btn-secondary text-sm inline-flex items-center gap-1">
+                  <Icon name="heroicons:plus" class="w-4 h-4" />
+                  添加一条公告
+                </button>
               </div>
             </template>
           </div>
@@ -248,9 +261,22 @@
                   <span class="text-sm text-gray-700 dark:text-gray-300">横幅</span>
                 </label>
               </div>
-              <textarea v-model="announcementSettings.user.content" rows="4" class="input w-full font-mono text-sm" placeholder="请输入公告内容，支持 HTML"></textarea>
-              <div v-if="announcementSettings.user.content" class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div v-html="announcementSettings.user.content" class="prose prose-sm dark:prose-invert max-w-none"></div>
+              <div class="space-y-3">
+                <div v-for="(item, idx) in announcementSettings.user.items" :key="item.id" class="flex gap-2 items-start">
+                  <div class="flex-1 min-w-0">
+                    <textarea v-model="item.content" rows="3" class="input w-full font-mono text-sm" :placeholder="'公告 ' + (idx + 1) + '，支持 HTML'"></textarea>
+                    <div v-if="item.content" class="mt-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div v-html="item.content" class="prose prose-sm dark:prose-invert max-w-none"></div>
+                    </div>
+                  </div>
+                  <button type="button" @click="removeAnnouncementItem('user', idx)" class="btn-secondary p-2 shrink-0" title="删除本条" :disabled="announcementSettings.user.items.length <= 1">
+                    <Icon name="heroicons:trash" class="w-4 h-4" />
+                  </button>
+                </div>
+                <button type="button" @click="addAnnouncementItem('user')" class="btn-secondary text-sm inline-flex items-center gap-1">
+                  <Icon name="heroicons:plus" class="w-4 h-4" />
+                  添加一条公告
+                </button>
               </div>
             </template>
           </div>
@@ -959,12 +985,24 @@ const faviconError = ref(false)
 const backgroundError = ref(false)
 const savingApp = ref(false)
 
-const defaultAnnouncementBlock = () => ({ enabled: false, content: '', displayType: 'modal' })
-// 公告设置：游客与普通用户分开
+const defaultAnnouncementBlock = () => ({ enabled: false, displayType: 'modal', items: [{ id: '1', content: '' }] })
+// 公告设置：游客与普通用户分开，每类支持多条公告（items）
 const announcementSettings = reactive({
   guest: defaultAnnouncementBlock(),
   user: defaultAnnouncementBlock()
 })
+
+function addAnnouncementItem(blockKey) {
+  const block = announcementSettings[blockKey]
+  if (!block.items) block.items = [{ id: '1', content: '' }]
+  block.items.push({ id: `item-${Date.now()}`, content: '' })
+}
+
+function removeAnnouncementItem(blockKey, index) {
+  const block = announcementSettings[blockKey]
+  if (!block.items || block.items.length <= 1) return
+  block.items.splice(index, 1)
+}
 const savingAnnouncement = ref(false)
 
 // 存储配置（多桶）
@@ -1064,13 +1102,13 @@ async function saveAnnouncementSettings() {
       announcement: {
         guest: {
           enabled: announcementSettings.guest.enabled,
-          content: announcementSettings.guest.content,
-          displayType: announcementSettings.guest.displayType
+          displayType: announcementSettings.guest.displayType,
+          items: (announcementSettings.guest.items || []).map(it => ({ id: it.id, content: it.content || '' }))
         },
         user: {
           enabled: announcementSettings.user.enabled,
-          content: announcementSettings.user.content,
-          displayType: announcementSettings.user.displayType
+          displayType: announcementSettings.user.displayType,
+          items: (announcementSettings.user.items || []).map(it => ({ id: it.id, content: it.content || '' }))
         }
       }
     })
@@ -1523,21 +1561,28 @@ onMounted(async () => {
 
   const announcement = settingsStore.appSettings.announcement || {}
   const def = defaultAnnouncementBlock()
+  const toItems = (block) => {
+    if (!block) return def.items
+    if (Array.isArray(block.items) && block.items.length > 0) return block.items.map(it => ({ id: it.id || `item-${Date.now()}`, content: (it.content !== undefined && it.content !== null) ? String(it.content) : '' }))
+    if (block.content !== undefined && block.content !== null) return [{ id: '1', content: String(block.content) }]
+    return def.items
+  }
   if (announcement.guest && announcement.user) {
-    announcementSettings.guest.enabled = announcement.guest.enabled || false
-    announcementSettings.guest.content = announcement.guest.content || ''
+    announcementSettings.guest.enabled = announcement.guest.enabled !== false
     announcementSettings.guest.displayType = announcement.guest.displayType || 'modal'
-    announcementSettings.user.enabled = announcement.user.enabled || false
-    announcementSettings.user.content = announcement.user.content || ''
+    announcementSettings.guest.items = toItems(announcement.guest)
+    announcementSettings.user.enabled = announcement.user.enabled !== false
     announcementSettings.user.displayType = announcement.user.displayType || 'modal'
+    announcementSettings.user.items = toItems(announcement.user)
   } else if (announcement.enabled !== undefined) {
-    announcementSettings.guest.enabled = announcement.enabled || false
-    announcementSettings.guest.content = announcement.content || ''
+    announcementSettings.guest.enabled = announcement.enabled !== false
     announcementSettings.guest.displayType = announcement.displayType || 'modal'
+    announcementSettings.guest.items = toItems(announcement)
     announcementSettings.user = { ...def }
+    announcementSettings.user.items = [...def.items]
   } else {
-    announcementSettings.guest = { ...def }
-    announcementSettings.user = { ...def }
+    announcementSettings.guest = { ...def, items: [...def.items] }
+    announcementSettings.user = { ...def, items: [...def.items] }
   }
 
   newUsername.value = ''

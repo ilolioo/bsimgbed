@@ -90,12 +90,20 @@ const visible = ref(false)
 const announcement = computed(() => settingsStore.appSettings.announcement || {})
 const currentBlock = computed(() => {
   const a = announcement.value
-  if (authStore.isAuthenticated) return a.user || { enabled: false, content: '', displayType: 'modal' }
-  return a.guest || (a.enabled !== undefined ? a : { enabled: false, content: '', displayType: 'modal' })
+  if (authStore.isAuthenticated) return a.user || { enabled: false, displayType: 'modal', items: [{ id: '1', content: '' }] }
+  return a.guest || (a.enabled !== undefined ? a : { enabled: false, displayType: 'modal', items: [{ id: '1', content: '' }] })
 })
 const enabled = computed(() => currentBlock.value.enabled || false)
-const content = computed(() => currentBlock.value.content || '')
 const displayType = computed(() => currentBlock.value.displayType || 'modal')
+// 多条公告：取 items 中非空 content 用分隔符合并为一段 HTML 展示
+const content = computed(() => {
+  const block = currentBlock.value
+  const items = Array.isArray(block.items) ? block.items : (block.content !== undefined ? [{ id: '1', content: block.content }] : [])
+  const parts = items.map(it => (it && it.content != null && String(it.content).trim() !== '') ? String(it.content).trim() : null).filter(Boolean)
+  if (parts.length === 0) return ''
+  const sep = '<hr class="my-3 border-gray-200 dark:border-gray-600" />'
+  return parts.join(sep)
+})
 
 function getDismissKey() {
   return authStore.isAuthenticated ? DISMISS_KEY_USER : DISMISS_KEY_GUEST
@@ -136,8 +144,7 @@ function checkAndShowAnnouncement() {
 watch(
   () => ({ announcement: settingsStore.appSettings.announcement, isAuth: authStore.isAuthenticated }),
   () => {
-    const block = currentBlock.value
-    if (block?.enabled && block?.content && !isDismissed()) {
+    if (enabled.value && content.value && !isDismissed()) {
       visible.value = true
     }
   },
