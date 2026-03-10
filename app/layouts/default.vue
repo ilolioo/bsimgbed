@@ -117,7 +117,17 @@
             <!-- 分隔线 -->
             <div class="w-px h-6 bg-gray-400 dark:bg-gray-600 flex-shrink-0"></div>
 
-            <!-- 登录/登出 -->
+            <!-- 我的（登录后）、注册/登录 -->
+            <NuxtLink
+              v-if="authStore.isAuthenticated"
+              to="/settings?tab=api-private"
+              class="nav-link nav-link-icon sm:nav-link-text"
+              :class="{ 'nav-link-active': route.path === '/settings' && route.query?.tab === 'api-private' }"
+              title="我的"
+            >
+              <Icon name="heroicons:user-circle" class="w-5 h-5 flex-shrink-0" />
+              <span class="hidden sm:inline">我的</span>
+            </NuxtLink>
             <button
               v-if="authStore.isAuthenticated"
               @click="handleLogout"
@@ -127,16 +137,26 @@
               <Icon name="heroicons:arrow-right-on-rectangle" class="w-5 h-5 flex-shrink-0" />
               <span class="hidden sm:inline">登出</span>
             </button>
-            <NuxtLink
-              v-else
-              to="/login"
-              class="nav-link nav-link-icon sm:nav-link-text"
-              :class="{ 'nav-link-active': route.path === '/login' }"
-              title="登录"
-            >
-              <Icon name="heroicons:arrow-left-on-rectangle" class="w-5 h-5 flex-shrink-0" />
-              <span class="hidden sm:inline">登录</span>
-            </NuxtLink>
+            <template v-else>
+              <NuxtLink
+                to="/register"
+                class="nav-link nav-link-icon sm:nav-link-text"
+                :class="{ 'nav-link-active': route.path === '/register' }"
+                title="注册"
+              >
+                <Icon name="heroicons:user-plus" class="w-5 h-5 flex-shrink-0" />
+                <span class="hidden sm:inline">注册</span>
+              </NuxtLink>
+              <NuxtLink
+                to="/login"
+                class="nav-link nav-link-icon sm:nav-link-text"
+                :class="{ 'nav-link-active': route.path === '/login' }"
+                title="登录"
+              >
+                <Icon name="heroicons:arrow-left-on-rectangle" class="w-5 h-5 flex-shrink-0" />
+                <span class="hidden sm:inline">登录</span>
+              </NuxtLink>
+            </template>
 
             <!-- 暗黑模式切换 -->
             <ThemeToggle class="flex-shrink-0" />
