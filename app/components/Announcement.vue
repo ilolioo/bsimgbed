@@ -50,16 +50,55 @@
     </Transition>
   </Teleport>
 
-  <!-- 顶部横幅形式（在首页上传区域上方显示） -->
+  <!-- 顶部横幅形式（多条时可手动翻滚） -->
   <Transition name="announcement-banner">
     <div
       v-if="visible && displayType === 'banner'"
       class="px-4 py-3 rounded-lg mb-4 bg-gray-200/80 dark:bg-gray-700/80 text-gray-900 dark:text-gray-300 border border-gray-300/50 dark:border-gray-600/50"
     >
-      <div class="flex items-center justify-between gap-4">
-        <div class="flex items-center gap-3 flex-1 min-w-0">
-          <Icon name="heroicons:megaphone" class="w-5 h-5 flex-shrink-0 text-gray-700 dark:text-gray-300 shrink-0" />
-          <div class="prose prose-sm prose-gray-900 dark:prose-invert max-w-none flex-1 min-w-0 truncate-content text-gray-900 dark:text-gray-300 announcement-banner-content" v-html="content"></div>
+      <div class="flex items-center gap-2">
+        <Icon name="heroicons:megaphone" class="w-5 h-5 flex-shrink-0 text-gray-700 dark:text-gray-300 shrink-0" />
+        <!-- 多条时：上一页 -->
+        <button
+          v-if="bannerItems.length > 1"
+          type="button"
+          @click="bannerPrev"
+          class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-400/30 dark:hover:bg-gray-500/50 transition-colors text-gray-700 dark:text-gray-300"
+          title="上一条"
+        >
+          <Icon name="heroicons:chevron-left" class="w-5 h-5" />
+        </button>
+        <!-- 当前条内容 -->
+        <div class="flex-1 min-w-0 flex items-center gap-2">
+          <Transition name="banner-slide" mode="out-in">
+            <div
+              :key="bannerIndex"
+              class="prose prose-sm prose-gray-900 dark:prose-invert max-w-none flex-1 min-w-0 truncate-content text-gray-900 dark:text-gray-300 announcement-banner-content"
+              v-html="bannerItems[bannerIndex] || ''"
+            />
+          </Transition>
+        </div>
+        <!-- 多条时：下一页 -->
+        <button
+          v-if="bannerItems.length > 1"
+          type="button"
+          @click="bannerNext"
+          class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-400/30 dark:hover:bg-gray-500/50 transition-colors text-gray-700 dark:text-gray-300"
+          title="下一条"
+        >
+          <Icon name="heroicons:chevron-right" class="w-5 h-5" />
+        </button>
+        <!-- 指示点（多条时） -->
+        <div v-if="bannerItems.length > 1" class="flex items-center gap-1 flex-shrink-0">
+          <button
+            v-for="(_, i) in bannerItems"
+            :key="i"
+            type="button"
+            @click="bannerIndex = i"
+            class="w-2 h-2 rounded-full transition-colors"
+            :class="i === bannerIndex ? 'bg-primary-500 dark:bg-primary-400' : 'bg-gray-400 dark:bg-gray-500 hover:bg-gray-500 dark:hover:bg-gray-400'"
+            :title="'第 ' + (i + 1) + ' 条'"
+          />
         </div>
         <button
           @click="close"
@@ -95,15 +134,37 @@ const currentBlock = computed(() => {
 })
 const enabled = computed(() => currentBlock.value.enabled || false)
 const displayType = computed(() => currentBlock.value.displayType || 'modal')
-// 多条公告：取 items 中非空 content 用分隔符合并为一段 HTML 展示
-const content = computed(() => {
+// 公告条目列表（非空 content），用于弹窗合并展示与横幅逐条翻滚
+const announcementParts = computed(() => {
   const block = currentBlock.value
   const items = Array.isArray(block.items) ? block.items : (block.content !== undefined ? [{ id: '1', content: block.content }] : [])
-  const parts = items.map(it => (it && it.content != null && String(it.content).trim() !== '') ? String(it.content).trim() : null).filter(Boolean)
+  return items.map(it => (it && it.content != null && String(it.content).trim() !== '') ? String(it.content).trim() : null).filter(Boolean)
+})
+// 弹窗用：合并为一段 HTML
+const content = computed(() => {
+  const parts = announcementParts.value
   if (parts.length === 0) return ''
   const sep = '<hr class="my-3 border-gray-200 dark:border-gray-600" />'
   return parts.join(sep)
 })
+// 横幅用：多条时逐条展示，可手动翻滚
+const bannerItems = computed(() => announcementParts.value)
+const bannerIndex = ref(0)
+watch(bannerItems, (items) => {
+  const maxIdx = Math.max(0, items.length - 1)
+  if (bannerIndex.value > maxIdx) bannerIndex.value = maxIdx
+}, { immediate: true })
+watch(() => currentBlock.value, () => { bannerIndex.value = 0 })
+function bannerPrev() {
+  const n = bannerItems.value.length
+  if (n <= 1) return
+  bannerIndex.value = (bannerIndex.value - 1 + n) % n
+}
+function bannerNext() {
+  const n = bannerItems.value.length
+  if (n <= 1) return
+  bannerIndex.value = (bannerIndex.value + 1) % n
+}
 
 function getDismissKey() {
   return authStore.isAuthenticated ? DISMISS_KEY_USER : DISMISS_KEY_GUEST
@@ -190,6 +251,20 @@ onMounted(() => {
 .announcement-banner-leave-to {
   transform: translateY(-20px);
   opacity: 0;
+}
+
+/* 横幅内多条公告切换 */
+.banner-slide-enter-active,
+.banner-slide-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.banner-slide-enter-from {
+  opacity: 0;
+  transform: translateX(12px);
+}
+.banner-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-12px);
 }
 
 /* 横幅内容截断 */
