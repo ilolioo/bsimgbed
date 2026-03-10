@@ -6,16 +6,20 @@ export default defineEventHandler(async (event) => {
     const settings = await db.settings.findOne({ key: 'appSettings' })
     const emailConfig = await getEmailConfig()
 
-    const defaultItems = () => [{ id: '1', content: '' }]
-    const defaultBlock = () => ({ enabled: false, displayType: 'modal', items: defaultItems() })
+    const defaultItems = () => [{ id: '1', content: '', displayType: 'modal' }]
+    const defaultBlock = () => ({ enabled: false, displayType: 'modal', items: defaultItems(), bannerAutoPlay: false, bannerSpeed: 5 })
     const defaultAnnouncement = () => ({ guest: defaultBlock(), user: defaultBlock() })
 
     function toItems(block) {
       if (!block || typeof block !== 'object') return defaultItems()
       if (Array.isArray(block.items) && block.items.length > 0) {
-        return block.items.map((it, i) => ({ id: (it && it.id) ? String(it.id) : `item-${i + 1}`, content: (it && it.content !== undefined) ? String(it.content) : '' }))
+        return block.items.map((it, i) => ({
+          id: (it && it.id) ? String(it.id) : `item-${i + 1}`,
+          content: (it && it.content !== undefined) ? String(it.content) : '',
+          displayType: (it && it.displayType && ['modal', 'banner'].includes(it.displayType)) ? it.displayType : 'modal'
+        }))
       }
-      if (block.content !== undefined) return [{ id: '1', content: String(block.content) }]
+      if (block.content !== undefined) return [{ id: '1', content: String(block.content), displayType: 'modal' }]
       return defaultItems()
     }
 
@@ -24,17 +28,16 @@ export default defineEventHandler(async (event) => {
       const hasGuestUser = ann.guest && ann.user
       const guestSrc = hasGuestUser ? ann.guest : (ann.enabled !== undefined ? ann : null)
       const userSrc = hasGuestUser ? ann.user : defaultBlock()
+      const blockDefault = (src, def) => ({
+        enabled: !!src && src.enabled !== false,
+        displayType: (src?.displayType === 'banner') ? 'banner' : 'modal',
+        items: toItems(src),
+        bannerAutoPlay: !!src?.bannerAutoPlay,
+        bannerSpeed: (typeof src?.bannerSpeed === 'number' && src.bannerSpeed >= 2 && src.bannerSpeed <= 120) ? Math.round(src.bannerSpeed) : 5
+      })
       return {
-        guest: {
-          enabled: !!guestSrc && guestSrc.enabled !== false,
-          displayType: (guestSrc?.displayType === 'banner') ? 'banner' : 'modal',
-          items: toItems(guestSrc)
-        },
-        user: {
-          enabled: userSrc?.enabled !== false,
-          displayType: (userSrc?.displayType === 'banner') ? 'banner' : 'modal',
-          items: toItems(userSrc)
-        }
+        guest: blockDefault(guestSrc, defaultBlock()),
+        user: blockDefault(userSrc, defaultBlock())
       }
     }
 

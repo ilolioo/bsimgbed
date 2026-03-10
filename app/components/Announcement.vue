@@ -1,11 +1,11 @@
 <template>
-  <!-- 弹窗形式 -->
+  <!-- 弹窗形式（展示形式为弹窗的条目） -->
   <Teleport to="body">
     <Transition name="announcement-modal">
       <div
-        v-if="visible && displayType === 'modal'"
+        v-if="modalVisible"
         class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-        @click="close"
+        @click="close('modal')"
       >
         <div
           class="card w-full max-w-lg p-6 shadow-2xl"
@@ -18,7 +18,7 @@
               公告
             </h3>
             <button
-              @click="close"
+              @click="close('modal')"
               class="text-gray-600 hover:text-gray-800 dark:text-white dark:hover:text-gray-200 transition-colors"
             >
               <Icon name="heroicons:x-mark" class="w-5 h-5 text-gray-600 dark:text-white shrink-0" />
@@ -39,7 +39,7 @@
               不再提示
             </button>
             <button
-              @click="close"
+              @click="close('modal')"
               class="btn-primary"
             >
               我知道了
@@ -50,10 +50,10 @@
     </Transition>
   </Teleport>
 
-  <!-- 顶部横幅形式（多条时可手动翻滚） -->
+  <!-- 顶部横幅形式（展示形式为横幅的条目，可手动或自动轮播） -->
   <Transition name="announcement-banner">
     <div
-      v-if="visible && displayType === 'banner'"
+      v-if="bannerVisible"
       class="px-4 py-3 rounded-lg mb-4 bg-gray-200/80 dark:bg-gray-700/80 text-gray-900 dark:text-gray-300 border border-gray-300/50 dark:border-gray-600/50"
     >
       <div class="flex items-center gap-2">
@@ -101,7 +101,7 @@
           />
         </div>
         <button
-          @click="close"
+          @click="close('banner')"
           class="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-400/30 dark:hover:bg-gray-500/50 rounded-lg transition-colors text-gray-800 dark:text-gray-300"
           title="关闭公告"
         >
@@ -113,7 +113,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useSettingsStore } from '~/stores/settings'
 import { useAuthStore } from '~/stores/auth'
 
@@ -123,38 +123,85 @@ const authStore = useAuthStore()
 const DISMISS_KEY_GUEST = 'announcement_guest_dismissed_until'
 const DISMISS_KEY_USER = 'announcement_user_dismissed_until'
 
-const visible = ref(false)
+const modalClosed = ref(false)
+const bannerClosed = ref(false)
 
 // 按身份选取公告：未登录用游客公告，已登录用普通用户公告
 const announcement = computed(() => settingsStore.appSettings.announcement || {})
 const currentBlock = computed(() => {
   const a = announcement.value
-  if (authStore.isAuthenticated) return a.user || { enabled: false, displayType: 'modal', items: [{ id: '1', content: '' }] }
-  return a.guest || (a.enabled !== undefined ? a : { enabled: false, displayType: 'modal', items: [{ id: '1', content: '' }] })
+  const fallback = { enabled: false, displayType: 'modal', items: [{ id: '1', content: '', displayType: 'modal' }], bannerAutoPlay: false, bannerSpeed: 5 }
+  if (authStore.isAuthenticated) return a.user || fallback
+  return a.guest || (a.enabled !== undefined ? a : fallback)
 })
 const enabled = computed(() => currentBlock.value.enabled || false)
-const displayType = computed(() => currentBlock.value.displayType || 'modal')
-// 公告条目列表（非空 content），用于弹窗合并展示与横幅逐条翻滚
-const announcementParts = computed(() => {
+const blockDisplayType = computed(() => currentBlock.value.displayType || 'modal')
+
+// 按条目的展示形式拆分：每条 item.displayType 或 block.displayType
+const modalItemsContent = computed(() => {
   const block = currentBlock.value
-  const items = Array.isArray(block.items) ? block.items : (block.content !== undefined ? [{ id: '1', content: block.content }] : [])
-  return items.map(it => (it && it.content != null && String(it.content).trim() !== '') ? String(it.content).trim() : null).filter(Boolean)
+  const items = Array.isArray(block.items) ? block.items : (block.content !== undefined ? [{ content: block.content, displayType: blockDisplayType.value }] : [])
+  const form = (it) => (it && it.displayType === 'banner') ? 'banner' : 'modal'
+  return items
+    .filter(it => it && form(it) === 'modal')
+    .map(it => (it.content != null && String(it.content).trim() !== '') ? String(it.content).trim() : null)
+    .filter(Boolean)
 })
+const bannerItemsContent = computed(() => {
+  const block = currentBlock.value
+  const items = Array.isArray(block.items) ? block.items : (block.content !== undefined ? [{ content: block.content, displayType: blockDisplayType.value }] : [])
+  const form = (it) => (it && it.displayType === 'banner') ? 'banner' : 'modal'
+  return items
+    .filter(it => it && form(it) === 'banner')
+    .map(it => (it.content != null && String(it.content).trim() !== '') ? String(it.content).trim() : null)
+    .filter(Boolean)
+})
+
 // 弹窗用：合并为一段 HTML
 const content = computed(() => {
-  const parts = announcementParts.value
+  const parts = modalItemsContent.value
   if (parts.length === 0) return ''
   const sep = '<hr class="my-3 border-gray-200 dark:border-gray-600" />'
   return parts.join(sep)
 })
-// 横幅用：多条时逐条展示，可手动翻滚
-const bannerItems = computed(() => announcementParts.value)
+// 横幅用：逐条展示，可手动或自动轮播
+const bannerItems = computed(() => bannerItemsContent.value)
 const bannerIndex = ref(0)
+const bannerAutoPlay = computed(() => !!currentBlock.value.bannerAutoPlay)
+const bannerSpeed = computed(() => Math.max(2, Math.min(120, Number(currentBlock.value.bannerSpeed) || 5)))
+
 watch(bannerItems, (items) => {
   const maxIdx = Math.max(0, items.length - 1)
   if (bannerIndex.value > maxIdx) bannerIndex.value = maxIdx
 }, { immediate: true })
 watch(() => currentBlock.value, () => { bannerIndex.value = 0 })
+
+let bannerTimer = null
+function startBannerTimer() {
+  if (bannerTimer) return
+  const ms = bannerSpeed.value * 1000
+  bannerTimer = setInterval(() => {
+    const n = bannerItems.value.length
+    if (n <= 1) return
+    bannerIndex.value = (bannerIndex.value + 1) % n
+  }, ms)
+}
+function stopBannerTimer() {
+  if (bannerTimer) {
+    clearInterval(bannerTimer)
+    bannerTimer = null
+  }
+}
+watch(
+  () => ({ visible: bannerVisible.value, auto: bannerAutoPlay.value, len: bannerItems.value.length }),
+  ({ visible, auto, len }) => {
+    stopBannerTimer()
+    if (visible && auto && len > 1) startBannerTimer()
+  },
+  { immediate: true }
+)
+onUnmounted(stopBannerTimer)
+
 function bannerPrev() {
   const n = bannerItems.value.length
   if (n <= 1) return
@@ -166,23 +213,25 @@ function bannerNext() {
   bannerIndex.value = (bannerIndex.value + 1) % n
 }
 
+// 是否已“不再提示”
+function isDismissed() {
+  if (typeof window === 'undefined') return false
+  const dismissedUntil = localStorage.getItem(getDismissKey())
+  if (!dismissedUntil) return false
+  return Date.now() < parseInt(dismissedUntil, 10)
+}
 function getDismissKey() {
   return authStore.isAuthenticated ? DISMISS_KEY_USER : DISMISS_KEY_GUEST
 }
 
-function isDismissed() {
-  if (typeof window === 'undefined') return false
+const modalVisible = computed(() => enabled.value && modalItemsContent.value.length > 0 && !isDismissed() && !modalClosed.value)
+const bannerVisible = computed(() => enabled.value && bannerItems.value.length > 0 && !isDismissed() && !bannerClosed.value)
 
-  const dismissedUntil = localStorage.getItem(getDismissKey())
-  if (!dismissedUntil) return false
-
-  const dismissedTime = parseInt(dismissedUntil, 10)
-  return Date.now() < dismissedTime
-}
-
-// 关闭公告（仅本次）
-function close() {
-  visible.value = false
+// 关闭公告（仅本次）：可指定关闭弹窗或横幅
+function close(which) {
+  if (which === 'modal') modalClosed.value = true
+  else if (which === 'banner') bannerClosed.value = true
+  else { modalClosed.value = true; bannerClosed.value = true }
 }
 
 // 不再提示（有效期1天）
@@ -191,31 +240,18 @@ function dismissForDay() {
     const expireTime = Date.now() + 24 * 60 * 60 * 1000
     localStorage.setItem(getDismissKey(), expireTime.toString())
   }
-  visible.value = false
+  modalClosed.value = true
+  bannerClosed.value = true
 }
 
-// 检查并显示公告
-function checkAndShowAnnouncement() {
-  if (enabled.value && content.value && !isDismissed()) {
-    visible.value = true
-  }
-}
-
-// 监听公告配置与登录状态变化
+// 配置或登录变化时重新展示
 watch(
   () => ({ announcement: settingsStore.appSettings.announcement, isAuth: authStore.isAuthenticated }),
   () => {
-    if (enabled.value && content.value && !isDismissed()) {
-      visible.value = true
-    }
-  },
-  { immediate: true }
+    modalClosed.value = false
+    bannerClosed.value = false
+  }
 )
-
-// 初始化时检查是否需要显示公告
-onMounted(() => {
-  checkAndShowAnnouncement()
-})
 </script>
 
 <style scoped>

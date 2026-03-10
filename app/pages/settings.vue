@@ -188,7 +188,7 @@
           <Icon name="heroicons:megaphone" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
           公告设置
         </h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">可为游客（未登录）与普通用户（已登录）分别设置多条公告，展示形式支持弹窗或顶部横幅；多条公告将合并展示。</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">可为游客与普通用户分别设置多条公告；每条公告可设为弹窗或横幅形式，横幅支持自动轮播与轮播速度配置。</p>
 
         <form @submit.prevent="saveAnnouncementSettings" class="space-y-8">
           <!-- 游客公告 -->
@@ -206,6 +206,7 @@
               </button>
             </div>
             <template v-if="announcementSettings.guest.enabled">
+              <p class="text-xs text-gray-500 dark:text-gray-400">新添加的公告默认形式：</p>
               <div class="flex gap-4">
                 <label class="inline-flex items-center gap-2 cursor-pointer">
                   <input type="radio" v-model="announcementSettings.guest.displayType" value="modal" class="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500" />
@@ -217,21 +218,52 @@
                 </label>
               </div>
               <div class="space-y-3">
-                <div v-for="(item, idx) in announcementSettings.guest.items" :key="item.id" class="flex gap-2 items-start">
-                  <div class="flex-1 min-w-0">
-                    <textarea v-model="item.content" rows="3" class="input w-full font-mono text-sm" :placeholder="'公告 ' + (idx + 1) + '，支持 HTML'"></textarea>
-                    <div v-if="item.content" class="mt-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <div v-html="item.content" class="prose prose-sm dark:prose-invert max-w-none"></div>
+                <div v-for="(item, idx) in announcementSettings.guest.items" :key="item.id" class="rounded border border-gray-200 dark:border-gray-600 p-3 space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">第 {{ idx + 1 }} 条 · 展示形式</span>
+                    <div class="flex items-center gap-2">
+                      <label class="inline-flex items-center gap-1 cursor-pointer">
+                        <input type="radio" v-model="item.displayType" value="modal" class="w-3.5 h-3.5 text-primary-600" />
+                        <span class="text-xs text-gray-600 dark:text-gray-300">弹窗</span>
+                      </label>
+                      <label class="inline-flex items-center gap-1 cursor-pointer">
+                        <input type="radio" v-model="item.displayType" value="banner" class="w-3.5 h-3.5 text-primary-600" />
+                        <span class="text-xs text-gray-600 dark:text-gray-300">横幅</span>
+                      </label>
+                      <button type="button" @click="removeAnnouncementItem('guest', idx)" class="p-1.5 text-gray-500 hover:text-red-600 rounded" title="删除本条" :disabled="announcementSettings.guest.items.length <= 1">
+                        <Icon name="heroicons:trash" class="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  <button type="button" @click="removeAnnouncementItem('guest', idx)" class="btn-secondary p-2 shrink-0" title="删除本条" :disabled="announcementSettings.guest.items.length <= 1">
-                    <Icon name="heroicons:trash" class="w-4 h-4" />
-                  </button>
+                  <textarea v-model="item.content" rows="3" class="input w-full font-mono text-sm" :placeholder="'公告内容，支持 HTML'"></textarea>
+                  <div v-if="item.content" class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div v-html="item.content" class="prose prose-sm dark:prose-invert max-w-none"></div>
+                  </div>
                 </div>
                 <button type="button" @click="addAnnouncementItem('guest')" class="btn-secondary text-sm inline-flex items-center gap-1">
                   <Icon name="heroicons:plus" class="w-4 h-4" />
                   添加一条公告
                 </button>
+              </div>
+              <!-- 横幅选项：存在横幅类公告时显示 -->
+              <div v-if="announcementSettings.guest.items.some(i => i.displayType === 'banner')" class="pt-3 border-t border-gray-200 dark:border-gray-600 space-y-3">
+                <h4 class="text-sm font-medium text-gray-800 dark:text-gray-200">横幅轮播</h4>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-700 dark:text-gray-300">自动轮播</span>
+                  <button
+                    type="button"
+                    @click="announcementSettings.guest.bannerAutoPlay = !announcementSettings.guest.bannerAutoPlay"
+                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                    :class="announcementSettings.guest.bannerAutoPlay ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
+                  >
+                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform" :class="announcementSettings.guest.bannerAutoPlay ? 'translate-x-6' : 'translate-x-1'" />
+                  </button>
+                </div>
+                <div v-if="announcementSettings.guest.bannerAutoPlay" class="flex items-center gap-2">
+                  <label class="text-sm text-gray-700 dark:text-gray-300">轮播间隔（秒）</label>
+                  <input v-model.number="announcementSettings.guest.bannerSpeed" type="number" min="2" max="120" class="input w-20 text-sm" />
+                  <span class="text-xs text-gray-500 dark:text-gray-400">2～120 秒</span>
+                </div>
               </div>
             </template>
           </div>
@@ -251,6 +283,7 @@
               </button>
             </div>
             <template v-if="announcementSettings.user.enabled">
+              <p class="text-xs text-gray-500 dark:text-gray-400">新添加的公告默认形式：</p>
               <div class="flex gap-4">
                 <label class="inline-flex items-center gap-2 cursor-pointer">
                   <input type="radio" v-model="announcementSettings.user.displayType" value="modal" class="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500" />
@@ -262,21 +295,51 @@
                 </label>
               </div>
               <div class="space-y-3">
-                <div v-for="(item, idx) in announcementSettings.user.items" :key="item.id" class="flex gap-2 items-start">
-                  <div class="flex-1 min-w-0">
-                    <textarea v-model="item.content" rows="3" class="input w-full font-mono text-sm" :placeholder="'公告 ' + (idx + 1) + '，支持 HTML'"></textarea>
-                    <div v-if="item.content" class="mt-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <div v-html="item.content" class="prose prose-sm dark:prose-invert max-w-none"></div>
+                <div v-for="(item, idx) in announcementSettings.user.items" :key="item.id" class="rounded border border-gray-200 dark:border-gray-600 p-3 space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">第 {{ idx + 1 }} 条 · 展示形式</span>
+                    <div class="flex items-center gap-2">
+                      <label class="inline-flex items-center gap-1 cursor-pointer">
+                        <input type="radio" v-model="item.displayType" value="modal" class="w-3.5 h-3.5 text-primary-600" />
+                        <span class="text-xs text-gray-600 dark:text-gray-300">弹窗</span>
+                      </label>
+                      <label class="inline-flex items-center gap-1 cursor-pointer">
+                        <input type="radio" v-model="item.displayType" value="banner" class="w-3.5 h-3.5 text-primary-600" />
+                        <span class="text-xs text-gray-600 dark:text-gray-300">横幅</span>
+                      </label>
+                      <button type="button" @click="removeAnnouncementItem('user', idx)" class="p-1.5 text-gray-500 hover:text-red-600 rounded" title="删除本条" :disabled="announcementSettings.user.items.length <= 1">
+                        <Icon name="heroicons:trash" class="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  <button type="button" @click="removeAnnouncementItem('user', idx)" class="btn-secondary p-2 shrink-0" title="删除本条" :disabled="announcementSettings.user.items.length <= 1">
-                    <Icon name="heroicons:trash" class="w-4 h-4" />
-                  </button>
+                  <textarea v-model="item.content" rows="3" class="input w-full font-mono text-sm" :placeholder="'公告内容，支持 HTML'"></textarea>
+                  <div v-if="item.content" class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div v-html="item.content" class="prose prose-sm dark:prose-invert max-w-none"></div>
+                  </div>
                 </div>
                 <button type="button" @click="addAnnouncementItem('user')" class="btn-secondary text-sm inline-flex items-center gap-1">
                   <Icon name="heroicons:plus" class="w-4 h-4" />
                   添加一条公告
                 </button>
+              </div>
+              <div v-if="announcementSettings.user.items.some(i => i.displayType === 'banner')" class="pt-3 border-t border-gray-200 dark:border-gray-600 space-y-3">
+                <h4 class="text-sm font-medium text-gray-800 dark:text-gray-200">横幅轮播</h4>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-700 dark:text-gray-300">自动轮播</span>
+                  <button
+                    type="button"
+                    @click="announcementSettings.user.bannerAutoPlay = !announcementSettings.user.bannerAutoPlay"
+                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                    :class="announcementSettings.user.bannerAutoPlay ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
+                  >
+                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform" :class="announcementSettings.user.bannerAutoPlay ? 'translate-x-6' : 'translate-x-1'" />
+                  </button>
+                </div>
+                <div v-if="announcementSettings.user.bannerAutoPlay" class="flex items-center gap-2">
+                  <label class="text-sm text-gray-700 dark:text-gray-300">轮播间隔（秒）</label>
+                  <input v-model.number="announcementSettings.user.bannerSpeed" type="number" min="2" max="120" class="input w-20 text-sm" />
+                  <span class="text-xs text-gray-500 dark:text-gray-400">2～120 秒</span>
+                </div>
               </div>
             </template>
           </div>
@@ -985,8 +1048,8 @@ const faviconError = ref(false)
 const backgroundError = ref(false)
 const savingApp = ref(false)
 
-const defaultAnnouncementBlock = () => ({ enabled: false, displayType: 'modal', items: [{ id: '1', content: '' }] })
-// 公告设置：游客与普通用户分开，每类支持多条公告（items）
+const defaultAnnouncementBlock = () => ({ enabled: false, displayType: 'modal', items: [{ id: '1', content: '', displayType: 'modal' }], bannerAutoPlay: false, bannerSpeed: 5 })
+// 公告设置：游客与普通用户分开，每类支持多条公告（items），每条可设弹窗/横幅，横幅可配置自动轮播
 const announcementSettings = reactive({
   guest: defaultAnnouncementBlock(),
   user: defaultAnnouncementBlock()
@@ -994,8 +1057,9 @@ const announcementSettings = reactive({
 
 function addAnnouncementItem(blockKey) {
   const block = announcementSettings[blockKey]
-  if (!block.items) block.items = [{ id: '1', content: '' }]
-  block.items.push({ id: `item-${Date.now()}`, content: '' })
+  if (!block.items) block.items = [{ id: '1', content: '', displayType: 'modal' }]
+  const defaultForm = (block.displayType === 'banner') ? 'banner' : 'modal'
+  block.items.push({ id: `item-${Date.now()}`, content: '', displayType: defaultForm })
 }
 
 function removeAnnouncementItem(blockKey, index) {
@@ -1103,12 +1167,16 @@ async function saveAnnouncementSettings() {
         guest: {
           enabled: announcementSettings.guest.enabled,
           displayType: announcementSettings.guest.displayType,
-          items: (announcementSettings.guest.items || []).map(it => ({ id: it.id, content: it.content || '' }))
+          items: (announcementSettings.guest.items || []).map(it => ({ id: it.id, content: it.content || '', displayType: (it.displayType === 'banner') ? 'banner' : 'modal' })),
+          bannerAutoPlay: !!announcementSettings.guest.bannerAutoPlay,
+          bannerSpeed: Math.min(120, Math.max(2, Number(announcementSettings.guest.bannerSpeed) || 5))
         },
         user: {
           enabled: announcementSettings.user.enabled,
           displayType: announcementSettings.user.displayType,
-          items: (announcementSettings.user.items || []).map(it => ({ id: it.id, content: it.content || '' }))
+          items: (announcementSettings.user.items || []).map(it => ({ id: it.id, content: it.content || '', displayType: (it.displayType === 'banner') ? 'banner' : 'modal' })),
+          bannerAutoPlay: !!announcementSettings.user.bannerAutoPlay,
+          bannerSpeed: Math.min(120, Math.max(2, Number(announcementSettings.user.bannerSpeed) || 5))
         }
       }
     })
@@ -1563,23 +1631,35 @@ onMounted(async () => {
   const def = defaultAnnouncementBlock()
   const toItems = (block) => {
     if (!block) return def.items
-    if (Array.isArray(block.items) && block.items.length > 0) return block.items.map(it => ({ id: it.id || `item-${Date.now()}`, content: (it.content !== undefined && it.content !== null) ? String(it.content) : '' }))
-    if (block.content !== undefined && block.content !== null) return [{ id: '1', content: String(block.content) }]
+    if (Array.isArray(block.items) && block.items.length > 0) {
+      return block.items.map(it => ({
+        id: it.id || `item-${Date.now()}`,
+        content: (it.content !== undefined && it.content !== null) ? String(it.content) : '',
+        displayType: (it.displayType === 'banner') ? 'banner' : 'modal'
+      }))
+    }
+    if (block.content !== undefined && block.content !== null) return [{ id: '1', content: String(block.content), displayType: 'modal' }]
     return def.items
   }
   if (announcement.guest && announcement.user) {
     announcementSettings.guest.enabled = announcement.guest.enabled !== false
     announcementSettings.guest.displayType = announcement.guest.displayType || 'modal'
     announcementSettings.guest.items = toItems(announcement.guest)
+    announcementSettings.guest.bannerAutoPlay = !!announcement.guest.bannerAutoPlay
+    announcementSettings.guest.bannerSpeed = Math.min(120, Math.max(2, Number(announcement.guest.bannerSpeed) || 5))
     announcementSettings.user.enabled = announcement.user.enabled !== false
     announcementSettings.user.displayType = announcement.user.displayType || 'modal'
     announcementSettings.user.items = toItems(announcement.user)
+    announcementSettings.user.bannerAutoPlay = !!announcement.user.bannerAutoPlay
+    announcementSettings.user.bannerSpeed = Math.min(120, Math.max(2, Number(announcement.user.bannerSpeed) || 5))
   } else if (announcement.enabled !== undefined) {
     announcementSettings.guest.enabled = announcement.enabled !== false
     announcementSettings.guest.displayType = announcement.displayType || 'modal'
     announcementSettings.guest.items = toItems(announcement)
-    announcementSettings.user = { ...def }
-    announcementSettings.user.items = [...def.items]
+    announcementSettings.guest.bannerAutoPlay = false
+    announcementSettings.guest.bannerSpeed = 5
+    announcementSettings.user = { ...def, items: [...def.items] }
+    announcementSettings.user.items = announcementSettings.user.items.map(it => ({ ...it, displayType: it.displayType || 'modal' }))
   } else {
     announcementSettings.guest = { ...def, items: [...def.items] }
     announcementSettings.user = { ...def, items: [...def.items] }
