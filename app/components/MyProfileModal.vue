@@ -72,7 +72,16 @@
                     placeholder="不修改请留空"
                     :disabled="savingProfile"
                   />
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">至少 6 位，不能为纯数字</p>
+                </div>
+                <div v-if="profileForm.newPassword">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">确认新密码</label>
+                  <input
+                    v-model="profileForm.confirmPassword"
+                    type="password"
+                    class="input w-full"
+                    placeholder="请再输入一遍新密码"
+                    :disabled="savingProfile"
+                  />
                 </div>
                 <button type="submit" class="btn-primary" :disabled="savingProfile">
                   {{ savingProfile ? '保存中...' : '保存' }}
@@ -158,7 +167,7 @@ const settingsStore = useSettingsStore()
 const toastStore = useToastStore()
 
 const me = ref(null)
-const profileForm = reactive({ email: '', newPassword: '' })
+const profileForm = reactive({ email: '', newPassword: '', confirmPassword: '' })
 const savingProfile = ref(false)
 const loadingKeys = ref(false)
 const addingKey = ref(false)
@@ -175,6 +184,7 @@ async function fetchMe() {
       me.value = res.data
       profileForm.email = res.data.email || ''
       profileForm.newPassword = ''
+      profileForm.confirmPassword = ''
     }
   } catch (_) {
     me.value = null
@@ -207,6 +217,10 @@ watch(() => props.visible, (visible) => {
 })
 
 async function saveProfile() {
+  if (profileForm.newPassword && profileForm.newPassword !== profileForm.confirmPassword) {
+    toastStore.error('两次输入的新密码不一致')
+    return
+  }
   savingProfile.value = true
   try {
     const res = await $fetch('/api/auth/me', {
@@ -221,6 +235,7 @@ async function saveProfile() {
       authStore.updateUserProfile(res.data)
       me.value = res.data
       profileForm.newPassword = ''
+      profileForm.confirmPassword = ''
       toastStore.success(res.message || '已保存')
     } else {
       toastStore.error(res?.message || '保存失败')
