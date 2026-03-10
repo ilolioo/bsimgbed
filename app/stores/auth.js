@@ -97,6 +97,15 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('token', this.token)
         localStorage.setItem('user', JSON.stringify(this.user))
       }
+    },
+
+    // 更新用户资料（邮箱等，用于「我的」弹窗保存后同步）
+    updateUserProfile(data) {
+      if (!this.user || !data) return
+      this.user = { ...this.user, ...data }
+      if (import.meta.client) {
+        localStorage.setItem('user', JSON.stringify(this.user))
+      }
     }
   },
 

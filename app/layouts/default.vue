@@ -117,17 +117,17 @@
             <!-- 分隔线 -->
             <div class="w-px h-6 bg-gray-400 dark:bg-gray-600 flex-shrink-0"></div>
 
-            <!-- 我的（登录后）、注册/登录 -->
-            <NuxtLink
+            <!-- 我的（登录后弹窗）、注册/登录 -->
+            <button
               v-if="authStore.isAuthenticated"
-              to="/settings?tab=api-private"
+              type="button"
               class="nav-link nav-link-icon sm:nav-link-text"
-              :class="{ 'nav-link-active': route.path === '/settings' && route.query?.tab === 'api-private' }"
               title="我的"
+              @click="showMyModal = true"
             >
               <Icon name="heroicons:user-circle" class="w-5 h-5 flex-shrink-0" />
               <span class="hidden sm:inline">我的</span>
-            </NuxtLink>
+            </button>
             <button
               v-if="authStore.isAuthenticated"
               @click="handleLogout"
@@ -170,6 +170,9 @@
       <slot />
     </main>
 
+    <!-- 我的 弹窗 -->
+    <MyProfileModal :visible="showMyModal" @close="showMyModal = false" />
+
     <!-- Toast 组件 -->
     <Toast />
   </div>
@@ -184,6 +187,7 @@ import { useToastStore } from '~/stores/toast'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const showMyModal = ref(false)
 const settingsStore = useSettingsStore()
 const toastStore = useToastStore()
 
