@@ -380,10 +380,10 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">容量上限 (MB)</label>
                     <input v-model.number="b.sizeLimitMB" type="number" min="1" class="input w-32" />
                   </div>
-                  <!-- 允许游客使用 -->
+                  <!-- 游客可用 -->
                   <div class="flex items-center justify-between py-1">
                     <div>
-                      <label class="text-sm font-medium text-gray-700 dark:text-gray-300">允许游客使用</label>
+                      <label class="text-sm font-medium text-gray-700 dark:text-gray-300">游客可用</label>
                       <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">开启后，未登录用户可在首页选择此储存桶上传</p>
                     </div>
                     <button
@@ -395,6 +395,24 @@
                       <span
                         class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
                         :class="b.allowGuest !== false ? 'translate-x-6' : 'translate-x-1'"
+                      />
+                    </button>
+                  </div>
+                  <!-- 普通用户可用 -->
+                  <div class="flex items-center justify-between py-1">
+                    <div>
+                      <label class="text-sm font-medium text-gray-700 dark:text-gray-300">普通用户可用</label>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">开启后，已登录普通用户可在首页或 API 中选择此储存桶上传；管理员始终可用全部储存桶</p>
+                    </div>
+                    <button
+                      type="button"
+                      @click="b.allowUser = !b.allowUser"
+                      class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                      :class="b.allowUser !== false ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
+                    >
+                      <span
+                        class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                        :class="b.allowUser !== false ? 'translate-x-6' : 'translate-x-1'"
                       />
                     </button>
                   </div>
@@ -987,6 +1005,7 @@ function addBucket() {
     sizeLimitMB: 1024,
     usedSize: 0,
     allowGuest: true,
+    allowUser: true,
     showOnCapacity: true,
     webdav: { baseUrl: '', username: '', password: '', hasPassword: false },
     telegram: { token: '', chatId: '', apiBaseUrl: '', hasToken: false }
@@ -1083,6 +1102,7 @@ async function fetchStorageConfig() {
         sizeLimitMB: Math.round((b.sizeLimit ?? 1024 * 1024 * 1024) / 1024 / 1024),
         usedSize: b.usedSize ?? 0,
         allowGuest: b.allowGuest !== false,
+        allowUser: b.allowUser !== false,
         showOnCapacity: b.showOnCapacity !== false,
         webdav: b.webdav ? { baseUrl: b.webdav.baseUrl || '', username: b.webdav.username || '', password: '', hasPassword: !!b.webdav.hasPassword } : { baseUrl: '', username: '', password: '', hasPassword: false },
         telegram: b.telegram ? { token: '', chatId: b.telegram.chatId || '', apiBaseUrl: b.telegram.apiBaseUrl || '', hasToken: !!b.telegram.hasToken } : { token: '', chatId: '', apiBaseUrl: '', hasToken: false }
@@ -1103,6 +1123,7 @@ async function saveStorageConfig() {
       driver: b.driver,
       sizeLimit: (b.sizeLimitMB || 1024) * 1024 * 1024,
       allowGuest: b.allowGuest !== false,
+      allowUser: b.allowUser !== false,
       showOnCapacity: b.showOnCapacity !== false,
       webdav: b.driver === 'webdav' ? { baseUrl: b.webdav.baseUrl, username: b.webdav.username, password: b.webdav.password || undefined } : undefined,
       telegram: b.driver === 'telegram' ? { token: b.telegram.token || undefined, chatId: b.telegram.chatId, apiBaseUrl: b.telegram.apiBaseUrl || undefined } : undefined

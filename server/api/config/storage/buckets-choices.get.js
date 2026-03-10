@@ -3,7 +3,8 @@ import { optionalAuthMiddleware } from '../../../utils/authMiddleware.js'
 
 /**
  * 获取当前用户可选的储存桶列表（用于首页上传下拉）
- * - 未登录或非管理员：仅返回 allowGuest 为 true 的桶
+ * - 未登录（游客）：仅返回 allowGuest 为 true 的桶
+ * - 已登录普通用户：仅返回 allowUser 为 true 的桶
  * - 已登录管理员：返回全部桶
  */
 export default defineEventHandler(async (event) => {
@@ -19,6 +20,10 @@ export default defineEventHandler(async (event) => {
     let choices
     if (isAdmin) {
       choices = list.map(b => ({ id: b.id, name: b.name || b.id }))
+    } else if (user) {
+      choices = list
+        .filter(b => b.allowUser !== false)
+        .map(b => ({ id: b.id, name: b.name || b.id }))
     } else {
       choices = list
         .filter(b => b.allowGuest !== false)

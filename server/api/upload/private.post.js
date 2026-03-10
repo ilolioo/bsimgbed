@@ -123,13 +123,18 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 管理员/私有 API 可使用全部储存桶，校验请求的 bucketId
+    // 储存桶权限：管理员可用全部；普通用户仅可用 allowUser 为 true 的桶
     const { defaultId, buckets } = await getBucketsConfig()
     const allBucketIds = (buckets || []).map(b => b.id)
-    let bucketIdToUse = defaultId || allBucketIds[0]
+    const uploadUser = keyDoc.userId ? await db.users.findOne({ _id: keyDoc.userId }) : null
+    const isAdmin = uploadUser?.role === 'admin'
+    const allowedBucketIds = isAdmin
+      ? allBucketIds
+      : (buckets || []).filter(b => b.allowUser !== false).map(b => b.id)
+    let bucketIdToUse = defaultId || allowedBucketIds[0] || allBucketIds[0]
     if (requestedBucketId) {
-      if (!allBucketIds.includes(requestedBucketId)) {
-        throw createError({ statusCode: 400, message: '储存桶不存在' })
+      if (!allowedBucketIds.includes(requestedBucketId)) {
+        throw createError({ statusCode: 400, message: '储存桶不存在或您无权使用该储存桶' })
       }
       bucketIdToUse = requestedBucketId
     }

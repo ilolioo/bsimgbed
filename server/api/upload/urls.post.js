@@ -195,11 +195,15 @@ export default defineEventHandler(async (event) => {
     const effectiveConfig = { ...config, maxFileSize: effectiveMaxFileSize }
     const contentSafetyEnabled = publicConfigDoc?.value?.contentSafety?.enabled || false
 
-    // 解析上传目标储存桶
+    // 解析上传目标储存桶：管理员可用全部；普通用户仅可用 allowUser 为 true 的桶
     const { defaultId, buckets } = await getBucketsConfig()
     const allBucketIds = (buckets || []).map(b => b.id)
-    let bucketIdToUse = defaultId || allBucketIds[0]
-    if (requestedBucketId && allBucketIds.includes(String(requestedBucketId).trim())) {
+    const isAdmin = user?.role === 'admin'
+    const allowedBucketIds = isAdmin
+      ? allBucketIds
+      : (buckets || []).filter(b => b.allowUser !== false).map(b => b.id)
+    let bucketIdToUse = defaultId || allowedBucketIds[0] || allBucketIds[0]
+    if (requestedBucketId && allowedBucketIds.includes(String(requestedBucketId).trim())) {
       bucketIdToUse = String(requestedBucketId).trim()
     }
 

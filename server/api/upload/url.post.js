@@ -64,13 +64,18 @@ export default defineEventHandler(async (event) => {
     const configDoc = await db.settings.findOne({ key: 'privateApiConfig' })
     const config = configDoc?.value || {}
 
-    // 解析上传目标储存桶（登录/API Key 可使用全部桶）
+    // 解析上传目标储存桶：管理员可用全部；普通用户仅可用 allowUser 为 true 的桶
     const { defaultId, buckets } = await getBucketsConfig()
     const allBucketIds = (buckets || []).map(b => b.id)
-    let bucketIdToUse = defaultId || allBucketIds[0]
+    const uploadUserDoc = uploadUserId ? await db.users.findOne({ _id: uploadUserId }) : null
+    const isAdmin = uploadUserDoc?.role === 'admin'
+    const allowedBucketIds = isAdmin
+      ? allBucketIds
+      : (buckets || []).filter(b => b.allowUser !== false).map(b => b.id)
+    let bucketIdToUse = defaultId || allowedBucketIds[0] || allBucketIds[0]
     if (requestedBucketId) {
       const id = String(requestedBucketId).trim()
-      if (allBucketIds.includes(id)) bucketIdToUse = id
+      if (allowedBucketIds.includes(id)) bucketIdToUse = id
     }
 
     // 处理所有 URL
