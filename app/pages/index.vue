@@ -114,8 +114,8 @@
       </div>
     </section>
 
-    <!-- 图片查看器（懒加载，独立 chunk，关闭动画保留） -->
-    <LazyImageViewer
+    <!-- 图片查看器 -->
+    <ImageViewer
       :visible="viewerVisible"
       :src="viewerImage?.url || ''"
       :alt="viewerImage?.filename || ''"
@@ -123,8 +123,8 @@
       @close="closeViewer"
     />
 
-    <!-- 删除确认弹窗（懒加载） -->
-    <LazyModal
+    <!-- 删除确认弹窗 -->
+    <Modal
       :visible="showDeleteModal"
       title="确认删除"
       confirm-text="删除"
@@ -135,10 +135,10 @@
       <p class="text-gray-600 dark:text-gray-400">
         确定要删除这张图片吗？删除后可在设置页面进行硬删除。
       </p>
-    </LazyModal>
+    </Modal>
 
-    <!-- 批量删除确认弹窗（懒加载） -->
-    <LazyModal
+    <!-- 批量删除确认弹窗 -->
+    <Modal
       :visible="showBatchDeleteModal"
       title="确认批量删除"
       confirm-text="删除"
@@ -149,7 +149,7 @@
       <p class="text-gray-600 dark:text-gray-400">
         确定要删除选中的 {{ imagesStore.selectedIds.length }} 张图片吗？
       </p>
-    </LazyModal>
+    </Modal>
 
     <!-- 图片右键菜单 -->
     <Teleport to="body">
@@ -713,8 +713,8 @@ onMounted(async () => {
     imagesStore.setOnlyMine(!authStore.isAdmin)
   }
 
-  // 获取图片列表（不 await，优先首屏渲染，列表数据返回后自动更新）
-  imagesStore.fetchImages(true)
+  // 获取图片列表（authStore.init() 已在插件中调用）
+  await imagesStore.fetchImages(true)
 
   // 设置无限滚动
   setupIntersectionObserver()

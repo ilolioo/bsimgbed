@@ -58,7 +58,6 @@
         class="absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out group-hover:scale-105"
         :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
         loading="lazy"
-        decoding="async"
         @load="onImageLoad"
         @error="onImageError"
       />

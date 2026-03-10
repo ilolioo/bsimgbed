@@ -5,7 +5,6 @@ import { getRandomHeaders } from '../../utils/fetchHeaders.js'
 import { processImageWithConfig, generateTimestampId } from '../../utils/upload.js'
 import { getBucketsConfig } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
-import { createModerationTask } from '../../utils/moderationQueue.js'
 
 // 供第三方API调用
 export default defineEventHandler(async (event) => {
@@ -64,9 +63,6 @@ export default defineEventHandler(async (event) => {
     // 获取私有 API 配置
     const configDoc = await db.settings.findOne({ key: 'privateApiConfig' })
     const config = configDoc?.value || {}
-    const defaultMaxFileSize = config.maxFileSize || 100 * 1024 * 1024
-    const uploadUserDoc = uploadUserId ? await db.users.findOne({ _id: uploadUserId }) : null
-    const maxFileSize = (uploadUserDoc?.maxFileSize != null && uploadUserDoc.maxFileSize > 0) ? uploadUserDoc.maxFileSize : defaultMaxFileSize
 
     // 解析上传目标储存桶（登录/API Key 可使用全部桶）
     const { defaultId, buckets } = await getBucketsConfig()
@@ -76,9 +72,6 @@ export default defineEventHandler(async (event) => {
       const id = String(requestedBucketId).trim()
       if (allBucketIds.includes(id)) bucketIdToUse = id
     }
-
-    const publicConfigDoc = await db.settings.findOne({ key: 'publicApiConfig' })
-    const contentSafetyEnabled = publicConfigDoc?.value?.contentSafety?.enabled || false
 
     // 处理所有 URL
     const results = []
@@ -153,7 +146,8 @@ export default defineEventHandler(async (event) => {
         const arrayBuffer = await response.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
 
-        // 检查文件大小（已按用户配置或私有 API 配置计算）
+        // 检查文件大小
+        const maxFileSize = config.maxFileSize || 100 * 1024 * 1024
         if (buffer.length > maxFileSize) {
           throw createError({
             statusCode: 400,
@@ -204,7 +198,7 @@ export default defineEventHandler(async (event) => {
           originalName += `.${fileExt}`
         }
 
-        // 保存到数据库（内容安全与公共 API 共用配置，按储存桶审核）
+        // 保存到数据库
         const imageDoc = {
           _id: uuidv4(),
           uuid: imageUuid,
@@ -218,15 +212,11 @@ export default defineEventHandler(async (event) => {
           isWebp: isWebp,
           isDeleted: false,
           uploadedBy: uploadedBy,
-          uploadedByType: uploadedByType,
-          sourceUrl: currentUrl,
+          uploadedByType: uploadedByType, // 标记为URL上传
+          sourceUrl: currentUrl, // 保存原始URL
           ip: clientIP,
           uploadedAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          moderationStatus: contentSafetyEnabled ? 'pending' : 'skipped',
-          moderationResult: contentSafetyEnabled ? null : { skipped: true, reason: '内容安全检测未启用' },
-          moderationChecked: !contentSafetyEnabled,
-          isNsfw: false
+          updatedAt: new Date().toISOString()
         }
 
         if (apiKeyId) imageDoc.apiKeyId = apiKeyId
@@ -234,14 +224,6 @@ export default defineEventHandler(async (event) => {
         imageDoc.showOnHomepage = requestedShowOnHomepage !== false
 
         await db.images.insert(imageDoc)
-
-        if (contentSafetyEnabled) {
-          try {
-            await createModerationTask(imageDoc._id, imageUuid, filename, bucketId)
-          } catch (err) {
-            console.error('[Upload] 创建审核任务失败:', err)
-          }
-        }
 
         // 构建返回数据
         const responseData = {
