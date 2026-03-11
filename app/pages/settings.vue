@@ -2,19 +2,21 @@
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">系统设置</h1>
 
-    <!-- 标签页（与顶栏一致：半透明+毛玻璃+底边框，按钮用 nav-link 风格） -->
-    <div class="flex bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-lg mb-6 overflow-hidden">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        @click="activeTab = tab.id"
-        class="px-4 py-3 text-sm font-medium rounded-lg border-b-2 -mb-px transition-colors"
-        :class="activeTab === tab.id
-          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-          : 'border-transparent text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
-      >
-        {{ tab.label }}
-      </button>
+    <!-- 标签页（与顶栏一致：横向滑动式菜单，半透明+毛玻璃，nav-link 风格） -->
+    <div class="settings-tab-bar bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-lg mb-6">
+      <nav class="flex items-center gap-0.5 sm:gap-2 overflow-x-auto scrollbar-hide py-2 px-2">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          :ref="(el) => { if (el) tabRefs[tab.id] = el }"
+          type="button"
+          @click="activeTab = tab.id"
+          class="settings-nav-link flex-shrink-0 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+          :class="activeTab === tab.id ? 'settings-nav-link-active' : ''"
+        >
+          {{ tab.label }}
+        </button>
+      </nav>
     </div>
 
     <!-- 应用设置 -->
@@ -992,6 +994,7 @@ const deletingEditKeyId = ref(null)
 const settingDefaultEditKeyId = ref(null)
 const route = useRoute()
 const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : route.query.tab === 'email' ? 'email' : route.query.tab === 'api-public' ? 'api-public' : route.query.tab === 'api-private' ? 'api-private' : route.query.tab === 'api-docs' ? 'api-docs' : 'app')
+const tabRefs = reactive({})
 watch(() => route.query.tab, (tab) => {
   if (tab === 'notification') activeTab.value = 'notification'
   else if (tab === 'users') activeTab.value = 'users'
@@ -999,6 +1002,13 @@ watch(() => route.query.tab, (tab) => {
   else if (tab === 'api-public') activeTab.value = 'api-public'
   else if (tab === 'api-private') activeTab.value = 'api-private'
   else if (tab === 'api-docs') activeTab.value = 'api-docs'
+})
+// 切换标签时将当前项滚动到可见区域（与顶栏滑动菜单一致）
+watch(activeTab, (id) => {
+  nextTick(() => {
+    const el = tabRefs[id]
+    if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  })
 })
 
 // 邮箱设置（独立于通知）
@@ -1664,3 +1674,20 @@ onMounted(async () => {
   newUsername.value = ''
 })
 </script>
+
+<style scoped>
+/* 设置页标签栏：与顶栏一致的滑动式菜单样式 */
+.settings-nav-link {
+  @apply text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800;
+}
+.settings-nav-link-active {
+  @apply bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+</style>
