@@ -57,7 +57,7 @@
       class="px-4 py-3 rounded-lg mb-4 bg-gray-200/80 dark:bg-gray-700/80 text-gray-900 dark:text-gray-300 border border-gray-300/50 dark:border-gray-600/50"
     >
       <div class="flex items-center gap-2">
-        <Icon name="heroicons:megaphone" class="w-5 h-5 flex-shrink-0 text-gray-700 dark:text-gray-300 shrink-0" />
+        <Icon name="heroicons:megaphone" class="w-5 h-5 flex-shrink-0 text-gray-700 dark:text-white sm:dark:text-gray-300 shrink-0" />
         <!-- 多条时：上一页 -->
         <button
           v-if="bannerItems.length > 1"
