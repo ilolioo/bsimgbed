@@ -248,9 +248,9 @@ async function handleLogout() {
 </script>
 
 <style scoped>
-/* 顶栏导航：手机端与电脑端暗黑模式样式一致 */
+/* 顶栏导航：手机端暗黑未选中为白色，桌面端暗黑为 gray-300 */
 .nav-link {
-  @apply rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0;
+  @apply rounded-lg text-sm font-medium text-gray-600 dark:text-white sm:dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0;
 }
 
 .nav-link :deep(svg) {
