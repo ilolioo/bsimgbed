@@ -248,10 +248,9 @@ async function handleLogout() {
 </script>
 
 <style scoped>
-/* 顶栏导航：手机端暗黑模式未选中时图标为白色，桌面端保持灰色 */
+/* 顶栏导航：手机端与电脑端暗黑模式样式一致 */
 .nav-link {
-  @apply rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center flex-shrink-0;
-  @apply dark:text-white dark:hover:bg-gray-800 sm:dark:text-gray-300;
+  @apply rounded-lg text-sm font-medium text-gray-600 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0;
 }
 
 .nav-link :deep(svg) {

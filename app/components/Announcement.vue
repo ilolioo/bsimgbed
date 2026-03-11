@@ -57,13 +57,13 @@
       class="px-4 py-3 rounded-lg mb-4 bg-gray-200/80 dark:bg-gray-700/80 text-gray-900 dark:text-gray-300 border border-gray-300/50 dark:border-gray-600/50"
     >
       <div class="flex items-center gap-2">
-        <Icon name="heroicons:megaphone" class="w-5 h-5 flex-shrink-0 text-gray-700 dark:text-white sm:dark:text-gray-300 shrink-0" />
+        <Icon name="heroicons:megaphone" class="w-5 h-5 flex-shrink-0 text-gray-700 dark:text-white shrink-0" />
         <!-- 多条时：上一页 -->
         <button
           v-if="bannerItems.length > 1"
           type="button"
           @click="bannerPrev"
-          class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-400/30 dark:hover:bg-gray-500/50 transition-colors text-gray-700 dark:text-gray-300"
+          class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-400/30 dark:hover:bg-gray-500/50 transition-colors text-gray-700 dark:text-white"
           title="上一条"
         >
           <Icon name="heroicons:chevron-left" class="w-5 h-5" />
@@ -83,7 +83,7 @@
           v-if="bannerItems.length > 1"
           type="button"
           @click="bannerNext"
-          class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-400/30 dark:hover:bg-gray-500/50 transition-colors text-gray-700 dark:text-gray-300"
+          class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-400/30 dark:hover:bg-gray-500/50 transition-colors text-gray-700 dark:text-white"
           title="下一条"
         >
           <Icon name="heroicons:chevron-right" class="w-5 h-5" />
@@ -102,10 +102,10 @@
         </div>
         <button
           @click="close"
-          class="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-400/30 dark:hover:bg-gray-500/50 rounded-lg transition-colors text-gray-800 dark:text-gray-300"
+          class="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:bg-gray-400/30 dark:hover:bg-gray-500/50 rounded-lg transition-colors text-gray-800 dark:text-white"
           title="关闭公告"
         >
-          <Icon name="heroicons:x-mark" class="w-5 h-5 text-gray-800 dark:text-gray-300 shrink-0" />
+          <Icon name="heroicons:x-mark" class="w-5 h-5 text-gray-800 dark:text-white shrink-0" />
         </button>
       </div>
     </div>
