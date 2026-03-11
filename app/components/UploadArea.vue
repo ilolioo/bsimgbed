@@ -81,13 +81,13 @@
         </template>
       </div>
 
-      <!-- 储存桶选择与上传后展示：放在上传框底部栏内，点击不触发选择文件 -->
+      <!-- 储存桶选择与上传后展示：放在上传框底部栏内，点击不触发选择文件；关闭公有 API 时对游客隐藏储存桶选择 -->
       <div
-        v-if="configLoaded && (bucketChoices.length > 0 || authStore.isAuthenticated)"
+        v-if="configLoaded && (showBucketSelector || authStore.isAuthenticated)"
         class="upload-box-options border-t border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-800/30 px-4 py-3 flex flex-wrap items-center justify-center gap-3"
         @click.stop
       >
-        <div v-if="bucketChoices.length > 0" class="flex items-center gap-2">
+        <div v-if="showBucketSelector" class="flex items-center gap-2">
           <span class="text-xs text-gray-500 dark:text-gray-400">上传到</span>
           <select
             v-model="selectedBucketId"
@@ -302,6 +302,13 @@ const showOnHomepage = ref(true)
 const isDisabled = computed(() => {
   if (!configLoaded.value) return false
   return !authStore.isAuthenticated && publicApiEnabled.value === false
+})
+
+// 是否显示储存桶选择框：已登录始终可显；游客仅在公有 API 开启时显示
+const showBucketSelector = computed(() => {
+  if (bucketChoices.value.length === 0) return false
+  if (authStore.isAuthenticated) return true
+  return publicApiEnabled.value === true
 })
 
 // 计算接受的文件类型
