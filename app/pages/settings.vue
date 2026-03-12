@@ -367,13 +367,23 @@
           <!-- 项目信息（链接列表） -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">项目信息</label>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">关于页「项目信息」区块中的链接列表，可添加多条（如项目地址、文档链接等）。</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">关于页「项目信息」区块中的链接列表，可添加多条（如项目地址、文档链接等）。图标填写 Iconify 图标名（如 <code class="px-1 py-0.5 rounded bg-gray-200 dark:bg-gray-700">simple-icons:github</code>、<code class="px-1 py-0.5 rounded bg-gray-200 dark:bg-gray-700">heroicons:link</code>），留空使用默认链接图标。</p>
             <div class="space-y-3">
               <div
                 v-for="(item, idx) in aboutSettings.projectInfo"
                 :key="'pi-' + idx"
                 class="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30"
               >
+                <input
+                  v-model="item.icon"
+                  type="text"
+                  class="input w-48 shrink-0 font-mono text-sm"
+                  placeholder="图标（如 simple-icons:github）"
+                  title="Iconify 图标名，留空默认链接图标"
+                />
+                <span v-if="item.icon" class="shrink-0 flex items-center justify-center w-8 h-8 rounded bg-gray-200 dark:bg-gray-600">
+                  <Icon :name="item.icon" class="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                </span>
                 <input
                   v-model="item.label"
                   type="text"
@@ -1148,7 +1158,7 @@ const savingAnnouncement = ref(false)
 
 // 关于设置
 const defaultAboutProject = 'bsimgbed 是一个简单易用的个人图床应用，支持本地磁盘、WebDAV、Telegram 等多种存储方式，可自由切换无需重启。提供公共/私有 API、API Key 管理、内容安全（NSFW 检测、违规自动处理）与通知等能力，适合自建图床与图片管理。'
-const defaultProjectInfo = [{ label: '项目地址', url: 'https://github.com/ilolioo/bsimgbed' }]
+const defaultProjectInfo = [{ label: '项目地址', url: 'https://github.com/ilolioo/bsimgbed', icon: 'simple-icons:github' }]
 const aboutSettings = reactive({
   aboutProject: defaultAboutProject,
   projectInfo: [...defaultProjectInfo.map(i => ({ ...i }))]
@@ -1156,7 +1166,7 @@ const aboutSettings = reactive({
 const savingAbout = ref(false)
 
 function addProjectInfoItem() {
-  aboutSettings.projectInfo.push({ label: '', url: '' })
+  aboutSettings.projectInfo.push({ label: '', url: '', icon: '' })
 }
 
 function removeProjectInfoItem(index) {
@@ -1171,7 +1181,8 @@ async function saveAboutSettings() {
       aboutProject: aboutSettings.aboutProject || defaultAboutProject,
       projectInfo: aboutSettings.projectInfo.filter(it => it && (it.url || it.label)).map(it => ({
         label: String(it.label || '').trim() || '链接',
-        url: String(it.url || '').trim()
+        url: String(it.url || '').trim(),
+        icon: String(it.icon || '').trim() || undefined
       }))
     })
     if (result.success) {
@@ -1749,7 +1760,7 @@ onMounted(async () => {
   const pi = settingsStore.appSettings.projectInfo
   aboutSettings.aboutProject = (ap != null && ap !== '') ? String(ap) : defaultAboutProject
   aboutSettings.projectInfo = Array.isArray(pi) && pi.length > 0
-    ? pi.map(it => ({ label: it.label || '', url: it.url || '' }))
+    ? pi.map(it => ({ label: it.label || '', url: it.url || '', icon: it.icon || '' }))
     : [...defaultProjectInfo.map(i => ({ ...i }))]
 
   const announcement = settingsStore.appSettings.announcement || {}

@@ -51,13 +51,14 @@ export default defineEventHandler(async (event) => {
     }
 
     const defaultAboutProject = 'bsimgbed 是一个简单易用的个人图床应用，支持本地磁盘、WebDAV、Telegram 等多种存储方式，可自由切换无需重启。提供公共/私有 API、API Key 管理、内容安全（NSFW 检测、违规自动处理）与通知等能力，适合自建图床与图片管理。'
-    const defaultProjectInfo = [{ label: '项目地址', url: 'https://github.com/ilolioo/bsimgbed' }]
+    const defaultProjectInfo = [{ label: '项目地址', url: 'https://github.com/ilolioo/bsimgbed', icon: 'simple-icons:github' }]
 
     function normalizeProjectInfo(arr) {
       if (!Array.isArray(arr) || arr.length === 0) return defaultProjectInfo
       return arr.filter(it => it && (it.url || it.label)).map(it => ({
         label: String(it.label || '').trim() || '链接',
-        url: String(it.url || '').trim()
+        url: String(it.url || '').trim(),
+        icon: (it.icon != null && String(it.icon).trim()) ? String(it.icon).trim() : 'heroicons:link'
       }))
     }
 

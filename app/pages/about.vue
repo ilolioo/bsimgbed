@@ -26,7 +26,7 @@
             :key="idx"
             class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0"
           >
-            <Icon name="heroicons:link" class="w-5 h-5 text-gray-800 dark:text-gray-200 shrink-0" />
+            <Icon :name="item.icon || 'heroicons:link'" class="w-5 h-5 text-gray-800 dark:text-gray-200 shrink-0" />
             <span class="text-gray-700 dark:text-gray-300 shrink-0">{{ item.label }}:</span>
             <a
               v-if="item.url"
@@ -68,7 +68,7 @@ const { public: publicConfig } = useRuntimeConfig()
 const appVersion = publicConfig.appVersion || '1.0.0'
 
 const defaultAboutProject = 'bsimgbed 是一个简单易用的个人图床应用，支持本地磁盘、WebDAV、Telegram 等多种存储方式，可自由切换无需重启。提供公共/私有 API、API Key 管理、内容安全（NSFW 检测、违规自动处理）与通知等能力，适合自建图床与图片管理。'
-const defaultProjectInfo = [{ label: '项目地址', url: 'https://github.com/ilolioo/bsimgbed' }]
+const defaultProjectInfo = [{ label: '项目地址', url: 'https://github.com/ilolioo/bsimgbed', icon: 'simple-icons:github' }]
 
 const aboutProject = ref(defaultAboutProject)
 const projectInfo = ref([...defaultProjectInfo])
