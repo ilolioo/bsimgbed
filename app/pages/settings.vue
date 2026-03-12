@@ -768,6 +768,11 @@
       </div>
     </div>
 
+    <!-- 安全设置 -->
+    <div v-show="activeTab === 'security'" class="space-y-6">
+      <SecuritySettings />
+    </div>
+
     <!-- 公共配置 -->
     <div v-show="activeTab === 'api-public'" class="space-y-6">
       <ApiManagement panel="public" />
@@ -1053,6 +1058,7 @@ const tabs = [
   { id: 'storage', label: '存储配置' },
   { id: 'notification', label: '通知设置' },
   { id: 'email', label: '邮箱设置' },
+  { id: 'security', label: '安全设置' },
   { id: 'api-public', label: '公共配置' },
   { id: 'api-private', label: '私有配置' },
   { id: 'api-docs', label: 'API文档' },
@@ -1074,12 +1080,13 @@ const regeneratingEditKeyId = ref(null)
 const deletingEditKeyId = ref(null)
 const settingDefaultEditKeyId = ref(null)
 const route = useRoute()
-const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : route.query.tab === 'email' ? 'email' : route.query.tab === 'api-public' ? 'api-public' : route.query.tab === 'api-private' ? 'api-private' : route.query.tab === 'api-docs' ? 'api-docs' : route.query.tab === 'about' ? 'about' : 'app')
+const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : route.query.tab === 'email' ? 'email' : route.query.tab === 'security' ? 'security' : route.query.tab === 'api-public' ? 'api-public' : route.query.tab === 'api-private' ? 'api-private' : route.query.tab === 'api-docs' ? 'api-docs' : route.query.tab === 'about' ? 'about' : 'app')
 const tabRefs = reactive({})
 watch(() => route.query.tab, (tab) => {
   if (tab === 'notification') activeTab.value = 'notification'
   else if (tab === 'users') activeTab.value = 'users'
   else if (tab === 'email') activeTab.value = 'email'
+  else if (tab === 'security') activeTab.value = 'security'
   else if (tab === 'api-public') activeTab.value = 'api-public'
   else if (tab === 'api-private') activeTab.value = 'api-private'
   else if (tab === 'api-docs') activeTab.value = 'api-docs'
