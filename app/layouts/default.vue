@@ -91,6 +91,18 @@
               <span class="hidden sm:inline">统计</span>
             </NuxtLink>
 
+            <!-- 用户（仅管理员可见） -->
+            <NuxtLink
+              v-if="authStore.isAdmin"
+              to="/users"
+              class="nav-link nav-link-icon sm:nav-link-text"
+              :class="{ 'nav-link-active': route.path === '/users' }"
+              title="用户管理"
+            >
+              <Icon name="heroicons:users" class="w-5 h-5 flex-shrink-0" />
+              <span class="hidden sm:inline">用户</span>
+            </NuxtLink>
+
             <!-- 关于 -->
             <NuxtLink
               to="/about"
