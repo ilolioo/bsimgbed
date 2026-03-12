@@ -8,6 +8,9 @@ export default defineEventHandler(async (event) => {
 
     // 获取当前设置
     const currentSettings = await db.settings.findOne({ key: 'appSettings' })
+    const defaultAboutProject = 'bsimgbed 是一个简单易用的个人图床应用，支持本地磁盘、WebDAV、Telegram 等多种存储方式，可自由切换无需重启。提供公共/私有 API、API Key 管理、内容安全（NSFW 检测、违规自动处理）与通知等能力，适合自建图床与图片管理。'
+    const defaultProjectInfo = [{ label: '项目地址', url: 'https://github.com/ilolioo/bsimgbed' }]
+
     const currentValue = currentSettings?.value || {
       appName: 'bsimgbed',
       appLogo: '',
@@ -19,7 +22,9 @@ export default defineEventHandler(async (event) => {
         enabled: false,
         content: '',
         displayType: 'modal'
-      }
+      },
+      aboutProject: defaultAboutProject,
+      projectInfo: defaultProjectInfo
     }
 
     // 获取请求体
@@ -103,6 +108,22 @@ export default defineEventHandler(async (event) => {
         base.items = Array.isArray(target.items) && target.items.length > 0 ? target.items : defaultItems()
       }
       return base
+    }
+
+    // 更新 aboutProject（如果传递了）
+    if (body.aboutProject !== undefined) {
+      updatedValue.aboutProject = typeof body.aboutProject === 'string' ? body.aboutProject : defaultAboutProject
+    }
+
+    // 更新 projectInfo（如果传递了）
+    if (body.projectInfo !== undefined) {
+      if (Array.isArray(body.projectInfo) && body.projectInfo.length > 0) {
+        updatedValue.projectInfo = body.projectInfo
+          .filter(it => it && (it.url || it.label))
+          .map(it => ({ label: String(it.label || '').trim() || '链接', url: String(it.url || '').trim() }))
+      } else {
+        updatedValue.projectInfo = defaultProjectInfo
+      }
     }
 
     // 更新 announcement（如果传递了）

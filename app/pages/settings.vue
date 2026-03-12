@@ -342,6 +342,76 @@
       </div>
     </div>
 
+    <!-- 关于设置 -->
+    <div v-show="activeTab === 'about'" class="space-y-6">
+      <div class="card p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <Icon name="heroicons:document-text" class="w-5 h-5 text-primary-500 dark:text-primary-400" />
+          关于设置
+        </h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">自定义关于页面中「关于项目」与「项目信息」的展示内容。留空将使用默认文案。</p>
+
+        <form @submit.prevent="saveAboutSettings" class="space-y-6">
+          <!-- 关于项目 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">关于项目</label>
+            <textarea
+              v-model="aboutSettings.aboutProject"
+              rows="5"
+              class="input w-full"
+              placeholder="关于页「关于项目」区块的简介文字"
+            />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">展示在关于页的「关于项目」卡片中，支持多行。</p>
+          </div>
+
+          <!-- 项目信息（链接列表） -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">项目信息</label>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">关于页「项目信息」区块中的链接列表，可添加多条（如项目地址、文档链接等）。</p>
+            <div class="space-y-3">
+              <div
+                v-for="(item, idx) in aboutSettings.projectInfo"
+                :key="'pi-' + idx"
+                class="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30"
+              >
+                <input
+                  v-model="item.label"
+                  type="text"
+                  class="input flex-1 min-w-[100px]"
+                  placeholder="标签（如：项目地址）"
+                />
+                <input
+                  v-model="item.url"
+                  type="url"
+                  class="input flex-1 min-w-[180px]"
+                  placeholder="https://..."
+                />
+                <button
+                  type="button"
+                  class="btn-secondary p-2 shrink-0"
+                  title="删除"
+                  :disabled="aboutSettings.projectInfo.length <= 1"
+                  @click="removeProjectInfoItem(idx)"
+                >
+                  <Icon name="heroicons:trash" class="w-4 h-4" />
+                </button>
+              </div>
+              <button type="button" class="btn-secondary text-sm inline-flex items-center gap-1" @click="addProjectInfoItem">
+                <Icon name="heroicons:plus" class="w-4 h-4" />
+                添加一条链接
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="btn-primary" :disabled="savingAbout">
+              {{ savingAbout ? '保存中...' : '保存关于设置' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- 存储配置（多储存桶） -->
     <div v-show="activeTab === 'storage'" class="space-y-6">
       <div class="card p-6">
@@ -969,6 +1039,7 @@ const toastStore = useToastStore()
 const tabs = [
   { id: 'app', label: '应用设置' },
   { id: 'announcement', label: '公告设置' },
+  { id: 'about', label: '关于设置' },
   { id: 'storage', label: '存储配置' },
   { id: 'notification', label: '通知设置' },
   { id: 'email', label: '邮箱设置' },
@@ -993,7 +1064,7 @@ const regeneratingEditKeyId = ref(null)
 const deletingEditKeyId = ref(null)
 const settingDefaultEditKeyId = ref(null)
 const route = useRoute()
-const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : route.query.tab === 'email' ? 'email' : route.query.tab === 'api-public' ? 'api-public' : route.query.tab === 'api-private' ? 'api-private' : route.query.tab === 'api-docs' ? 'api-docs' : 'app')
+const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : route.query.tab === 'email' ? 'email' : route.query.tab === 'api-public' ? 'api-public' : route.query.tab === 'api-private' ? 'api-private' : route.query.tab === 'api-docs' ? 'api-docs' : route.query.tab === 'about' ? 'about' : 'app')
 const tabRefs = reactive({})
 watch(() => route.query.tab, (tab) => {
   if (tab === 'notification') activeTab.value = 'notification'
@@ -1002,6 +1073,7 @@ watch(() => route.query.tab, (tab) => {
   else if (tab === 'api-public') activeTab.value = 'api-public'
   else if (tab === 'api-private') activeTab.value = 'api-private'
   else if (tab === 'api-docs') activeTab.value = 'api-docs'
+  else if (tab === 'about') activeTab.value = 'about'
 })
 // 切换标签时将当前项滚动到可见区域（与顶栏滑动菜单一致）
 watch(activeTab, (id) => {
@@ -1073,6 +1145,46 @@ function removeAnnouncementItem(blockKey, index) {
   block.items.splice(index, 1)
 }
 const savingAnnouncement = ref(false)
+
+// 关于设置
+const defaultAboutProject = 'bsimgbed 是一个简单易用的个人图床应用，支持本地磁盘、WebDAV、Telegram 等多种存储方式，可自由切换无需重启。提供公共/私有 API、API Key 管理、内容安全（NSFW 检测、违规自动处理）与通知等能力，适合自建图床与图片管理。'
+const defaultProjectInfo = [{ label: '项目地址', url: 'https://github.com/ilolioo/bsimgbed' }]
+const aboutSettings = reactive({
+  aboutProject: defaultAboutProject,
+  projectInfo: [...defaultProjectInfo.map(i => ({ ...i }))]
+})
+const savingAbout = ref(false)
+
+function addProjectInfoItem() {
+  aboutSettings.projectInfo.push({ label: '', url: '' })
+}
+
+function removeProjectInfoItem(index) {
+  if (aboutSettings.projectInfo.length <= 1) return
+  aboutSettings.projectInfo.splice(index, 1)
+}
+
+async function saveAboutSettings() {
+  savingAbout.value = true
+  try {
+    const result = await settingsStore.updateAppSetting({
+      aboutProject: aboutSettings.aboutProject || defaultAboutProject,
+      projectInfo: aboutSettings.projectInfo.filter(it => it && (it.url || it.label)).map(it => ({
+        label: String(it.label || '').trim() || '链接',
+        url: String(it.url || '').trim()
+      }))
+    })
+    if (result.success) {
+      toastStore.success('关于设置已保存')
+    } else {
+      toastStore.error(result.message || '保存失败')
+    }
+  } catch (e) {
+    toastStore.error(e?.data?.message || '保存失败')
+  } finally {
+    savingAbout.value = false
+  }
+}
 
 // 存储配置（多桶）
 const storageDefaultId = ref('default')
@@ -1631,6 +1743,14 @@ onMounted(async () => {
   appSettings.backgroundBlur = settingsStore.appSettings.backgroundBlur || 0
   appSettings.siteUrl = settingsStore.appSettings.siteUrl || ''
   appSettings.registrationEnabled = settingsStore.appSettings.registrationEnabled !== false
+
+  // 关于设置
+  const ap = settingsStore.appSettings.aboutProject
+  const pi = settingsStore.appSettings.projectInfo
+  aboutSettings.aboutProject = (ap != null && ap !== '') ? String(ap) : defaultAboutProject
+  aboutSettings.projectInfo = Array.isArray(pi) && pi.length > 0
+    ? pi.map(it => ({ label: it.label || '', url: it.url || '' }))
+    : [...defaultProjectInfo.map(i => ({ ...i }))]
 
   const announcement = settingsStore.appSettings.announcement || {}
   const def = defaultAnnouncementBlock()
