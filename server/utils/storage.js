@@ -208,7 +208,8 @@ export async function saveFile(buffer, filename, bucketId) {
   const size = Buffer.isBuffer(buffer) ? buffer.length : Buffer.from(buffer).length
   const limit = bucket.sizeLimit ?? DEFAULT_SIZE_LIMIT
   const used = bucket.usedSize || 0
-  if (used + size > limit) {
+  // sizeLimit === -1 表示不限制容量
+  if (limit >= 0 && used + size > limit) {
     throw new Error(`[Storage] 储存桶「${bucket.name}」已满（已用 ${(used / 1024 / 1024).toFixed(1)}MB / 限制 ${(limit / 1024 / 1024).toFixed(1)}MB）`)
   }
 

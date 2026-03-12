@@ -481,8 +481,8 @@
                     <div class="w-20 h-1.5 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden" title="已用容量">
                       <div
                         class="h-full rounded-full transition-all"
-                        :class="(b.usedSize || 0) / (b.sizeLimit || 1) > 0.9 ? 'bg-red-500' : (b.usedSize || 0) / (b.sizeLimit || 1) > 0.7 ? 'bg-amber-500' : 'bg-primary-500'"
-                        :style="{ width: Math.min(100, ((b.usedSize || 0) / (b.sizeLimit || 1)) * 100) + '%' }"
+                        :class="(b.sizeLimit != null && b.sizeLimit < 0) ? 'bg-primary-500' : (b.usedSize || 0) / (b.sizeLimit || 1) > 0.9 ? 'bg-red-500' : (b.usedSize || 0) / (b.sizeLimit || 1) > 0.7 ? 'bg-amber-500' : 'bg-primary-500'"
+                        :style="{ width: (b.sizeLimit != null && b.sizeLimit < 0) ? '100%' : (Math.min(100, ((b.usedSize || 0) / (b.sizeLimit || 1)) * 100) + '%') }"
                       />
                     </div>
                   </div>
@@ -536,7 +536,8 @@
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">容量上限 (MB)</label>
-                    <input v-model.number="b.sizeLimitMB" type="number" min="1" class="input w-32" />
+                    <input v-model.number="b.sizeLimitMB" type="number" min="-1" class="input w-32" placeholder="-1 表示不限制" />
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">设为 -1 表示该储存桶不限制容量</p>
                   </div>
                   <!-- 游客可用 -->
                   <div class="flex items-center justify-between py-1">
@@ -944,6 +945,7 @@ const savingStorage = ref(false)
 function formatSize(bytes) {
   if (bytes == null) return '0 B'
   const n = Number(bytes)
+  if (n < 0) return '不限制'
   if (n >= 1024 * 1024 * 1024) return (n / 1024 / 1024 / 1024).toFixed(1) + ' GB'
   if (n >= 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + ' MB'
   if (n >= 1024) return (n / 1024).toFixed(1) + ' KB'
@@ -1070,8 +1072,8 @@ async function fetchStorageConfig() {
         id: b.id,
         name: b.name || b.id,
         driver: (b.driver || 'local').toLowerCase(),
-        sizeLimit: b.sizeLimit ?? 1024 * 1024 * 1024,
-        sizeLimitMB: Math.round((b.sizeLimit ?? 1024 * 1024 * 1024) / 1024 / 1024),
+        sizeLimit: (b.sizeLimit != null && b.sizeLimit >= 0) ? b.sizeLimit : (b.sizeLimit === -1 ? -1 : 1024 * 1024 * 1024),
+        sizeLimitMB: (b.sizeLimit === -1 || (typeof b.sizeLimit === 'number' && b.sizeLimit < 0)) ? -1 : Math.round((b.sizeLimit ?? 1024 * 1024 * 1024) / 1024 / 1024),
         usedSize: b.usedSize ?? 0,
         allowGuest: b.allowGuest !== false,
         allowUser: b.allowUser !== false,
@@ -1093,7 +1095,7 @@ async function saveStorageConfig() {
       id: (b.id && String(b.id).trim()) || undefined,
       name: b.name,
       driver: b.driver,
-      sizeLimit: (b.sizeLimitMB || 1024) * 1024 * 1024,
+      sizeLimit: (b.sizeLimitMB === -1 || (typeof b.sizeLimitMB === 'number' && b.sizeLimitMB < 0)) ? -1 : ((b.sizeLimitMB || 1024) * 1024 * 1024),
       allowGuest: b.allowGuest !== false,
       allowUser: b.allowUser !== false,
       showOnCapacity: b.showOnCapacity !== false,

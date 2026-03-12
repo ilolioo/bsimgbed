@@ -39,7 +39,9 @@ export default defineEventHandler(async (event) => {
         if (!['local', 'webdav', 'telegram'].includes(driver)) {
           throw createError({ statusCode: 400, message: `储存桶 ${b.name || id} 无效的驱动` })
         }
-        const sizeLimit = typeof b.sizeLimit === 'number' ? b.sizeLimit : (existing?.sizeLimit ?? 1024 * 1024 * 1024)
+        // -1 表示不限制容量；其他负数归一为 -1
+        let sizeLimit = typeof b.sizeLimit === 'number' ? b.sizeLimit : (existing?.sizeLimit ?? 1024 * 1024 * 1024)
+        if (sizeLimit < 0) sizeLimit = -1
         const usedSize = existing?.usedSize ?? 0
         const allowGuest = b.allowGuest !== undefined ? !!b.allowGuest : (existing?.allowGuest !== false)
         const allowUser = b.allowUser !== undefined ? !!b.allowUser : (existing?.allowUser !== false)

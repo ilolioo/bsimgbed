@@ -54,11 +54,13 @@
           <span class="text-gray-400 dark:text-gray-500">/</span>
           <span class="font-mono text-gray-700 dark:text-gray-300">{{ formatSize(summary.totalLimit) }}</span>
           <span
+            v-if="summary.totalLimit >= 0"
             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
             :class="summary.percent >= 90 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : summary.percent >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'"
           >
             {{ summary.percent.toFixed(1) }}%
           </span>
+          <span v-else class="text-xs text-gray-500 dark:text-gray-400">部分桶不限制</span>
         </div>
       </div>
 
@@ -80,11 +82,13 @@
                 {{ formatSize(b.usedSize) }} / {{ formatSize(b.sizeLimit) }}
               </span>
               <span
+                v-if="b.sizeLimit != null && b.sizeLimit >= 0"
                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium tabular-nums"
                 :class="percent(b) >= 90 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : percent(b) >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'"
               >
                 已用 {{ percent(b).toFixed(1) }}%
               </span>
+              <span v-else class="text-xs text-gray-500 dark:text-gray-400">不限制</span>
             </div>
           </div>
           <div
@@ -117,7 +121,8 @@ const error = ref('')
 const refreshing = ref(false)
 
 function formatSize(bytes) {
-  if (bytes == null || bytes < 0) return '0 B'
+  if (bytes == null) return '0 B'
+  if (bytes === -1 || bytes < 0) return '不限制'
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB'
   if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(2) + ' MB'
@@ -125,13 +130,17 @@ function formatSize(bytes) {
 }
 
 function percent(b) {
-  const limit = b.sizeLimit || 1
+  const limit = b.sizeLimit
+  if (limit == null || limit < 0) return 0 // -1 表示不限制，不显示百分比
   return ((b.usedSize || 0) / limit) * 100
 }
 
 const summary = computed(() => {
   const totalUsed = buckets.value.reduce((s, b) => s + (b.usedSize || 0), 0)
-  const totalLimit = buckets.value.reduce((s, b) => s + (b.sizeLimit || 0), 0)
+  const limitedBuckets = buckets.value.filter(b => b.sizeLimit != null && b.sizeLimit >= 0)
+  const totalLimit = limitedBuckets.length === buckets.value.length
+    ? limitedBuckets.reduce((s, b) => s + (b.sizeLimit || 0), 0)
+    : -1 // 存在任一不限制容量的桶时，总容量显示为「不限制」
   const percent = totalLimit > 0 ? (totalUsed / totalLimit) * 100 : 0
   return { totalUsed, totalLimit, percent }
 })
