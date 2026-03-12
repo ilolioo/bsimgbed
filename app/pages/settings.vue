@@ -773,13 +773,9 @@
       <SecuritySettings />
     </div>
 
-    <!-- 公共配置 -->
-    <div v-show="activeTab === 'api-public'" class="space-y-6">
+    <!-- 上传设置（公共配置 + 私有配置） -->
+    <div v-show="activeTab === 'upload'" class="space-y-6">
       <ApiManagement panel="public" />
-    </div>
-
-    <!-- 私有配置 -->
-    <div v-show="activeTab === 'api-private'" class="space-y-6">
       <ApiManagement panel="private" />
     </div>
 
@@ -963,7 +959,7 @@
                   class="input w-full"
                   placeholder="留空使用私有 API 默认"
                 />
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">仅对该用户生效；留空则使用「私有配置」中的最大文件大小</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">仅对该用户生效；留空则使用「上传设置」中私有配置的最大文件大小</p>
               </div>
 
               <!-- 该用户的 API Key（仅管理员可见） -->
@@ -1059,8 +1055,7 @@ const tabs = [
   { id: 'notification', label: '通知设置' },
   { id: 'email', label: '邮箱设置' },
   { id: 'security', label: '安全设置' },
-  { id: 'api-public', label: '公共配置' },
-  { id: 'api-private', label: '私有配置' },
+  { id: 'upload', label: '上传设置' },
   { id: 'api-docs', label: 'API文档' },
   { id: 'users', label: '用户管理' }
 ]
@@ -1080,15 +1075,14 @@ const regeneratingEditKeyId = ref(null)
 const deletingEditKeyId = ref(null)
 const settingDefaultEditKeyId = ref(null)
 const route = useRoute()
-const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : route.query.tab === 'email' ? 'email' : route.query.tab === 'security' ? 'security' : route.query.tab === 'api-public' ? 'api-public' : route.query.tab === 'api-private' ? 'api-private' : route.query.tab === 'api-docs' ? 'api-docs' : route.query.tab === 'about' ? 'about' : 'app')
+const activeTab = ref(route.query.tab === 'notification' ? 'notification' : route.query.tab === 'users' ? 'users' : route.query.tab === 'email' ? 'email' : route.query.tab === 'security' ? 'security' : route.query.tab === 'upload' ? 'upload' : route.query.tab === 'api-docs' ? 'api-docs' : route.query.tab === 'about' ? 'about' : 'app')
 const tabRefs = reactive({})
 watch(() => route.query.tab, (tab) => {
   if (tab === 'notification') activeTab.value = 'notification'
   else if (tab === 'users') activeTab.value = 'users'
   else if (tab === 'email') activeTab.value = 'email'
   else if (tab === 'security') activeTab.value = 'security'
-  else if (tab === 'api-public') activeTab.value = 'api-public'
-  else if (tab === 'api-private') activeTab.value = 'api-private'
+  else if (tab === 'upload') activeTab.value = 'upload'
   else if (tab === 'api-docs') activeTab.value = 'api-docs'
   else if (tab === 'about') activeTab.value = 'about'
 })
