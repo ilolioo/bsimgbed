@@ -5,6 +5,7 @@ import { getRandomHeaders } from '../../utils/fetchHeaders.js'
 import { processImageWithConfig, generateTimestampId } from '../../utils/upload.js'
 import { getBucketsConfig } from '../../utils/storage.js'
 import { v4 as uuidv4 } from 'uuid'
+import { createModerationTask } from '../../utils/moderationQueue.js'
 
 // 供第三方API调用
 export default defineEventHandler(async (event) => {
@@ -203,6 +204,10 @@ export default defineEventHandler(async (event) => {
           originalName += `.${fileExt}`
         }
 
+        // 与游客上传一致：使用公共 API 配置中的内容安全开关
+        const publicConfigDoc = await db.settings.findOne({ key: 'publicApiConfig' })
+        const contentSafetyEnabled = publicConfigDoc?.value?.contentSafety?.enabled || false
+
         // 保存到数据库
         const imageDoc = {
           _id: uuidv4(),
@@ -221,7 +226,11 @@ export default defineEventHandler(async (event) => {
           sourceUrl: currentUrl, // 保存原始URL
           ip: clientIP,
           uploadedAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          moderationStatus: contentSafetyEnabled ? 'pending' : 'skipped',
+          moderationResult: contentSafetyEnabled ? null : { skipped: true, reason: '内容安全检测未启用' },
+          moderationChecked: !contentSafetyEnabled,
+          isNsfw: false
         }
 
         if (apiKeyId) imageDoc.apiKeyId = apiKeyId
@@ -229,6 +238,14 @@ export default defineEventHandler(async (event) => {
         imageDoc.showOnHomepage = requestedShowOnHomepage !== false
 
         await db.images.insert(imageDoc)
+
+        if (contentSafetyEnabled) {
+          try {
+            await createModerationTask(imageDoc._id, imageUuid, filename, bucketId)
+          } catch (err) {
+            console.error('[Upload] 创建审核任务失败:', err)
+          }
+        }
 
         // 构建返回数据
         const responseData = {
