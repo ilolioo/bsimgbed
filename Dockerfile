@@ -29,12 +29,12 @@ WORKDIR /app
 COPY --from=builder /app/.output ./.output
 
 # 暴露端口
-EXPOSE 3000
+EXPOSE 5198
 
 # 设置环境变量
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
-ENV PORT=3000
+ENV PORT=5198
 
 # 启动应用
 CMD ["node", ".output/server/index.mjs"]

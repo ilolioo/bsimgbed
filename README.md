@@ -84,7 +84,7 @@ docker compose up -d
 ### Docker run部署
 
 ```bash
-docker run -d --name bsimgbed -p 3000:3000 -v ./db:/app/db -v ./uploads:/app/uploads ghcr.io/ilolioo/bsimgbed:latest
+docker run -d --name bsimgbed -p 5198:5198 -v ./db:/app/db -v ./uploads:/app/uploads ghcr.io/ilolioo/bsimgbed:latest
 ```
 
 
@@ -114,7 +114,7 @@ node .output/server/index.mjs
 
 | 变量名 | 说明 | 默认值 |
 |--------|------|--------|
-| `PORT` | 服务端口 | `3000` |
+| `PORT` | 服务端口 | `5198` |
 | `HOST` | 监听地址 | `0.0.0.0` |
 | `NODE_ENV` | 运行环境 | `production` | -->
 
@@ -183,4 +183,3 @@ volumes:
 ## 开源协议
 
 [Apache-License2.0](LICENSE)
-
