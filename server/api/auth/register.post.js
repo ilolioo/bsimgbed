@@ -43,6 +43,9 @@ export default defineEventHandler(async (event) => {
     if (!password || password.length < PASSWORD_MIN_LEN) {
       throw createError({ statusCode: 400, message: '密码至少 6 位' })
     }
+    if (/^\d+$/.test(password)) {
+      throw createError({ statusCode: 400, message: '密码不能为纯数字' })
+    }
 
     const existingUsername = await db.users.findOne({ username })
     if (existingUsername) {
@@ -58,6 +61,9 @@ export default defineEventHandler(async (event) => {
 
     const emailConfig = await getEmailConfig()
     const emailVerificationRequired = !!emailConfig.registrationEmailVerification
+    if (emailVerificationRequired && (!emailConfig.service || !emailConfig.user || !emailConfig.pass)) {
+      throw createError({ statusCode: 400, message: '邮箱验证已开启，但邮件服务未配置，请联系管理员' })
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10)
     const now = new Date().toISOString()
@@ -98,6 +104,7 @@ export default defineEventHandler(async (event) => {
         await sendVerificationEmail(email, username, verifyUrl)
       } catch (err) {
         console.error('[Auth] 注册验证邮件发送失败:', err)
+        await db.users.remove({ _id: userId })
         throw createError({ statusCode: 500, message: '发送验证邮件失败，请稍后重试' })
       }
       return {

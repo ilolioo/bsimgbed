@@ -279,7 +279,7 @@ async function handleRegister() {
     if (res.success) {
       toastStore.success(res.message || (res.data?.emailVerificationRequired ? '请查收邮件完成验证' : '注册成功，请登录'))
       if (res.data?.emailVerificationRequired) {
-        router.push('/login')
+        router.push('/login?verify=1')
       } else {
         router.push('/login')
       }

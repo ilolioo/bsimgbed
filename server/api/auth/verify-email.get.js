@@ -11,7 +11,8 @@ export default defineEventHandler(async (event) => {
     }
 
     const user = await db.users.findOne({
-      emailVerificationToken: String(token).trim()
+      emailVerificationToken: String(token).trim(),
+      emailVerified: { $ne: true }
     })
     if (!user) {
       throw createError({
