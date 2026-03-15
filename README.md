@@ -4,10 +4,6 @@
 
 _✨ 简单易用的个人图床系统，基于 Nuxt.js 构建 ✨_
 
-<a href="https://github.com/ilolioo/bsimgbed/releases">
-  <img src="https://img.shields.io/github/v/release/ilolioo/bsimgbed?color=brightgreen" alt="release">
-</a>
-
 <a href="https://github.com/ilolioo/bsimgbed">
   <img src="https://img.shields.io/badge/Apache-License2.0-green" alt="License">
 </a>
@@ -21,8 +17,6 @@ _✨ 简单易用的个人图床系统，基于 Nuxt.js 构建 ✨_
 [功能特性](#功能特性) • [快速开始](#快速开始) • [配置说明](#配置说明) • [API 文档](#api-文档) • [常见问题](#常见问题)
 
 </div>
-
-## 项目预览
 
 ## 功能特性
 
@@ -71,7 +65,7 @@ _✨ 简单易用的个人图床系统，基于 Nuxt.js 构建 ✨_
 
 ```bash
 # 1. 创建 bsimgbed 目录
-mkdir -p /root/bsimgbed && cd /root/bsimgbed
+mkdir -p /opt/bsimgbed && cd /opt/bsimgbed
 
 
 # 2. 下载docker-compose.yml文件

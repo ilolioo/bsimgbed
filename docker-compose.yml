@@ -1,9 +1,6 @@
 services:
   bsimgbed:
     image: ilolioo/bsimgbed:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
     container_name: bsimgbed
     restart: unless-stopped
     ports:
@@ -15,5 +12,3 @@ services:
       NODE_ENV: production
       HOST: "0.0.0.0"
       PORT: "5198"
-    labels:
-      - "com.centurylinklabs.watchtower.enable=false"
