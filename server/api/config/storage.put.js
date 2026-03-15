@@ -25,18 +25,22 @@ export default defineEventHandler(async (event) => {
       nextBuckets = bodyBuckets.map(b => {
         let id = (b.id ?? b._id ?? '').toString().trim()
         const existing = id ? currentBuckets.find(x => x.id === id) : null
-        if (!id || id.startsWith('bs-')) {
+        if (!id) {
           id = existing?.id || uuidv4()
         } else {
           // 自定义 ID：仅保留英文、数字、连字符、下划线，避免路径问题
           const sanitized = id.replace(/[^a-zA-Z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
-          if (!sanitized) id = uuidv4()
-          else id = sanitized
+          if (!sanitized) {
+            throw createError({ statusCode: 400, message: `储存桶 ${b.name || id} 的 ID 无效，请使用英文/数字/连字符/下划线` })
+          }
+          id = sanitized
         }
-        if (usedIds.has(id)) id = uuidv4()
+        if (usedIds.has(id)) {
+          throw createError({ statusCode: 400, message: `储存桶 ID 重复: ${id}` })
+        }
         usedIds.add(id)
         const driver = (b.driver || (existing?.driver) || 'local').toLowerCase()
-        if (!['local', 'webdav', 'telegram'].includes(driver)) {
+        if (!['local', 'webdav', 'telegram', 'ftp', 'sftp', 's3'].includes(driver)) {
           throw createError({ statusCode: 400, message: `储存桶 ${b.name || id} 无效的驱动` })
         }
         // -1 表示不限制容量；其他负数归一为 -1
@@ -56,7 +60,10 @@ export default defineEventHandler(async (event) => {
           allowUser,
           showOnCapacity,
           webdav: null,
-          telegram: null
+          telegram: null,
+          ftp: null,
+          sftp: null,
+          s3: null
         }
         if (driver === 'webdav' && (b.webdav || existing?.webdav)) {
           const w = b.webdav || {}
@@ -78,6 +85,56 @@ export default defineEventHandler(async (event) => {
             token: (t.token !== undefined && t.token !== '' && t.token !== PLACEHOLDER)
               ? t.token
               : (et.token || '')
+          }
+        }
+        if (driver === 'ftp' && (b.ftp || existing?.ftp)) {
+          const f = b.ftp || {}
+          const ef = existing?.ftp || {}
+          out.ftp = {
+            host: (f.host !== undefined ? f.host : ef.host) || '',
+            port: (f.port !== undefined ? Number(f.port) : (ef.port || 21)) || 21,
+            username: (f.username !== undefined ? f.username : ef.username) || '',
+            basePath: (f.basePath !== undefined ? f.basePath : ef.basePath) || '',
+            secure: (f.secure !== undefined ? !!f.secure : !!ef.secure),
+            password: (f.password !== undefined && f.password !== '' && f.password !== PLACEHOLDER)
+              ? f.password
+              : (ef.password || '')
+          }
+        }
+        if (driver === 'sftp' && (b.sftp || existing?.sftp)) {
+          const s = b.sftp || {}
+          const es = existing?.sftp || {}
+          out.sftp = {
+            host: (s.host !== undefined ? s.host : es.host) || '',
+            port: (s.port !== undefined ? Number(s.port) : (es.port || 22)) || 22,
+            username: (s.username !== undefined ? s.username : es.username) || '',
+            basePath: (s.basePath !== undefined ? s.basePath : es.basePath) || '',
+            password: (s.password !== undefined && s.password !== '' && s.password !== PLACEHOLDER)
+              ? s.password
+              : (es.password || ''),
+            privateKey: (s.privateKey !== undefined && s.privateKey !== '' && s.privateKey !== PLACEHOLDER)
+              ? s.privateKey
+              : (es.privateKey || ''),
+            passphrase: (s.passphrase !== undefined && s.passphrase !== '' && s.passphrase !== PLACEHOLDER)
+              ? s.passphrase
+              : (es.passphrase || '')
+          }
+        }
+        if (driver === 's3' && (b.s3 || existing?.s3)) {
+          const s3 = b.s3 || {}
+          const es3 = existing?.s3 || {}
+          out.s3 = {
+            bucket: (s3.bucket !== undefined ? s3.bucket : es3.bucket) || '',
+            region: (s3.region !== undefined ? s3.region : es3.region) || '',
+            endpoint: (s3.endpoint !== undefined ? s3.endpoint : es3.endpoint) || '',
+            pathPrefix: (s3.pathPrefix !== undefined ? s3.pathPrefix : es3.pathPrefix) || '',
+            forcePathStyle: (s3.forcePathStyle !== undefined ? !!s3.forcePathStyle : !!es3.forcePathStyle),
+            accessKeyId: (s3.accessKeyId !== undefined && s3.accessKeyId !== '' && s3.accessKeyId !== PLACEHOLDER)
+              ? s3.accessKeyId
+              : (es3.accessKeyId || ''),
+            secretAccessKey: (s3.secretAccessKey !== undefined && s3.secretAccessKey !== '' && s3.secretAccessKey !== PLACEHOLDER)
+              ? s3.secretAccessKey
+              : (es3.secretAccessKey || '')
           }
         }
         return out

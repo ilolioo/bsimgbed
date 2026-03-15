@@ -27,6 +27,32 @@ export default defineEventHandler(async (event) => {
           chatId: b.telegram.chatId || '',
           apiBaseUrl: b.telegram.apiBaseUrl || '',
           hasToken: !!b.telegram.token
+        } : null,
+        ftp: b.ftp ? {
+          host: b.ftp.host || '',
+          port: b.ftp.port || 21,
+          username: b.ftp.username || '',
+          basePath: b.ftp.basePath || '',
+          secure: !!b.ftp.secure,
+          hasPassword: !!b.ftp.password
+        } : null,
+        sftp: b.sftp ? {
+          host: b.sftp.host || '',
+          port: b.sftp.port || 22,
+          username: b.sftp.username || '',
+          basePath: b.sftp.basePath || '',
+          hasPassword: !!b.sftp.password,
+          hasPrivateKey: !!b.sftp.privateKey,
+          hasPassphrase: !!b.sftp.passphrase
+        } : null,
+        s3: b.s3 ? {
+          bucket: b.s3.bucket || '',
+          region: b.s3.region || '',
+          endpoint: b.s3.endpoint || '',
+          pathPrefix: b.s3.pathPrefix || '',
+          forcePathStyle: !!b.s3.forcePathStyle,
+          hasAccessKey: !!b.s3.accessKeyId,
+          hasSecretKey: !!b.s3.secretAccessKey
         } : null
       }))
     }

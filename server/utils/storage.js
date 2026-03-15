@@ -1,7 +1,10 @@
-import { join } from 'path'
+import { join, posix } from 'path'
 import { existsSync, mkdirSync, unlinkSync, createReadStream } from 'fs'
 import { writeFile, readFile } from 'fs/promises'
-import { Readable } from 'stream'
+import { Readable, Writable, PassThrough } from 'stream'
+import { Client as FtpClient } from 'basic-ftp'
+import SftpClient from 'ssh2-sftp-client'
+import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import db from './db.js'
 
 // 存储驱动默认值（环境变量），运行时可由数据库覆盖
@@ -23,11 +26,11 @@ console.log('[Storage] 默认驱动:', ENV_DRIVER, '本地目录:', uploadsDir)
 
 /**
  * 获取当前存储配置（默认桶的配置，兼容旧调用）
- * @returns {Promise<{ driver: string, webdav?: object, telegram?: object }>}
+ * @returns {Promise<{ driver: string, webdav?: object, telegram?: object, ftp?: object, sftp?: object, s3?: object }>}
  */
 export async function getStorageConfig() {
   const bucket = await getBucketById(null)
-  if (!bucket) return { driver: 'local', webdav: null, telegram: null }
+  if (!bucket) return { driver: 'local', webdav: null, telegram: null, ftp: null, sftp: null, s3: null }
   const driver = (bucket.driver || 'local').toLowerCase()
   let webdav = null
   if (bucket.webdav?.baseUrl && bucket.webdav?.username) {
@@ -60,7 +63,10 @@ export async function getStorageConfig() {
       telegram = { token, chatId: String(chatId), apiBaseUrl: (process.env.TELEGRAM_API_URL || 'https://api.telegram.org').replace(/\/+$/, '') }
     }
   }
-  return { driver, webdav, telegram }
+  const ftp = bucket.ftp || null
+  const sftp = bucket.sftp || null
+  const s3 = bucket.s3 || null
+  return { driver, webdav, telegram, ftp, sftp, s3 }
 }
 
 const BUCKETS_KEY = 'storageBuckets'
@@ -79,7 +85,10 @@ async function migrateToBuckets() {
     sizeLimit: DEFAULT_SIZE_LIMIT,
     usedSize: 0,
     webdav: v.webdav || null,
-    telegram: v.telegram || null
+    telegram: v.telegram || null,
+    ftp: null,
+    sftp: null,
+    s3: null
   }]
   const value = { defaultId: 'default', buckets }
   await db.settings.update(
@@ -167,6 +176,46 @@ function resolveWebdavConfig(webdavFromConfig, bucketName = '') {
   return { baseUrl: baseUrl.replace(/\/+$/, ''), username, password }
 }
 
+function normalizeRemotePath(basePath, filename) {
+  const cleanBase = String(basePath || '').replace(/\\/g, '/').replace(/\/+$/, '').trim()
+  if (!cleanBase) return filename
+  return posix.join(cleanBase, filename)
+}
+
+function streamToBuffer(readable) {
+  return new Promise((resolve, reject) => {
+    const chunks = []
+    const writable = new Writable({
+      write(chunk, _enc, cb) {
+        chunks.push(Buffer.from(chunk))
+        cb()
+      }
+    })
+    writable.on('finish', () => resolve(Buffer.concat(chunks)))
+    writable.on('error', reject)
+    readable.on('error', reject)
+    readable.pipe(writable)
+  })
+}
+
+async function bodyToBuffer(body) {
+  if (!body) return Buffer.alloc(0)
+  if (Buffer.isBuffer(body)) return body
+  if (body instanceof Uint8Array) return Buffer.from(body)
+  if (typeof body.transformToByteArray === 'function') {
+    const bytes = await body.transformToByteArray()
+    return Buffer.from(bytes)
+  }
+  if (typeof body.arrayBuffer === 'function') {
+    const arrayBuffer = await body.arrayBuffer()
+    return Buffer.from(arrayBuffer)
+  }
+  if (typeof body.pipe === 'function') {
+    return await streamToBuffer(body)
+  }
+  throw new Error('[Storage] 无法读取对象内容')
+}
+
 function buildWebdavFileUrl(baseUrl, filename) {
   return `${baseUrl}/${encodeURIComponent(filename)}`
 }
@@ -196,6 +245,71 @@ function resolveTelegramConfig(telegramFromConfig) {
   }
 }
 
+function resolveFtpConfig(ftpFromConfig, bucketName = '') {
+  if (ftpFromConfig?.host && ftpFromConfig?.username && ftpFromConfig?.password) {
+    return {
+      host: ftpFromConfig.host,
+      port: Number(ftpFromConfig.port) || 21,
+      username: ftpFromConfig.username,
+      password: ftpFromConfig.password,
+      secure: !!ftpFromConfig.secure,
+      basePath: ftpFromConfig.basePath || ''
+    }
+  }
+  if (ftpFromConfig && (ftpFromConfig.host || ftpFromConfig.username)) {
+    throw new Error(`[Storage] FTP 储存桶「${bucketName || '当前'}」配置不完整，请填写主机、用户名和密码`)
+  }
+  throw new Error('[Storage] FTP 配置不完整，请在后台存储配置中设置')
+}
+
+function resolveSftpConfig(sftpFromConfig, bucketName = '') {
+  if (sftpFromConfig?.host && sftpFromConfig?.username && (sftpFromConfig?.password || sftpFromConfig?.privateKey)) {
+    return {
+      host: sftpFromConfig.host,
+      port: Number(sftpFromConfig.port) || 22,
+      username: sftpFromConfig.username,
+      password: sftpFromConfig.password || undefined,
+      privateKey: sftpFromConfig.privateKey || undefined,
+      passphrase: sftpFromConfig.passphrase || undefined,
+      basePath: sftpFromConfig.basePath || ''
+    }
+  }
+  if (sftpFromConfig && (sftpFromConfig.host || sftpFromConfig.username)) {
+    throw new Error(`[Storage] SFTP 储存桶「${bucketName || '当前'}」配置不完整，请填写主机、用户名与密码或私钥`)
+  }
+  throw new Error('[Storage] SFTP 配置不完整，请在后台存储配置中设置')
+}
+
+function resolveS3Config(s3FromConfig, bucketName = '') {
+  if (s3FromConfig?.bucket && s3FromConfig?.region && s3FromConfig?.accessKeyId && s3FromConfig?.secretAccessKey) {
+    return {
+      bucket: s3FromConfig.bucket,
+      region: s3FromConfig.region,
+      accessKeyId: s3FromConfig.accessKeyId,
+      secretAccessKey: s3FromConfig.secretAccessKey,
+      endpoint: s3FromConfig.endpoint || undefined,
+      pathPrefix: s3FromConfig.pathPrefix || '',
+      forcePathStyle: !!s3FromConfig.forcePathStyle
+    }
+  }
+  if (s3FromConfig && (s3FromConfig.bucket || s3FromConfig.accessKeyId || s3FromConfig.region)) {
+    throw new Error(`[Storage] S3 储存桶「${bucketName || '当前'}」配置不完整，请填写 Bucket、Region、AccessKey 与 SecretKey`)
+  }
+  throw new Error('[Storage] S3 配置不完整，请在后台存储配置中设置')
+}
+
+function buildS3Client(config) {
+  return new S3Client({
+    region: config.region,
+    endpoint: config.endpoint,
+    forcePathStyle: config.forcePathStyle || false,
+    credentials: {
+      accessKeyId: config.accessKeyId,
+      secretAccessKey: config.secretAccessKey
+    }
+  })
+}
+
 /**
  * 保存文件到指定桶（不传则用默认桶）
  * @returns {Promise<string>} 返回 bucketId，用于写入 image.bucketId
@@ -216,6 +330,9 @@ export async function saveFile(buffer, filename, bucketId) {
   const driver = (bucket.driver || 'local').toLowerCase()
   const webdavFromConfig = bucket.webdav || null
   const telegramFromConfig = bucket.telegram || null
+  const ftpFromConfig = bucket.ftp || null
+  const sftpFromConfig = bucket.sftp || null
+  const s3FromConfig = bucket.s3 || null
 
   if (driver === 'local') {
     const dir = join(uploadsDir, bucket.id)
@@ -287,6 +404,48 @@ export async function saveFile(buffer, filename, bucketId) {
     return bucket.id
   }
 
+  if (driver === 'ftp') {
+    const { host, port, username, password, secure, basePath } = resolveFtpConfig(ftpFromConfig, bucket.name)
+    const client = new FtpClient()
+    try {
+      await client.access({ host, port, user: username, password, secure })
+      if (basePath) await client.ensureDir(basePath)
+      const remotePath = normalizeRemotePath(basePath, filename)
+      const body = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer)
+      await client.uploadFrom(Readable.from(body), remotePath)
+    } finally {
+      client.close()
+    }
+    await updateBucketUsedSize(bucket.id, size)
+    return bucket.id
+  }
+
+  if (driver === 'sftp') {
+    const { host, port, username, password, privateKey, passphrase, basePath } = resolveSftpConfig(sftpFromConfig, bucket.name)
+    const client = new SftpClient()
+    try {
+      await client.connect({ host, port, username, password, privateKey, passphrase })
+      if (basePath) await client.mkdir(basePath, true).catch(() => {})
+      const remotePath = normalizeRemotePath(basePath, filename)
+      const body = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer)
+      await client.put(body, remotePath)
+    } finally {
+      await client.end().catch(() => {})
+    }
+    await updateBucketUsedSize(bucket.id, size)
+    return bucket.id
+  }
+
+  if (driver === 's3') {
+    const config = resolveS3Config(s3FromConfig, bucket.name)
+    const client = buildS3Client(config)
+    const body = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer)
+    const key = normalizeRemotePath(config.pathPrefix, filename)
+    await client.send(new PutObjectCommand({ Bucket: config.bucket, Key: key, Body: body }))
+    await updateBucketUsedSize(bucket.id, size)
+    return bucket.id
+  }
+
   const dir = join(uploadsDir, bucket.id)
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
   const filepath = getLocalFilePath(bucket.id, filename)
@@ -306,6 +465,9 @@ export async function deleteFile(filename, bucketId, fileSize) {
   const driver = (bucket.driver || 'local').toLowerCase()
   const webdavFromConfig = bucket.webdav || null
   const telegramFromConfig = bucket.telegram || null
+  const ftpFromConfig = bucket.ftp || null
+  const sftpFromConfig = bucket.sftp || null
+  const s3FromConfig = bucket.s3 || null
 
   if (driver === 'local') {
     const filepath = getLocalFilePath(bucket.id, filename)
@@ -354,6 +516,58 @@ export async function deleteFile(filename, bucketId, fileSize) {
     return true
   }
 
+  if (driver === 'ftp') {
+    const { host, port, username, password, secure, basePath } = resolveFtpConfig(ftpFromConfig, bucket.name)
+    const client = new FtpClient()
+    try {
+      await client.access({ host, port, user: username, password, secure })
+      const remotePath = normalizeRemotePath(basePath, filename)
+      await client.remove(remotePath).catch(err => {
+        if (!String(err?.code || err?.message || '').includes('550')) throw err
+      })
+      if (fileSize != null) await updateBucketUsedSize(bucket.id, -fileSize)
+      return true
+    } catch (err) {
+      console.error('[Storage] FTP 删除失败:', err?.message || err)
+      return false
+    } finally {
+      client.close()
+    }
+  }
+
+  if (driver === 'sftp') {
+    const { host, port, username, password, privateKey, passphrase, basePath } = resolveSftpConfig(sftpFromConfig, bucket.name)
+    const client = new SftpClient()
+    try {
+      await client.connect({ host, port, username, password, privateKey, passphrase })
+      const remotePath = normalizeRemotePath(basePath, filename)
+      await client.delete(remotePath).catch(err => {
+        if (!String(err?.message || '').includes('No such file')) throw err
+      })
+      if (fileSize != null) await updateBucketUsedSize(bucket.id, -fileSize)
+      return true
+    } catch (err) {
+      console.error('[Storage] SFTP 删除失败:', err?.message || err)
+      return false
+    } finally {
+      await client.end().catch(() => {})
+    }
+  }
+
+  if (driver === 's3') {
+    const config = resolveS3Config(s3FromConfig, bucket.name)
+    const client = buildS3Client(config)
+    const key = normalizeRemotePath(config.pathPrefix, filename)
+    try {
+      await client.send(new DeleteObjectCommand({ Bucket: config.bucket, Key: key }))
+      if (fileSize != null) await updateBucketUsedSize(bucket.id, -fileSize)
+      return true
+    } catch (err) {
+      console.error('[Storage] S3 删除失败:', err?.message || err)
+      return false
+    }
+  }
+
   return false
 }
 
@@ -367,6 +581,9 @@ export async function fileExists(filename, bucketId) {
 
   const driver = (bucket.driver || 'local').toLowerCase()
   const webdavFromConfig = bucket.webdav || null
+  const ftpFromConfig = bucket.ftp || null
+  const sftpFromConfig = bucket.sftp || null
+  const s3FromConfig = bucket.s3 || null
 
   if (driver === 'local') {
     const filepath = getLocalFilePath(bucket.id, filename)
@@ -401,6 +618,52 @@ export async function fileExists(filename, bucketId) {
       return false
     }
   }
+  if (driver === 'ftp') {
+    const { host, port, username, password, secure, basePath } = resolveFtpConfig(ftpFromConfig, bucket.name)
+    const client = new FtpClient()
+    try {
+      await client.access({ host, port, user: username, password, secure })
+      const remotePath = normalizeRemotePath(basePath, filename)
+      await client.size(remotePath)
+      return true
+    } catch (err) {
+      if (String(err?.code || err?.message || '').includes('550')) return false
+      console.warn('[Storage] FTP 检查文件存在失败:', err?.message || err)
+      return false
+    } finally {
+      client.close()
+    }
+  }
+  if (driver === 'sftp') {
+    const { host, port, username, password, privateKey, passphrase, basePath } = resolveSftpConfig(sftpFromConfig, bucket.name)
+    const client = new SftpClient()
+    try {
+      await client.connect({ host, port, username, password, privateKey, passphrase })
+      const remotePath = normalizeRemotePath(basePath, filename)
+      await client.stat(remotePath)
+      return true
+    } catch (err) {
+      if (String(err?.message || '').includes('No such file')) return false
+      console.warn('[Storage] SFTP 检查文件存在失败:', err?.message || err)
+      return false
+    } finally {
+      await client.end().catch(() => {})
+    }
+  }
+  if (driver === 's3') {
+    const config = resolveS3Config(s3FromConfig, bucket.name)
+    const client = buildS3Client(config)
+    const key = normalizeRemotePath(config.pathPrefix, filename)
+    try {
+      await client.send(new HeadObjectCommand({ Bucket: config.bucket, Key: key }))
+      return true
+    } catch (err) {
+      const code = err?.name || err?.Code
+      if (code === 'NotFound' || err?.$metadata?.httpStatusCode === 404) return false
+      console.warn('[Storage] S3 检查文件存在失败:', err?.message || err)
+      return false
+    }
+  }
   return false
 }
 
@@ -415,6 +678,9 @@ export async function getFileBuffer(filename, bucketId) {
   const driver = (bucket.driver || 'local').toLowerCase()
   const webdavFromConfig = bucket.webdav || null
   const telegramFromConfig = bucket.telegram || null
+  const ftpFromConfig = bucket.ftp || null
+  const sftpFromConfig = bucket.sftp || null
+  const s3FromConfig = bucket.s3 || null
 
   if (driver === 'local') {
     const filepath = getLocalFilePath(bucket.id, filename)
@@ -459,6 +725,43 @@ export async function getFileBuffer(filename, bucketId) {
     const arrayBuffer = await fileRes.arrayBuffer()
     return Buffer.from(arrayBuffer)
   }
+  if (driver === 'ftp') {
+    const { host, port, username, password, secure, basePath } = resolveFtpConfig(ftpFromConfig, bucket.name)
+    const client = new FtpClient()
+    try {
+      await client.access({ host, port, user: username, password, secure })
+      const remotePath = normalizeRemotePath(basePath, filename)
+      const pass = new PassThrough()
+      const download = client.downloadTo(pass, remotePath)
+      const buffer = await streamToBuffer(pass)
+      await download
+      return buffer
+    } finally {
+      client.close()
+    }
+  }
+  if (driver === 'sftp') {
+    const { host, port, username, password, privateKey, passphrase, basePath } = resolveSftpConfig(sftpFromConfig, bucket.name)
+    const client = new SftpClient()
+    try {
+      await client.connect({ host, port, username, password, privateKey, passphrase })
+      const remotePath = normalizeRemotePath(basePath, filename)
+      const data = await client.get(remotePath)
+      if (Buffer.isBuffer(data)) return data
+      if (data instanceof Uint8Array) return Buffer.from(data)
+      if (typeof data.pipe === 'function') return await streamToBuffer(data)
+      throw new Error('[Storage] SFTP 返回未知数据类型')
+    } finally {
+      await client.end().catch(() => {})
+    }
+  }
+  if (driver === 's3') {
+    const config = resolveS3Config(s3FromConfig, bucket.name)
+    const client = buildS3Client(config)
+    const key = normalizeRemotePath(config.pathPrefix, filename)
+    const res = await client.send(new GetObjectCommand({ Bucket: config.bucket, Key: key }))
+    return await bodyToBuffer(res.Body)
+  }
   throw new Error('[Storage] 不支持的存储驱动')
 }
 
@@ -480,10 +783,9 @@ export async function getFileStream(filename, bucketId) {
     }
     throw new Error('[Storage] 本地文件不存在')
   }
-  if (driver === 'webdav' || driver === 'telegram') {
+  if (driver === 'webdav' || driver === 'telegram' || driver === 'ftp' || driver === 'sftp' || driver === 's3') {
     const buffer = await getFileBuffer(filename, bucket.id)
     return Readable.from(buffer)
   }
   throw new Error('[Storage] 不支持的存储驱动')
 }
-

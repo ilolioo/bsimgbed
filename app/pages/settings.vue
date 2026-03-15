@@ -468,12 +468,35 @@
                   <span class="px-2 py-0.5 text-xs font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded shrink-0" :title="'储存桶 ID: ' + b.id">{{ b.id }}</span>
                   <span
                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium shrink-0"
-                    :class="b.driver === 'local' ? 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300' : b.driver === 'webdav' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' : 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300'"
+                    :class="b.driver === 'local'
+                      ? 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
+                      : b.driver === 'webdav'
+                        ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                        : b.driver === 'telegram'
+                          ? 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300'
+                          : b.driver === 'ftp'
+                            ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+                            : b.driver === 'sftp'
+                              ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
+                              : 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'"
                   >
                     <Icon v-if="b.driver === 'local'" name="heroicons:computer-desktop" class="w-3.5 h-3.5" />
                     <Icon v-else-if="b.driver === 'webdav'" name="heroicons:cloud-arrow-up" class="w-3.5 h-3.5" />
-                    <Icon v-else name="heroicons:paper-airplane" class="w-3.5 h-3.5" />
-                    {{ b.driver === 'local' ? '本地' : b.driver === 'webdav' ? 'WebDAV' : 'Telegram' }}
+                    <Icon v-else-if="b.driver === 'telegram'" name="heroicons:paper-airplane" class="w-3.5 h-3.5" />
+                    <Icon v-else-if="b.driver === 'ftp'" name="heroicons:server" class="w-3.5 h-3.5" />
+                    <Icon v-else-if="b.driver === 'sftp'" name="heroicons:lock-closed" class="w-3.5 h-3.5" />
+                    <Icon v-else name="heroicons:cloud" class="w-3.5 h-3.5" />
+                    {{ b.driver === 'local'
+                      ? '本地'
+                      : b.driver === 'webdav'
+                        ? 'WebDAV'
+                        : b.driver === 'telegram'
+                          ? 'Telegram'
+                          : b.driver === 'ftp'
+                            ? 'FTP'
+                            : b.driver === 'sftp'
+                              ? 'SFTP'
+                              : 'S3' }}
                   </span>
                   <span v-if="storageDefaultId === b.id" class="px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 rounded">默认</span>
                   <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
@@ -531,6 +554,9 @@
                         <option value="local">本地磁盘</option>
                         <option value="webdav">WebDAV</option>
                         <option value="telegram">Telegram</option>
+                        <option value="ftp">FTP</option>
+                        <option value="sftp">SFTP</option>
+                        <option value="s3">S3</option>
                       </select>
                     </div>
                   </div>
@@ -619,6 +645,65 @@
                         <input v-model="b.telegram.chatId" type="text" class="input w-full" placeholder="Chat ID" />
                         <input v-model="b.telegram.apiBaseUrl" type="url" class="input w-full" placeholder="API 地址（可选）" />
                       </div>
+                    </div>
+                  </div>
+                  <!-- FTP 配置 -->
+                  <div v-if="b.driver === 'ftp'" class="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <Icon name="heroicons:server" class="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                      FTP 配置
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input v-model="b.ftp.host" type="text" class="input w-full" placeholder="主机" />
+                      <input v-model.number="b.ftp.port" type="number" class="input w-full" placeholder="端口 (21)" />
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input v-model="b.ftp.username" type="text" class="input w-full" placeholder="用户名" />
+                      <input v-model="b.ftp.password" type="password" class="input w-full" :placeholder="b.ftp.hasPassword ? '****（留空不修改）' : '密码'" autocomplete="new-password" />
+                    </div>
+                    <input v-model="b.ftp.basePath" type="text" class="input w-full" placeholder="Base Path（可选，如 /uploads）" />
+                    <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <input :id="`ftp-secure-${getBucketKey(b)}`" v-model="b.ftp.secure" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                      <label :for="`ftp-secure-${getBucketKey(b)}`">启用 FTPS (TLS)</label>
+                    </div>
+                  </div>
+                  <!-- SFTP 配置 -->
+                  <div v-if="b.driver === 'sftp'" class="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <Icon name="heroicons:lock-closed" class="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                      SFTP 配置
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input v-model="b.sftp.host" type="text" class="input w-full" placeholder="主机" />
+                      <input v-model.number="b.sftp.port" type="number" class="input w-full" placeholder="端口 (22)" />
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input v-model="b.sftp.username" type="text" class="input w-full" placeholder="用户名" />
+                      <input v-model="b.sftp.password" type="password" class="input w-full" :placeholder="b.sftp.hasPassword ? '****（留空不修改）' : '密码（可选）'" autocomplete="new-password" />
+                    </div>
+                    <textarea v-model="b.sftp.privateKey" rows="3" class="input w-full font-mono text-sm" :placeholder="b.sftp.hasPrivateKey ? '****（留空不修改）' : 'Private Key（可选）'" />
+                    <input v-model="b.sftp.passphrase" type="password" class="input w-full" :placeholder="b.sftp.hasPassphrase ? '****（留空不修改）' : 'Passphrase（可选）'" autocomplete="new-password" />
+                    <input v-model="b.sftp.basePath" type="text" class="input w-full" placeholder="Base Path（可选，如 /uploads）" />
+                  </div>
+                  <!-- S3 配置 -->
+                  <div v-if="b.driver === 's3'" class="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <Icon name="heroicons:cloud" class="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                      S3 配置
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input v-model="b.s3.bucket" type="text" class="input w-full" placeholder="Bucket" />
+                      <input v-model="b.s3.region" type="text" class="input w-full" placeholder="Region" />
+                    </div>
+                    <input v-model="b.s3.endpoint" type="url" class="input w-full" placeholder="Endpoint（可选，如 https://s3.example.com）" />
+                    <input v-model="b.s3.pathPrefix" type="text" class="input w-full" placeholder="Path Prefix（可选，如 images/）" />
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input v-model="b.s3.accessKeyId" type="text" class="input w-full" :placeholder="b.s3.hasAccessKey ? '****（留空不修改）' : 'Access Key ID'" autocomplete="new-password" />
+                      <input v-model="b.s3.secretAccessKey" type="password" class="input w-full" :placeholder="b.s3.hasSecretKey ? '****（留空不修改）' : 'Secret Access Key'" autocomplete="new-password" />
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <input :id="`s3-path-style-${getBucketKey(b)}`" v-model="b.s3.forcePathStyle" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                      <label :for="`s3-path-style-${getBucketKey(b)}`">强制 Path-Style</label>
                     </div>
                   </div>
                 </div>
@@ -896,7 +981,7 @@ function removeAnnouncementItem(blockKey, index) {
 const savingAnnouncement = ref(false)
 
 // 关于设置
-const defaultAboutProject = 'bsimgbed 是一个简单易用的个人图床应用，支持本地磁盘、WebDAV、Telegram 等多种存储方式，可自由切换无需重启。提供公共/私有 API、API Key 管理、内容安全（NSFW 检测、违规自动处理）与通知等能力，适合自建图床与图片管理。'
+const defaultAboutProject = 'bsimgbed 是一个简单易用的个人图床应用，支持本地磁盘、WebDAV、Telegram、FTP、SFTP、S3 等多种存储方式，可自由切换无需重启。提供公共/私有 API、API Key 管理、内容安全（NSFW 检测、违规自动处理）与通知等能力，适合自建图床与图片管理。'
 const defaultProjectInfo = [{ label: '项目地址', url: 'https://github.com/ilolioo/bsimgbed', icon: 'simple-icons:github' }]
 const aboutSettings = reactive({
   aboutProject: defaultAboutProject,
@@ -978,7 +1063,10 @@ function addBucket() {
     allowUser: true,
     showOnCapacity: true,
     webdav: { baseUrl: '', username: '', password: '', hasPassword: false },
-    telegram: { token: '', chatId: '', apiBaseUrl: '', hasToken: false }
+    telegram: { token: '', chatId: '', apiBaseUrl: '', hasToken: false },
+    ftp: { host: '', port: 21, username: '', password: '', basePath: '', secure: false, hasPassword: false },
+    sftp: { host: '', port: 22, username: '', password: '', privateKey: '', passphrase: '', basePath: '', hasPassword: false, hasPrivateKey: false, hasPassphrase: false },
+    s3: { bucket: '', region: '', endpoint: '', pathPrefix: '', accessKeyId: '', secretAccessKey: '', forcePathStyle: false, hasAccessKey: false, hasSecretKey: false }
   })
   editingBucketId.value = _editKey
 }
@@ -1079,7 +1167,10 @@ async function fetchStorageConfig() {
         allowUser: b.allowUser !== false,
         showOnCapacity: b.showOnCapacity !== false,
         webdav: b.webdav ? { baseUrl: b.webdav.baseUrl || '', username: b.webdav.username || '', password: '', hasPassword: !!b.webdav.hasPassword } : { baseUrl: '', username: '', password: '', hasPassword: false },
-        telegram: b.telegram ? { token: '', chatId: b.telegram.chatId || '', apiBaseUrl: b.telegram.apiBaseUrl || '', hasToken: !!b.telegram.hasToken } : { token: '', chatId: '', apiBaseUrl: '', hasToken: false }
+        telegram: b.telegram ? { token: '', chatId: b.telegram.chatId || '', apiBaseUrl: b.telegram.apiBaseUrl || '', hasToken: !!b.telegram.hasToken } : { token: '', chatId: '', apiBaseUrl: '', hasToken: false },
+        ftp: b.ftp ? { host: b.ftp.host || '', port: b.ftp.port || 21, username: b.ftp.username || '', password: '', basePath: b.ftp.basePath || '', secure: !!b.ftp.secure, hasPassword: !!b.ftp.hasPassword } : { host: '', port: 21, username: '', password: '', basePath: '', secure: false, hasPassword: false },
+        sftp: b.sftp ? { host: b.sftp.host || '', port: b.sftp.port || 22, username: b.sftp.username || '', password: '', privateKey: '', passphrase: '', basePath: b.sftp.basePath || '', hasPassword: !!b.sftp.hasPassword, hasPrivateKey: !!b.sftp.hasPrivateKey, hasPassphrase: !!b.sftp.hasPassphrase } : { host: '', port: 22, username: '', password: '', privateKey: '', passphrase: '', basePath: '', hasPassword: false, hasPrivateKey: false, hasPassphrase: false },
+        s3: b.s3 ? { bucket: b.s3.bucket || '', region: b.s3.region || '', endpoint: b.s3.endpoint || '', pathPrefix: b.s3.pathPrefix || '', accessKeyId: '', secretAccessKey: '', forcePathStyle: !!b.s3.forcePathStyle, hasAccessKey: !!b.s3.hasAccessKey, hasSecretKey: !!b.s3.hasSecretKey } : { bucket: '', region: '', endpoint: '', pathPrefix: '', accessKeyId: '', secretAccessKey: '', forcePathStyle: false, hasAccessKey: false, hasSecretKey: false }
       }))
     }
   } catch (error) {
@@ -1100,7 +1191,10 @@ async function saveStorageConfig() {
       allowUser: b.allowUser !== false,
       showOnCapacity: b.showOnCapacity !== false,
       webdav: b.driver === 'webdav' ? { baseUrl: b.webdav.baseUrl, username: b.webdav.username, password: b.webdav.password || undefined } : undefined,
-      telegram: b.driver === 'telegram' ? { token: b.telegram.token || undefined, chatId: b.telegram.chatId, apiBaseUrl: b.telegram.apiBaseUrl || undefined } : undefined
+      telegram: b.driver === 'telegram' ? { token: b.telegram.token || undefined, chatId: b.telegram.chatId, apiBaseUrl: b.telegram.apiBaseUrl || undefined } : undefined,
+      ftp: b.driver === 'ftp' ? { host: b.ftp.host, port: b.ftp.port, username: b.ftp.username, password: b.ftp.password || undefined, basePath: b.ftp.basePath || undefined, secure: !!b.ftp.secure } : undefined,
+      sftp: b.driver === 'sftp' ? { host: b.sftp.host, port: b.sftp.port, username: b.sftp.username, password: b.sftp.password || undefined, privateKey: b.sftp.privateKey || undefined, passphrase: b.sftp.passphrase || undefined, basePath: b.sftp.basePath || undefined } : undefined,
+      s3: b.driver === 's3' ? { bucket: b.s3.bucket, region: b.s3.region, endpoint: b.s3.endpoint || undefined, pathPrefix: b.s3.pathPrefix || undefined, accessKeyId: b.s3.accessKeyId || undefined, secretAccessKey: b.s3.secretAccessKey || undefined, forcePathStyle: !!b.s3.forcePathStyle } : undefined
     }))
     const response = await $fetch('/api/config/storage', {
       method: 'PUT',
