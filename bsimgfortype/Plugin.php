@@ -4,7 +4,7 @@
  *
  * @package Bsimgfortype
  * @author BSImg
- * @version 1.0.0
+ * @version 1.0.1
  * @link https://github.com/ilolioo/bsimgbed
  */
 
@@ -127,11 +127,16 @@ class Plugin implements PluginInterface
     private static function getOptions(): \stdClass
     {
         $opts = Options::alloc()->plugin('Bsimgfortype');
+        $bucketId = $opts ? trim((string) $opts->bucket_id) : '';
+        if ($bucketId !== '') {
+            $bucketId = preg_replace('/[^a-zA-Z0-9_-]/', '-', $bucketId);
+            $bucketId = trim($bucketId, '-');
+        }
         return (object) [
             'base_url'   => $opts ? rtrim(trim((string) $opts->base_url), '/') : '',
             'use_private' => $opts && (string) $opts->use_private === '1',
             'api_key'   => $opts ? trim((string) $opts->api_key) : '',
-            'bucket_id' => $opts ? trim((string) $opts->bucket_id) : '',
+            'bucket_id' => $bucketId,
             'timeout'   => $opts && (int) $opts->timeout > 0 ? min(120, max(5, (int) $opts->timeout)) : 30,
             'ssl_verify' => !$opts || (is_array($opts->ssl_verify) && in_array('1', $opts->ssl_verify, true)),
         ];

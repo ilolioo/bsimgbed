@@ -64,11 +64,16 @@ class BSImgBed_Settings {
             return get_option(self::OPTION_KEY, array());
         }
         $current = get_option(self::OPTION_KEY, array());
+        $bucket_id = isset($input['bucket_id']) ? sanitize_text_field(trim($input['bucket_id'])) : '';
+        if ($bucket_id !== '') {
+            $bucket_id = preg_replace('/[^a-zA-Z0-9_-]/', '-', $bucket_id);
+            $bucket_id = trim($bucket_id, '-');
+        }
         $out = array(
             'base_url'    => isset($input['base_url']) ? esc_url_raw(trim($input['base_url'])) : '',
             'api_key'     => isset($input['api_key']) && $input['api_key'] !== '' ? sanitize_text_field($input['api_key']) : (isset($current['api_key']) ? $current['api_key'] : ''),
             'use_private' => !empty($input['use_private']),
-            'bucket_id'   => isset($input['bucket_id']) ? sanitize_text_field(trim($input['bucket_id'])) : '',
+            'bucket_id'   => $bucket_id,
             'timeout'     => isset($input['timeout']) ? max(5, min(120, (int) $input['timeout'])) : 30,
             'ssl_verify'  => !empty($input['ssl_verify']),
         );
