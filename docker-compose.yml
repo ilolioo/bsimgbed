@@ -1,6 +1,6 @@
 services:
   bsimgbed:
-    image: bsimgbed:latest
+    image: ilolioo/bsimgbed:latest
     build:
       context: .
       dockerfile: Dockerfile
